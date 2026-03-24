@@ -223,6 +223,9 @@ html,body{height:100%;overflow:hidden;background:#1e1e1e;font-family:'Segoe UI',
     </div>
     <div id="canvas-wrap">
       <canvas id="cop-canvas"></canvas>
+      <div id="zoom-hint" style="position:absolute;bottom:8px;right:10px;font-size:10px;color:rgba(120,160,120,0.6);pointer-events:none;font-family:Consolas,monospace;">
+        scroll=zoom &nbsp;|&nbsp; drag=pan &nbsp;|&nbsp; dbl-click=reset
+      </div>
     </div>
   </div>
 
@@ -275,7 +278,7 @@ html,body{height:100%;overflow:hidden;background:#1e1e1e;font-family:'Segoe UI',
         </div>
         <div class="form-row">
           <label>Select Existing:</label>
-          <select id="existing-sel" onchange="onExistingSelect()">
+          <select id="existing-sel" onchange="onExistingSelect(this.value)">
             <option value=""></option>
           </select>
         </div>
@@ -307,7 +310,7 @@ html,body{height:100%;overflow:hidden;background:#1e1e1e;font-family:'Segoe UI',
     <div class="group-box">
       <div class="group-title">Select Person (from save folder)</div>
       <div class="group-body" style="padding-bottom:8px;">
-        <select id="person-sel" onchange="onPersonSelect()" style="width:100%;padding:3px 6px;border:1px solid #aaa;border-radius:2px;font-size:12px;">
+        <select id="person-sel" onchange="onPersonSelect(this.value)" style="width:100%;padding:3px 6px;border:1px solid #aaa;border-radius:2px;font-size:12px;">
           <option value=""></option>
         </select>
       </div>
@@ -374,18 +377,20 @@ const EXPERIMENTS = {
   cognitive:     'cognitive.csv',
 };
 
-const OVERLAY_COLORS = [
-  '#e6194b','#3cb44b','#4363d8','#f58231','#911eb4',
-  '#46f0f0','#f032e6','#bcf60c','#ff7f50','#00ced1',
-  '#da70d6','#ffa500','#7fff00','#ff69b4','#1e90ff',
+// 15 distinct colors per session slot — sessions cycle through blocks of 5
+const SESSION_COLOR_BANKS = [
+  ['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4'],  // session 1
+  ['#46f0f0','#f032e6','#bcf60c','#ff7f50','#00ced1'],  // session 2
+  ['#da70d6','#ffa500','#7fff00','#ff69b4','#1e90ff'],  // session 3
+  ['#ffec00','#a52a2a','#00fa9a','#dc143c','#4169e1'],  // session 4
 ];
 
 // ──────────────────────────────────────────────
 //  RUNTIME STATE
 // ──────────────────────────────────────────────
 let port=null, reader=null, readActive=false;
-let rootDir=null;   // FileSystemDirectoryHandle
-let sessionDirs={}; // cache of discovered session names
+let rootDir=null;
+let sessionDirs={};
 
 let offsets=null, offsetAcc={FL:0,FR:0,RL:0,RR:0}, offsetCount=0;
 let flBuf=new Float32Array(AVG_N), frBuf=new Float32Array(AVG_N);
@@ -393,16 +398,27 @@ let rlBuf=new Float32Array(AVG_N), rrBuf=new Float32Array(AVG_N);
 let bufIdx=0;
 
 let copX=0, copY=0;
-let trace=[];          // [{x,y,t}]
+let trace=[];
 let forces={FL:0,FR:0,RL:0,RR:0};
-let recording=false, recWritable=null, recTimer=null, recInterval=null;
-let overlays=[];       // [{name,x[],y[],color,ellipse}]
+let recording=false, recWritable=null, recInterval=null;
+
+// overlayMap: sessionName → [{name, x[], y[], color, ell}]
+// Allows multiple sessions to be shown simultaneously
+let overlayMap={};
+let sessionColorIdx=0; // which color bank to assign next new session
 
 // ──────────────────────────────────────────────
-//  CANVAS
+//  CANVAS + ZOOM/PAN STATE
 // ──────────────────────────────────────────────
 const canvas=document.getElementById('cop-canvas');
 const ctx=canvas.getContext('2d');
+
+let zoomScale=1.0;      // >1 = zoomed in
+let panX=0, panY=0;     // view centre offset in cm (0,0 = origin)
+let isPanning=false;
+let panStartX=0, panStartY=0, panStartCmX=0, panStartCmY=0;
+
+function resetView(){ zoomScale=1; panX=0; panY=0; }
 
 function resizeCanvas(){
   const wrap=document.getElementById('canvas-wrap');
@@ -412,81 +428,183 @@ function resizeCanvas(){
 window.addEventListener('resize',resizeCanvas);
 setTimeout(resizeCanvas,50);
 
-/* cm → pixel helpers */
-function c2p(cx,cy){
-  const half=PLOT_RANGE_CM/2;
-  return [(cx+half)/PLOT_RANGE_CM*canvas.width, (half-cy)/PLOT_RANGE_CM*canvas.height];
-}
-function cmPx(cm){ return cm/PLOT_RANGE_CM*canvas.width; }
+/* effective half-range in cm given current zoom */
+function viewHalf(){ return (PLOT_RANGE_CM/2)/zoomScale; }
 
+/* cm → canvas pixels */
+function c2p(cx,cy){
+  const vh=viewHalf();
+  const px=((cx-panX)+vh)/(2*vh)*canvas.width;
+  const py=(vh-(cy-panY))/(2*vh)*canvas.height;
+  return[px,py];
+}
+/* canvas pixels → cm */
+function p2c(px,py){
+  const vh=viewHalf();
+  const cx=panX + px/canvas.width*(2*vh) - vh;
+  const cy=panY + vh - py/canvas.height*(2*vh);
+  return[cx,cy];
+}
+/* cm length → pixel length */
+function cmPx(cm){ return cm/(2*viewHalf())*canvas.width; }
+
+// ── Mouse wheel zoom (centred on cursor) ──
+canvas.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const rect=canvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const[cmx,cmy]=p2c(mx,my);          // cm under cursor before zoom
+  const factor=e.deltaY<0?1.12:1/1.12;
+  zoomScale=Math.max(0.4,Math.min(20,zoomScale*factor));
+  // After zoom, recalculate where cursor cm maps to; adjust pan so it stays fixed
+  const[npx,npy]=c2p(cmx,cmy);       // new pixel position of same cm point
+  panX+=(npx-mx)/canvas.width*(2*viewHalf());
+  panY-=(npy-my)/canvas.height*(2*viewHalf());
+},{passive:false});
+
+// ── Mouse drag pan ──
+canvas.addEventListener('mousedown',e=>{
+  isPanning=true;
+  panStartX=e.clientX; panStartY=e.clientY;
+  panStartCmX=panX; panStartCmY=panY;
+  canvas.style.cursor='grabbing';
+});
+window.addEventListener('mousemove',e=>{
+  if(!isPanning) return;
+  const dx=e.clientX-panStartX, dy=e.clientY-panStartY;
+  const scale=2*viewHalf()/canvas.width;
+  panX=panStartCmX - dx*scale;
+  panY=panStartCmY + dy*scale;
+});
+window.addEventListener('mouseup',()=>{ isPanning=false; canvas.style.cursor='crosshair'; });
+
+// ── Double-click reset ──
+canvas.addEventListener('dblclick',resetView);
+
+// ── Touch zoom/pan ──
+let lastTouchDist=0, lastTouchMidX=0, lastTouchMidY=0, lastTouchPanX=0, lastTouchPanY=0;
+canvas.addEventListener('touchstart',e=>{
+  if(e.touches.length===2){
+    const t0=e.touches[0], t1=e.touches[1];
+    lastTouchDist=Math.hypot(t1.clientX-t0.clientX,t1.clientY-t0.clientY);
+    lastTouchMidX=(t0.clientX+t1.clientX)/2;
+    lastTouchMidY=(t0.clientY+t1.clientY)/2;
+    lastTouchPanX=panX; lastTouchPanY=panY;
+  }
+},{passive:true});
+canvas.addEventListener('touchmove',e=>{
+  if(e.touches.length===2){
+    e.preventDefault();
+    const t0=e.touches[0], t1=e.touches[1];
+    const dist=Math.hypot(t1.clientX-t0.clientX,t1.clientY-t0.clientY);
+    const midX=(t0.clientX+t1.clientX)/2, midY=(t0.clientY+t1.clientY)/2;
+    const rect=canvas.getBoundingClientRect();
+    const[cmx,cmy]=p2c(lastTouchMidX-rect.left,lastTouchMidY-rect.top);
+    zoomScale=Math.max(0.4,Math.min(20,zoomScale*(dist/lastTouchDist)));
+    lastTouchDist=dist;
+    // pan correction
+    const scale=2*viewHalf()/canvas.width;
+    panX=lastTouchPanX-(midX-lastTouchMidX)*scale;
+    panY=lastTouchPanY+(midY-lastTouchMidY)*scale;
+  }
+},{passive:false});
+
+// ──────────────────────────────────────────────
+//  DRAW
+// ──────────────────────────────────────────────
 function drawAll(){
   const W=canvas.width, H=canvas.height;
   if(!W||!H) return;
 
-  /* bg */
   ctx.fillStyle='#000';
   ctx.fillRect(0,0,W,H);
 
-  /* grid */
+  /* adaptive grid step based on zoom */
+  let gridStep=5;
+  if(viewHalf()<8) gridStep=1;
+  else if(viewHalf()<15) gridStep=2;
+  else if(viewHalf()>25) gridStep=10;
+
   ctx.strokeStyle='rgba(50,80,50,0.9)';
   ctx.lineWidth=0.6;
-  for(let cm=-PLOT_RANGE_CM/2;cm<=PLOT_RANGE_CM/2;cm+=5){
-    const [px]=c2p(cm,0); const [,py]=c2p(0,cm);
+  const lo=Math.ceil((-viewHalf()+panX)/gridStep)*gridStep;
+  const hi=Math.floor(( viewHalf()+panX)/gridStep)*gridStep;
+  const lo2=Math.ceil((-viewHalf()+panY)/gridStep)*gridStep;
+  const hi2=Math.floor(( viewHalf()+panY)/gridStep)*gridStep;
+  for(let cm=lo;cm<=hi;cm+=gridStep){
+    const[px]=c2p(cm,0);
     ctx.beginPath(); ctx.moveTo(px,0); ctx.lineTo(px,H); ctx.stroke();
+  }
+  for(let cm=lo2;cm<=hi2;cm+=gridStep){
+    const[,py]=c2p(0,cm);
     ctx.beginPath(); ctx.moveTo(0,py); ctx.lineTo(W,py); ctx.stroke();
   }
 
-  /* axis tick labels */
+  /* tick labels */
+  const fs=Math.max(9,Math.min(12,W/70));
+  ctx.font=`${fs}px Consolas,monospace`;
   ctx.fillStyle='rgba(160,180,160,0.8)';
-  ctx.font=`${Math.max(9,W/70)}px Consolas,monospace`;
   ctx.textAlign='center';
-  for(let cm=-30;cm<=30;cm+=10){
-    if(cm===0) continue;
-    const [px]=c2p(cm,0); const [,py]=c2p(0,cm);
+  for(let cm=lo;cm<=hi;cm+=gridStep){
+    if(Math.abs(cm)<0.01) continue;
+    const[px]=c2p(cm,0);
     ctx.fillText(cm,px,H-3);
-    ctx.textAlign='right';
+  }
+  ctx.textAlign='right';
+  for(let cm=lo2;cm<=hi2;cm+=gridStep){
+    if(Math.abs(cm)<0.01) continue;
+    const[,py]=c2p(0,cm);
     ctx.fillText(cm,22,py+4);
-    ctx.textAlign='center';
   }
   ctx.fillStyle='rgba(160,180,160,0.7)';
+  ctx.textAlign='center';
   ctx.fillText('X (cm)',W/2,H-1);
   ctx.save(); ctx.translate(10,H/2); ctx.rotate(-Math.PI/2);
   ctx.fillText('Y (cm)',0,0); ctx.restore();
 
+  /* zoom level badge */
+  if(zoomScale!==1){
+    ctx.fillStyle='rgba(100,160,100,0.55)';
+    ctx.font='10px Consolas,monospace';
+    ctx.textAlign='left';
+    ctx.fillText(`×${zoomScale.toFixed(1)}`,6,14);
+  }
+
   /* platform rectangle */
-  const [rx0,ry0]=c2p(-PLATFORM_SIZE_CM/2, PLATFORM_SIZE_CM/2);
-  const [rx1,ry1]=c2p( PLATFORM_SIZE_CM/2,-PLATFORM_SIZE_CM/2);
+  const[rx0,ry0]=c2p(-PLATFORM_SIZE_CM/2, PLATFORM_SIZE_CM/2);
+  const[rx1,ry1]=c2p( PLATFORM_SIZE_CM/2,-PLATFORM_SIZE_CM/2);
   ctx.strokeStyle='#ffffff';
   ctx.lineWidth=2;
   ctx.strokeRect(rx0,ry0,rx1-rx0,ry1-ry0);
 
-  /* overlay traces + ellipses */
-  overlays.forEach(ov=>{
-    if(!ov.x.length) return;
-    ctx.save();
-    ctx.strokeStyle=ov.color;
-    ctx.lineWidth=1.5;
-    ctx.globalAlpha=0.75;
-    ctx.beginPath();
-    const [sx,sy]=c2p(ov.x[0],ov.y[0]);
-    ctx.moveTo(sx,sy);
-    for(let i=1;i<ov.x.length;i++){
-      const [ex,ey]=c2p(ov.x[i],ov.y[i]);
-      ctx.lineTo(ex,ey);
-    }
-    ctx.stroke();
-    /* ellipse */
-    if(ov.ell){
-      const e=ov.ell;
-      const [ecx,ecy]=c2p(e.cx,e.cy);
-      ctx.setLineDash([5,4]);
+  /* overlay traces + ellipses (all sessions) */
+  Object.values(overlayMap).forEach(ovList=>{
+    ovList.forEach(ov=>{
+      if(!ov.x.length) return;
+      ctx.save();
+      ctx.strokeStyle=ov.color;
       ctx.lineWidth=1.5;
+      ctx.globalAlpha=0.75;
       ctx.beginPath();
-      ctx.ellipse(ecx,ecy,cmPx(e.rx),cmPx(e.ry),-e.angle*Math.PI/180,0,2*Math.PI);
+      const[sx,sy]=c2p(ov.x[0],ov.y[0]);
+      ctx.moveTo(sx,sy);
+      for(let i=1;i<ov.x.length;i++){
+        const[ex,ey]=c2p(ov.x[i],ov.y[i]);
+        ctx.lineTo(ex,ey);
+      }
       ctx.stroke();
-      ctx.setLineDash([]);
-    }
-    ctx.restore();
+      if(ov.ell){
+        const e=ov.ell;
+        const[ecx,ecy]=c2p(e.cx,e.cy);
+        ctx.setLineDash([5,4]);
+        ctx.lineWidth=1.5;
+        ctx.beginPath();
+        ctx.ellipse(ecx,ecy,cmPx(e.rx),cmPx(e.ry),-e.angle*Math.PI/180,0,2*Math.PI);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      ctx.restore();
+    });
   });
 
   /* live trace */
@@ -495,15 +613,15 @@ function drawAll(){
     ctx.strokeStyle='#00cc44';
     ctx.lineWidth=1.8;
     ctx.beginPath();
-    const [sx,sy]=c2p(trace[0].x,trace[0].y);
+    const[sx,sy]=c2p(trace[0].x,trace[0].y);
     ctx.moveTo(sx,sy);
-    trace.forEach(p=>{ const [ex,ey]=c2p(p.x,p.y); ctx.lineTo(ex,ey); });
+    trace.forEach(p=>{ const[ex,ey]=c2p(p.x,p.y); ctx.lineTo(ex,ey); });
     ctx.stroke();
     ctx.restore();
   }
 
   /* CoP dot */
-  const [dx,dy]=c2p(copX,copY);
+  const[dx,dy]=c2p(copX,copY);
   ctx.save();
   ctx.shadowColor='#ff3333'; ctx.shadowBlur=10;
   ctx.fillStyle='#ff2200';
@@ -742,13 +860,83 @@ async function refreshPersonList(){
   existing.value=preserve;
 }
 
-function onExistingSelect(){
-  const v=document.getElementById('existing-sel').value;
-  if(v) document.getElementById('session-inp').value=v;
+function onExistingSelect(v){
+  if(!v) return;
+  document.getElementById('session-inp').value=v;
+  loadSessionOverlay(v);
 }
-function onPersonSelect(){
-  const v=document.getElementById('person-sel').value;
-  if(v) document.getElementById('session-inp').value=v;
+function onPersonSelect(v){
+  if(!v) return;
+  document.getElementById('session-inp').value=v;
+  loadSessionOverlay(v);
+}
+
+/* Load all CSVs for a session and add/replace its entry in overlayMap */
+async function loadSessionOverlay(sessionName){
+  if(!rootDir) return;   // silently skip if no folder chosen yet
+
+  // assign a stable color bank to this session
+  if(!(sessionName in overlayMap)){
+    const bank=SESSION_COLOR_BANKS[sessionColorIdx%SESSION_COLOR_BANKS.length];
+    sessionColorIdx++;
+    overlayMap[sessionName]=[];
+    overlayMap[sessionName]._bank=bank;
+  }
+
+  const bank=overlayMap[sessionName]._bank||SESSION_COLOR_BANKS[0];
+  const entries=[];
+  let colorIdx=0;
+
+  let sdir;
+  try{ sdir=await getSessionHandle(sessionName,false); }
+  catch(e){ return; }  // session folder doesn't exist yet — silent
+
+  for(const[key,fname] of Object.entries(EXPERIMENTS)){
+    try{
+      const fh  =await sdir.getFileHandle(fname);
+      const file=await fh.getFile();
+      const text=await file.text();
+      const rows=text.split('\n').slice(1).filter(r=>r.trim());
+      let xs=[],ys=[];
+      rows.forEach(r=>{ const[a,b]=r.split(',').map(Number); if(!isNaN(a)&&!isNaN(b)){xs.push(a);ys.push(b);} });
+      const cl=removeOutliers(xs,ys);
+      xs=cl.x; ys=cl.y;
+      const color=bank[colorIdx++%bank.length];
+      const ell=ellipseParams(xs,ys);
+      entries.push({name:`${sessionName} — ${key.replace(/_/g,' ')}`,x:xs,y:ys,color,ell});
+    }catch(e){}
+  }
+
+  overlayMap[sessionName]=entries;
+  overlayMap[sessionName]._bank=bank;
+  renderOverlayPanel();
+}
+
+function renderOverlayPanel(){
+  const body=document.getElementById('overlay-body');
+  const lines=[];
+  const items=[];
+
+  Object.entries(overlayMap).forEach(([sess,entries])=>{
+    if(!Array.isArray(entries)) return;
+    entries.forEach(ov=>{
+      items.push({name:ov.name,color:ov.color,area:ov.ell?ov.ell.area:0});
+      lines.push(`${ov.name}: area = ${(ov.ell?ov.ell.area:0).toFixed(2)} cm^2`);
+    });
+  });
+
+  if(!items.length){
+    body.innerHTML='<div style="font-size:12px;color:#666;">Overlay: not computed</div>';
+    document.getElementById('overlay-summary').textContent='Overlay: not computed';
+    return;
+  }
+  body.innerHTML=items.map(it=>`
+    <div class="overlay-item">
+      <div class="ov-dot" style="background:${it.color}"></div>
+      <span style="flex:1;font-size:11px;">${it.name}</span>
+      <span class="ov-area">${it.area.toFixed(2)} cm²</span>
+    </div>`).join('');
+  document.getElementById('overlay-summary').textContent=lines.join('\n');
 }
 
 // ──────────────────────────────────────────────
@@ -810,63 +998,24 @@ async function stopRecording(auto=false){
   if(auto) setTimeout(()=>alert('✅ Recording complete!\nFile saved to your chosen folder.'),100);
 }
 
-// ──────────────────────────────────────────────
-//  TRACE / OVERLAY controls
-// ──────────────────────────────────────────────
 function clearTrace(){ trace=[]; }
 
 function clearOverlays(){
-  overlays=[];
+  overlayMap={};
+  sessionColorIdx=0;
   document.getElementById('overlay-body').innerHTML='<div style="font-size:12px;color:#666;">Overlay: not computed</div>';
   document.getElementById('overlay-summary').textContent='Overlay: not computed';
 }
 
+/* "Show Overlay + Ellipses" button — loads the session currently typed in the session input */
 async function showOverlay(){
   if(!rootDir){alert('Choose a save folder first.');return;}
   const sess=document.getElementById('session-inp').value.trim();
   if(!sess){alert('Enter a session name to overlay.');return;}
-
-  overlays=[];
-  const lines=[], items=[];
-  let colorIdx=0;
-
-  let sdir;
-  try{ sdir=await getSessionHandle(sess,false); }
-  catch(e){ alert('Session folder "'+sess+'" not found in save folder.'); return; }
-
-  for(const[key,fname] of Object.entries(EXPERIMENTS)){
-    try{
-      const fh  =await sdir.getFileHandle(fname);
-      const file=await fh.getFile();
-      const text=await file.text();
-      const rows=text.split('\n').slice(1).filter(r=>r.trim());
-      let xs=[],ys=[];
-      rows.forEach(r=>{ const[a,b]=r.split(',').map(Number); if(!isNaN(a)&&!isNaN(b)){xs.push(a);ys.push(b);} });
-      const cl=removeOutliers(xs,ys);
-      xs=cl.x; ys=cl.y;
-      const color=OVERLAY_COLORS[colorIdx++%OVERLAY_COLORS.length];
-      const ell=ellipseParams(xs,ys);
-      overlays.push({name:`${sess}-${key}`,x:xs,y:ys,color,ell});
-      const area=ell?ell.area:0;
-      lines.push(`${sess}-${key}: area = ${area.toFixed(2)} cm^2`);
-      items.push({name:`${sess} — ${key.replace(/_/g,' ')}`,color,area});
-    }catch(e){ /* file not present */ }
+  await loadSessionOverlay(sess);
+  if(!overlayMap[sess]||!overlayMap[sess].length){
+    alert('No CSV files found for session "'+sess+'".');
   }
-
-  /* update overlay areas panel */
-  const body=document.getElementById('overlay-body');
-  if(!items.length){
-    body.innerHTML='<div style="font-size:12px;color:#666;">No CSV files found for this session.</div>';
-    document.getElementById('overlay-summary').textContent='No data found.';
-    return;
-  }
-  body.innerHTML=items.map(it=>`
-    <div class="overlay-item">
-      <div class="ov-dot" style="background:${it.color}"></div>
-      <span style="flex:1;font-size:11px;">${it.name}</span>
-      <span class="ov-area">${it.area.toFixed(2)} cm²</span>
-    </div>`).join('');
-  document.getElementById('overlay-summary').textContent=lines.join('\n');
 }
 
 // ──────────────────────────────────────────────
