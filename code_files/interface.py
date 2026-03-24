@@ -23,13 +23,13 @@ CSV_STORE_DIR = r"C:\Users\Plaksha.PLAKSHA111\OneDrive - Plaksha University\Desk
 os.makedirs(CSV_STORE_DIR, exist_ok=True)
 
 SERIAL_PORT = os.environ.get('FORCE_PLATFORM_PORT', 'COM13')
-BAUD_RATE = int(os.environ.get('FORCE_PLATFORM_BAUD', '115200'))
+BAUD_RATE = int(os.environ.get('FORCE_PLATFORM_BAUD', '2000000'))
 
-PLATFORM_SIZE_CM = 47.0
-PLOT_RANGE_CM = 50.0
+PLATFORM_SIZE_CM = 47          # ← Updated for your new 54.5 × 54.5 cm platform
+PLOT_RANGE_CM = 60.0             # ← Slightly larger than platform for nice margins
 OFFSET_SAMPLE_COUNT = 50
-MIN_TOTAL_FORCE = 10
-TRACE_HISTORY_SECONDS = 30
+MIN_TOTAL_FORCE = 1000
+TRACE_HISTORY_SECONDS = 15
 POSITION_NAMES = ('FL', 'FR', 'RL', 'RR')
 
 EXPERIMENT_FILES = {
@@ -37,7 +37,11 @@ EXPERIMENT_FILES = {
     'eyes_closed': 'eyes_closed.csv',
     'one_leg_right': 'one_leg_right.csv',
     'one_leg_left': 'one_leg_left.csv',
+    'cognitive': 'cognitive.csv',
+    
 }
+
+AVG_SAMPLES = 50
 
 # ---------------- Helpers ----------------
 def get_session_dir(session_name):
@@ -46,7 +50,6 @@ def get_session_dir(session_name):
     return session_dir
 
 def remove_outliers_df(df: pd.DataFrame, thresh: float = 3.5, max_remove: int = 2) -> pd.DataFrame:
-    """Remove up to max_remove strongest 2D outliers on 'x','y' using MAD-based method."""
     if df is None or df.empty or 'x' not in df.columns or 'y' not in df.columns:
         return df
     try:
@@ -69,7 +72,6 @@ def remove_outliers_df(df: pd.DataFrame, thresh: float = 3.5, max_remove: int = 
         return df
 
 def get_ellipse_params(x, y):
-    """Return width, height, angle (deg), area using PCA on covariance (fallback ellipse fit)."""
     x = np.asarray(x, dtype=float)
     y = np.asarray(y, dtype=float)
     if x.size < 3:
@@ -80,7 +82,6 @@ def get_ellipse_params(x, y):
     order = eigvals.argsort()[::-1]
     eigvals = eigvals[order]
     eigvecs = eigvecs[:, order]
-    # width/height are 2 * sqrt(eigval)
     width = 2.0 * math.sqrt(max(eigvals[0], 0.0))
     height = 2.0 * math.sqrt(max(eigvals[1], 0.0))
     angle = math.degrees(math.atan2(eigvecs[1, 0], eigvecs[0, 0]))
@@ -88,7 +89,6 @@ def get_ellipse_params(x, y):
     return width, height, angle, area
 
 def remove_outliers_xy(x: np.ndarray, y: np.ndarray, thresh: float = 3.5):
-    """MAD-based filter for arrays."""
     x = np.asarray(x, dtype=float)
     y = np.asarray(y, dtype=float)
     if x.size < 5:
@@ -105,12 +105,25 @@ def remove_outliers_xy(x: np.ndarray, y: np.ndarray, thresh: float = 3.5):
     return x[mask], y[mask]
 
 def compute_center_of_pressure(fl, fr, rl, rr):
+    """Returns (x, y, is_valid).
+    - If total < 200 g OR CoP is physically impossible on a 54.5 cm platform
+      → returns (0, 0, False). This completely kills noise jumps.
+    - Otherwise normal CoP calculation."""
     total = fl + fr + rl + rr
     if abs(total) < MIN_TOTAL_FORCE:
-        return 0.0, 0.0
-    x = ((fr + rr) - (fl + rl)) * (PLATFORM_SIZE_CM / 2) / total
-    y = ((fl + fr) - (rl + rr)) * (PLATFORM_SIZE_CM / 2) / total
-    return x, y
+        return 0.0, 0.0, False
+
+    half = PLATFORM_SIZE_CM / 2.0
+    x = ((fr + rr) - (fl + rl)) * half / total
+    y = ((fl + fr) - (rl + rr)) * half / total
+
+    # Dynamic noise rejection based on actual platform size
+    # Any CoP outside the physical platform + 1 cm margin = guaranteed noise
+    max_cop_cm = half + 1.0
+    if abs(x) > max_cop_cm or abs(y) > max_cop_cm:
+        return 0.0, 0.0, False
+
+    return x, y, True
 
 def random_unique_hex_colors(n):
     colors = set()
@@ -158,7 +171,6 @@ class MainWindow(QWidget):
         # Right: Controls
         right_box = QVBoxLayout()
 
-        # Session and experiment controls
         session_group = QGroupBox('Session Settings')
         session_form = QFormLayout()
         self.session_input = QLineEdit()
@@ -177,7 +189,6 @@ class MainWindow(QWidget):
         session_group.setLayout(session_form)
         right_box.addWidget(session_group)
 
-        # Person selector
         person_group = QGroupBox('Select Person (from csv_store)')
         p_layout = QVBoxLayout()
         self.person_dropdown = QComboBox()
@@ -187,7 +198,6 @@ class MainWindow(QWidget):
         person_group.setLayout(p_layout)
         right_box.addWidget(person_group)
 
-        # Recording & overlay controls
         self.record_btn = QPushButton('Start Recording')
         self.record_btn.clicked.connect(self._toggle_recording)
         right_box.addWidget(self.record_btn)
@@ -204,7 +214,6 @@ class MainWindow(QWidget):
         self.clear_overlays_btn.clicked.connect(lambda: self._clear_overlays(keep_live=True))
         right_box.addWidget(self.clear_overlays_btn)
 
-        # Live metrics box
         metrics_group = QGroupBox('Live Metrics')
         metrics_form = QFormLayout()
         self.lbl_fl = QLabel('0')
@@ -222,14 +231,12 @@ class MainWindow(QWidget):
         metrics_group.setLayout(metrics_form)
         right_box.addWidget(metrics_group)
 
-        # Area values display (static colored labels)
         self.area_group = QGroupBox('Overlay Areas (per CSV)')
         self.area_layout = QVBoxLayout()
         self.area_group.setLayout(self.area_layout)
         self.area_layout.addWidget(QLabel('Overlay: not computed'))
         right_box.addWidget(self.area_group)
 
-        # overlay info label (multi-line summary)
         self.overlay_info = QLabel('Overlay: not computed')
         self.overlay_info.setWordWrap(True)
         right_box.addWidget(self.overlay_info)
@@ -242,7 +249,6 @@ class MainWindow(QWidget):
         self.plot.getAxis("bottom").setTickFont(axis_font)
         self.plot.getAxis("left").setTickFont(axis_font)
 
-        # UI timer for updates
         self.ui_timer = QTimer()
         self.ui_timer.timeout.connect(self._update)
         self.ui_timer.start(50)
@@ -257,14 +263,17 @@ class MainWindow(QWidget):
         self.running = True
         self.ser = None
         self.loadcell_offsets = None
-        self.offset_sums = {pos: 0.0 for pos in POSITION_NAMES}
-        self.offset_count = 0
         self.forces = {pos: 0.0 for pos in POSITION_NAMES}
-        self.traces = []  # overlays stored here
+        self.traces = []
         self.color_idx = 0
         self.record_timer = QTimer()
         self.record_timer.setSingleShot(True)
         self.record_timer.timeout.connect(self._on_record_timeout)
+        self.fl_buffer = np.zeros(AVG_SAMPLES)
+        self.fr_buffer = np.zeros(AVG_SAMPLES)
+        self.rl_buffer = np.zeros(AVG_SAMPLES)
+        self.rr_buffer = np.zeros(AVG_SAMPLES)
+        self.buf_index = 0
 
     # ---------------- Session helpers ----------------
     def _refresh_session_dropdown(self):
@@ -366,16 +375,16 @@ class MainWindow(QWidget):
         while self.ser and self.running:
             try:
                 line = self.ser.readline().decode(errors='ignore').strip()
-                if not line or '=' in line or 'Calibrating' in line or 'Done' in line or 'Counts' in line:
+                if not line:
                     continue
-                parts = line.split()
-                if len(parts) < 8:
+                parts = line.split('\t')
+                if len(parts) != 4:
                     continue
                 try:
-                    vals = list(map(float, parts))
+                    raw_rl, raw_fr, raw_fl, raw_rr = map(float, parts)
                 except Exception:
                     continue
-                raw_rl, raw_fr, raw_fl, raw_rr = vals[-4], vals[-3], vals[-2], vals[-1]
+
                 if self.loadcell_offsets is None:
                     offset_acc['RL'] += raw_rl
                     offset_acc['FR'] += raw_fr
@@ -386,24 +395,49 @@ class MainWindow(QWidget):
                         self.loadcell_offsets = {k: (offset_acc[k] / count) for k in offset_acc}
                         print("✅ Offsets established:", self.loadcell_offsets)
                     continue
+
                 rl_val = raw_rl - self.loadcell_offsets['RL']
                 fr_val = raw_fr - self.loadcell_offsets['FR']
                 fl_val = raw_fl - self.loadcell_offsets['FL']
                 rr_val = raw_rr - self.loadcell_offsets['RR']
-                x, y = compute_center_of_pressure(fl_val, fr_val, rl_val, rr_val)
+
+                self.rl_buffer[self.buf_index] = rl_val
+                self.fr_buffer[self.buf_index] = fr_val
+                self.fl_buffer[self.buf_index] = fl_val
+                self.rr_buffer[self.buf_index] = rr_val
+
+                avg_rl = np.mean(self.rl_buffer)
+                avg_fr = np.mean(self.fr_buffer)
+                avg_fl = np.mean(self.fl_buffer)
+                avg_rr = np.mean(self.rr_buffer)
+
+                self.buf_index = (self.buf_index + 1) % AVG_SAMPLES
+
+                x, y, is_valid = compute_center_of_pressure(avg_fl, avg_fr, avg_rl, avg_rr)
+
                 with self.data_lock:
                     self.cop_x, self.cop_y = x, y
-                    self.trace.append((x, y, time.time()))
-                    cutoff = time.time() - TRACE_HISTORY_SECONDS
-                    self.trace = [(xx, yy, t) for (xx, yy, t) in self.trace if t >= cutoff]
+
+                    if is_valid:
+                        self.trace.append((x, y, time.time()))
+                        cutoff = time.time() - TRACE_HISTORY_SECONDS
+                        self.trace = [(xx, yy, t) for (xx, yy, t) in self.trace if t >= cutoff]
+                    else:
+                        self.trace = []                     # force tracer empty below 200 g
+
+                    self.forces['FL'] = avg_fl
+                    self.forces['FR'] = avg_fr
+                    self.forces['RL'] = avg_rl
+                    self.forces['RR'] = avg_rr
+
                     if self.recording and self.csv_file:
                         try:
                             self.csv_file.write(f"{x},{y}\n")
                         except Exception:
                             pass
-                time.sleep(0.00)
+                time.sleep(0.001)
             except Exception:
-                time.sleep(0.00)
+                time.sleep(0.001)
                 continue
 
     # ---------------- Clear trace ----------------
@@ -416,15 +450,13 @@ class MainWindow(QWidget):
                 pass
         print("🧹 Live trace cleared.")
 
-    # ---------------- Overlay logic (user-provided code merged) ----------------
+    # ---------------- Overlay logic ----------------
     def _do_overlay(self):
-        # Overlay four experiment files for all selected sessions
         session_names = [self.session_input.text()]
-        # Add all selected from dropdown if not empty and not duplicate
         dropdown_name = self.session_dropdown.currentText()
         if dropdown_name and dropdown_name not in session_names:
             session_names.append(dropdown_name)
-        # Use a large set of dark colors for traces
+
         DARK_COLORS = [
             '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0',
             '#f032e6', '#bcf60c', '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8',
@@ -437,7 +469,7 @@ class MainWindow(QWidget):
             '#2c3e50', '#34495e', '#22313f', '#2c2c2c', '#222222', "#EBE2E2", '#333333',
         ]
         colors = DARK_COLORS
-        # Clear plot but re-draw platform and keep ability to add live items later
+
         self.plot.clear()
         self.plot.setAspectLocked(True)
         self.plot.showGrid(x=True, y=True)
@@ -451,10 +483,9 @@ class MainWindow(QWidget):
 
         summary_lines = []
         color_idx = 0
-        # Add legend
         legend = self.plot.addLegend(offset=(30, 30))
-        # Clear previous stored traces list (we'll re-populate)
         self.traces = []
+
         for session_name in session_names:
             session_dir = get_session_dir(session_name)
             for key, fname in EXPERIMENT_FILES.items():
@@ -469,28 +500,24 @@ class MainWindow(QWidget):
                     x = df['x'].to_numpy(dtype=float)
                     y = df['y'].to_numpy(dtype=float)
                     color = colors[color_idx % len(colors)]
-                    # ---- FIX: removed name=... from plot() to prevent duplicate legend entries ----
                     curve = self.plot.plot(x, y, pen=pg.mkPen(color=color, width=2))
                     try:
                         legend.addItem(curve, f"{session_name}-{key}")
                     except Exception:
                         pass
-                    # Compute ellipse parameters and area using get_ellipse_params
                     try:
                         width, height, angle, area = get_ellipse_params(x, y)
                         summary_lines.append(f"{session_name}-{key}: area = {area:.2f} cm^2")
                     except Exception as e:
                         summary_lines.append(f"{session_name}-{key}: area error {e}")
-                    # store overlay objects so we can clear later
-                    self.traces.append({'curve': curve, 'name': f"{session_name}-{key}", 'area': (area if 'area' in locals() else 0.0), 'color': color})
+                    self.traces.append({'curve': curve, 'name': f"{session_name}-{key}", 'area': area if 'area' in locals() else 0.0, 'color': color})
                     color_idx += 1
                 except Exception as e:
                     summary_lines.append(f"{session_name}-{key}: error {e}")
                     continue
 
-        # Update overlay info label
         self.overlay_info.setText("\n".join(summary_lines) if summary_lines else "Overlay: not computed")
-        # Update static area_layout (clear and add color-labeled QLabels)
+
         for i in reversed(range(self.area_layout.count())):
             w = self.area_layout.itemAt(i).widget()
             if w:
@@ -498,18 +525,15 @@ class MainWindow(QWidget):
         if self.traces:
             for rec in self.traces:
                 lbl = QLabel(f"{rec['name']}: {rec.get('area',0.0):.2f} cm²")
-                # color the label text same as curve color
                 lbl.setStyleSheet(f"color: {rec['color']};")
                 self.area_layout.addWidget(lbl)
         else:
             self.area_layout.addWidget(QLabel('Overlay: not computed'))
 
-        # re-add live dot and tracer on top so live info remains visible
         self.dot = self.plot.plot([self.cop_x], [self.cop_y], pen=None, symbol='o', symbolSize=10, symbolBrush='r')
         self.tracer = self.plot.plot([], [], pen=pg.mkPen('g', width=2))
 
     def _clear_overlays(self, keep_live=False):
-        # remove overlay items previously plotted
         for rec in getattr(self, 'traces', []):
             try:
                 if rec.get('curve') is not None:
@@ -517,7 +541,6 @@ class MainWindow(QWidget):
             except Exception:
                 pass
         self.traces = []
-        # clear area layout
         for i in reversed(range(self.area_layout.count())):
             w = self.area_layout.itemAt(i).widget()
             if w:
@@ -525,7 +548,6 @@ class MainWindow(QWidget):
         self.area_layout.addWidget(QLabel('Overlay: not computed'))
         self.overlay_info.setText('Overlay: not computed')
         if not keep_live:
-            # clear entire plot and redraw platform
             self.plot.clear()
             platform_rect = QGraphicsRectItem(-PLATFORM_SIZE_CM/2, -PLATFORM_SIZE_CM/2, PLATFORM_SIZE_CM, PLATFORM_SIZE_CM)
             platform_rect.setPen(pg.mkPen(color='w', width=2))
@@ -533,7 +555,6 @@ class MainWindow(QWidget):
             self.dot = self.plot.plot([self.cop_x], [self.cop_y], pen=None, symbol='o', symbolSize=10, symbolBrush='r')
             self.tracer = self.plot.plot([], [], pen=pg.mkPen('g', width=2))
         else:
-            # keep platform for live trace
             platform_rect = QGraphicsRectItem(-PLATFORM_SIZE_CM/2, -PLATFORM_SIZE_CM/2, PLATFORM_SIZE_CM, PLATFORM_SIZE_CM)
             platform_rect.setPen(pg.mkPen(color='w', width=2))
             self.plot.addItem(platform_rect)
@@ -545,13 +566,14 @@ class MainWindow(QWidget):
                 self.dot.setData([self.cop_x], [self.cop_y])
             except Exception:
                 pass
-            if self.trace:
-                xs = [p[0] for p in self.trace]
-                ys = [p[1] for p in self.trace]
-                try:
-                    self.tracer.setData(xs, ys)
-                except Exception:
-                    pass
+
+            xs = [p[0] for p in self.trace]
+            ys = [p[1] for p in self.trace]
+            try:
+                self.tracer.setData(xs, ys)
+            except Exception:
+                pass
+
             self.lbl_fl.setText(f"{self.forces.get('FL', 0.0):.1f}")
             self.lbl_fr.setText(f"{self.forces.get('FR', 0.0):.1f}")
             self.lbl_rl.setText(f"{self.forces.get('RL', 0.0):.1f}")

@@ -11,7 +11,7 @@ import numpy as np
 # ---------- Configuration ----------
 
 # Folder where CSV files are located
-csv_folder = r"C:\Users\Plaksha.PLAKSHA111\OneDrive - Plaksha University\Desktop\yts\Stable\EquiliSense\EquiliSense\ronak\csv_store\Deepan"
+csv_folder = r"C:\Users\Plaksha.PLAKSHA111\OneDrive - Plaksha University\Desktop\yts\Stable\EquiliSense\EquiliSense\ronak\csv_store\arshdeep_1"
 # List of CSV files to overlay
 file_list = [
     "eyes_closed.csv",

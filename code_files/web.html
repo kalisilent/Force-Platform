@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EquiliSense — Web Interface</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #06090f;
+    --panel: #0c1118;
+    --panel2: #111820;
+    --border: #1c2a3a;
+    --border2: #243040;
+    --green: #00f5a0;
+    --green-dim: rgba(0,245,160,0.15);
+    --red: #ff3355;
+    --red-dim: rgba(255,51,85,0.15);
+    --amber: #ffc107;
+    --cyan: #00d4ff;
+    --text: #c8d8e8;
+    --text-dim: #5a7080;
+    --white: #f0f4f8;
+    --platform: rgba(255,255,255,0.85);
+    --trace: #00f5a0;
+    --dot: #ff3355;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; background:var(--bg); color:var(--text); font-family:'Space Mono',monospace; overflow:hidden; }
+
+  #app { display:flex; height:100vh; width:100vw; gap:0; }
+
+  /* ── LEFT: PLOT ── */
+  #plot-panel {
+    flex:1 1 auto;
+    display:flex;
+    flex-direction:column;
+    background:var(--bg);
+    position:relative;
+    min-width:0;
+  }
+  #plot-header {
+    padding:12px 20px 8px;
+    display:flex;
+    align-items:center;
+    gap:16px;
+    border-bottom:1px solid var(--border);
+    background:var(--panel);
+    flex-shrink:0;
+  }
+  #plot-header .logo {
+    font-family:'Syne',sans-serif;
+    font-weight:800;
+    font-size:18px;
+    color:var(--green);
+    letter-spacing:0.08em;
+  }
+  #plot-header .logo span { color:var(--cyan); }
+  #status-dot { width:8px; height:8px; border-radius:50%; background:var(--text-dim); flex-shrink:0; transition:background 0.3s; }
+  #status-dot.connected { background:var(--green); box-shadow:0 0 8px var(--green); animation:pulse 2s infinite; }
+  #status-dot.recording { background:var(--red); box-shadow:0 0 8px var(--red); animation:blink 1s infinite; }
+  #status-text { font-size:11px; color:var(--text-dim); }
+  #timer-display { margin-left:auto; font-size:13px; color:var(--amber); font-weight:700; min-width:60px; text-align:right; }
+
+  #canvas-wrap {
+    flex:1 1 auto;
+    position:relative;
+    min-height:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:8px;
+  }
+  #cop-canvas { display:block; cursor:crosshair; }
+
+  /* ── RIGHT: CONTROLS ── */
+  #ctrl-panel {
+    width:310px;
+    min-width:300px;
+    flex-shrink:0;
+    background:var(--panel);
+    border-left:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    overflow-y:auto;
+    overflow-x:hidden;
+  }
+  #ctrl-panel::-webkit-scrollbar { width:4px; }
+  #ctrl-panel::-webkit-scrollbar-track { background:transparent; }
+  #ctrl-panel::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+
+  .section {
+    border-bottom:1px solid var(--border);
+    padding:14px 16px;
+  }
+  .section-title {
+    font-family:'Syne',sans-serif;
+    font-size:10px;
+    font-weight:600;
+    letter-spacing:0.18em;
+    color:var(--text-dim);
+    text-transform:uppercase;
+    margin-bottom:12px;
+  }
+
+  /* Buttons */
+  .btn {
+    width:100%;
+    padding:10px 14px;
+    border:1px solid var(--border2);
+    background:var(--panel2);
+    color:var(--text);
+    font-family:'Space Mono',monospace;
+    font-size:12px;
+    cursor:pointer;
+    border-radius:4px;
+    transition:all 0.2s;
+    letter-spacing:0.05em;
+    text-align:left;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .btn:hover { background:var(--border2); color:var(--white); border-color:var(--border2); }
+  .btn.primary { border-color:var(--cyan); color:var(--cyan); }
+  .btn.primary:hover { background:rgba(0,212,255,0.1); }
+  .btn.danger { border-color:var(--red); color:var(--red); }
+  .btn.danger:hover { background:var(--red-dim); }
+  .btn.success { border-color:var(--green); color:var(--green); }
+  .btn.success:hover { background:var(--green-dim); }
+  .btn.active-rec { background:var(--red-dim); border-color:var(--red); color:var(--red); }
+  .btn.active-rec:hover { background:rgba(255,51,85,0.25); }
+  .btn .icon { font-size:14px; flex-shrink:0; }
+  .btn-row { display:flex; gap:8px; }
+  .btn-row .btn { flex:1; }
+
+  /* Form fields */
+  .field { margin-bottom:10px; }
+  .field label { display:block; font-size:10px; color:var(--text-dim); margin-bottom:5px; letter-spacing:0.08em; }
+  .field input, .field select {
+    width:100%;
+    padding:8px 10px;
+    background:var(--bg);
+    border:1px solid var(--border2);
+    color:var(--white);
+    font-family:'Space Mono',monospace;
+    font-size:12px;
+    border-radius:4px;
+    outline:none;
+    transition:border-color 0.2s;
+  }
+  .field input:focus, .field select:focus { border-color:var(--cyan); }
+  .field select option { background:var(--bg); }
+
+  /* Metrics */
+  .metrics-grid {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+  .metric-cell {
+    background:var(--bg);
+    border:1px solid var(--border);
+    border-radius:4px;
+    padding:8px 10px;
+  }
+  .metric-cell.wide { grid-column:1/-1; }
+  .metric-label { font-size:9px; color:var(--text-dim); letter-spacing:0.1em; margin-bottom:3px; }
+  .metric-value { font-size:15px; color:var(--white); font-weight:700; }
+  .metric-value.green { color:var(--green); }
+  .metric-value.red { color:var(--red); }
+  .metric-value.amber { color:var(--amber); }
+  .metric-value.cop { font-size:12px; color:var(--cyan); }
+
+  /* Overlay areas */
+  #overlay-list { display:flex; flex-direction:column; gap:5px; }
+  .overlay-item {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:11px;
+    padding:6px 8px;
+    background:var(--bg);
+    border-radius:3px;
+    border:1px solid var(--border);
+  }
+  .overlay-color-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .overlay-name { flex:1; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .overlay-area { color:var(--text-dim); font-size:10px; flex-shrink:0; }
+  .empty-state { font-size:11px; color:var(--text-dim); text-align:center; padding:12px 0; }
+
+  /* Notice banner */
+  #browser-notice {
+    position:fixed; bottom:0; left:0; right:0;
+    background:rgba(255,193,7,0.1);
+    border-top:1px solid var(--amber);
+    color:var(--amber);
+    font-size:11px;
+    padding:8px 20px;
+    text-align:center;
+    z-index:999;
+    display:none;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity:1; } 50% { opacity:0.4; }
+  }
+  @keyframes blink {
+    0%,100% { opacity:1; } 50% { opacity:0.2; }
+  }
+
+  /* Scrollable overlay section */
+  #overlay-scroll { max-height:200px; overflow-y:auto; }
+  #overlay-scroll::-webkit-scrollbar { width:3px; }
+  #overlay-scroll::-webkit-scrollbar-thumb { background:var(--border2); }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- LEFT: Plot -->
+  <div id="plot-panel">
+    <div id="plot-header">
+      <div class="logo">Equili<span>Sense</span></div>
+      <div id="status-dot"></div>
+      <div id="status-text">Disconnected</div>
+      <div id="timer-display">—</div>
+    </div>
+    <div id="canvas-wrap">
+      <canvas id="cop-canvas"></canvas>
+    </div>
+  </div>
+
+  <!-- RIGHT: Controls -->
+  <div id="ctrl-panel">
+
+    <!-- Connect -->
+    <div class="section">
+      <div class="section-title">Device Connection</div>
+      <div class="field">
+        <label>BAUD RATE</label>
+        <select id="baud-select">
+          <option value="2000000" selected>2,000,000 (default)</option>
+          <option value="115200">115,200</option>
+          <option value="921600">921,600</option>
+          <option value="1000000">1,000,000</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" id="connect-btn" onclick="connectSerial()">
+          <span class="icon">⚡</span> Connect Device
+        </button>
+        <button class="btn danger" id="disconnect-btn" onclick="disconnectSerial()" style="display:none">
+          <span class="icon">✕</span> Disconnect
+        </button>
+      </div>
+    </div>
+
+    <!-- Storage -->
+    <div class="section">
+      <div class="section-title">Storage Directory</div>
+      <div id="dir-status" class="empty-state">No folder selected</div>
+      <button class="btn" onclick="selectDirectory()" style="margin-top:8px">
+        <span class="icon">📁</span> Choose Save Folder
+      </button>
+    </div>
+
+    <!-- Session -->
+    <div class="section">
+      <div class="section-title">Session Settings</div>
+      <div class="field">
+        <label>SESSION / PERSON NAME</label>
+        <input type="text" id="session-input" placeholder="e.g. Abhishek_male_33" value="">
+      </div>
+      <div class="field">
+        <label>EXPERIMENT</label>
+        <select id="experiment-select">
+          <option value="eyes_open">Eyes Open</option>
+          <option value="eyes_closed">Eyes Closed</option>
+          <option value="one_leg_right">One Leg — Right</option>
+          <option value="one_leg_left">One Leg — Left</option>
+          <option value="cognitive">Cognitive Task</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>DURATION (seconds)</label>
+        <select id="duration-select">
+          <option value="5">5s</option>
+          <option value="10" selected>10s</option>
+          <option value="20">20s</option>
+          <option value="30">30s</option>
+          <option value="60">60s</option>
+          <option value="120">120s</option>
+        </select>
+      </div>
+      <button class="btn success" id="record-btn" onclick="toggleRecording()">
+        <span class="icon" id="rec-icon">⏺</span>
+        <span id="rec-label">Start Recording</span>
+      </button>
+    </div>
+
+    <!-- Plot controls -->
+    <div class="section">
+      <div class="section-title">Plot Controls</div>
+      <div class="btn-row" style="margin-bottom:8px">
+        <button class="btn" onclick="clearTrace()"><span class="icon">🧹</span> Clear Trace</button>
+        <button class="btn" onclick="clearOverlays()"><span class="icon">✕</span> Clear Overlays</button>
+      </div>
+      <button class="btn primary" onclick="showOverlay()">
+        <span class="icon">📊</span> Load Overlay + Ellipses
+      </button>
+    </div>
+
+    <!-- Live Metrics -->
+    <div class="section">
+      <div class="section-title">Live Metrics</div>
+      <div class="metrics-grid">
+        <div class="metric-cell">
+          <div class="metric-label">FL (Front-Left)</div>
+          <div class="metric-value" id="m-fl">0.0</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">FR (Front-Right)</div>
+          <div class="metric-value" id="m-fr">0.0</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">RL (Rear-Left)</div>
+          <div class="metric-value" id="m-rl">0.0</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-label">RR (Rear-Right)</div>
+          <div class="metric-value" id="m-rr">0.0</div>
+        </div>
+        <div class="metric-cell wide">
+          <div class="metric-label">TOTAL FORCE</div>
+          <div class="metric-value amber" id="m-total">0.0</div>
+        </div>
+        <div class="metric-cell wide">
+          <div class="metric-label">CoP POSITION (cm)</div>
+          <div class="metric-value cop" id="m-cop">(0.00, 0.00)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overlay Results -->
+    <div class="section">
+      <div class="section-title">Overlay Areas (95% Ellipse)</div>
+      <div id="overlay-scroll">
+        <div id="overlay-list"><div class="empty-state">No overlay loaded</div></div>
+      </div>
+    </div>
+
+  </div><!-- /ctrl-panel -->
+</div>
+
+<div id="browser-notice">
+  ⚠ Web Serial API requires <strong>Chrome</strong> or <strong>Edge</strong> (desktop). Other browsers are not supported.
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  CONFIG  (mirrors rk.py constants)
+// ─────────────────────────────────────────────
+const PLATFORM_SIZE_CM = 47;
+const PLOT_RANGE_CM    = 60;
+const OFFSET_SAMPLES   = 50;
+const MIN_FORCE        = 1000;
+const TRACE_SECS       = 15;
+const AVG_SAMPLES      = 50;
+
+// ─────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────
+let port = null, reader = null, readLoopActive = false;
+let storageDir = null;
+let sessionDir = null;
+let fileWritable = null;
+let recording = false;
+let recordTimer = null;
+let recordStart = 0;
+let timerInterval = null;
+
+let offsets    = null;   // { FL,FR,RL,RR }
+let offsetAcc  = { FL:0,FR:0,RL:0,RR:0 };
+let offsetCount = 0;
+
+let flBuf = new Float32Array(AVG_SAMPLES);
+let frBuf = new Float32Array(AVG_SAMPLES);
+let rlBuf = new Float32Array(AVG_SAMPLES);
+let rrBuf = new Float32Array(AVG_SAMPLES);
+let bufIdx = 0;
+
+let copX = 0, copY = 0;
+let trace = [];          // [{x,y,t}]
+let forces = { FL:0, FR:0, RL:0, RR:0 };
+
+let overlayTraces = [];  // [{name, x[], y[], color, area}]
+
+// ─────────────────────────────────────────────
+//  CANVAS SETUP
+// ─────────────────────────────────────────────
+const canvas = document.getElementById('cop-canvas');
+const ctx    = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const wrap = document.getElementById('canvas-wrap');
+  const size = Math.min(wrap.clientWidth, wrap.clientHeight) - 16;
+  canvas.width  = size;
+  canvas.height = size;
+  drawFrame();
+}
+window.addEventListener('resize', resizeCanvas);
+setTimeout(resizeCanvas, 100);
+
+function cmToCanvas(cm_x, cm_y) {
+  const half = PLOT_RANGE_CM / 2;
+  const px = ((cm_x + half) / PLOT_RANGE_CM) * canvas.width;
+  const py = ((half - cm_y) / PLOT_RANGE_CM) * canvas.height;
+  return [px, py];
+}
+function cmScale(cm) { return (cm / PLOT_RANGE_CM) * canvas.width; }
+
+function drawFrame() {
+  const W = canvas.width, H = canvas.height;
+  // Background
+  ctx.fillStyle = '#06090f';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid lines
+  const gridStep = 10; // cm
+  ctx.strokeStyle = 'rgba(28,42,58,0.9)';
+  ctx.lineWidth = 1;
+  for (let cm = -PLOT_RANGE_CM/2; cm <= PLOT_RANGE_CM/2; cm += gridStep) {
+    const [px] = cmToCanvas(cm, 0);
+    const [, py] = cmToCanvas(0, cm);
+    ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(W, py); ctx.stroke();
+  }
+
+  // Axis labels
+  ctx.fillStyle = 'rgba(90,112,128,0.7)';
+  ctx.font = '10px Space Mono, monospace';
+  ctx.textAlign = 'center';
+  for (let cm = -30; cm <= 30; cm += 10) {
+    if (cm === 0) continue;
+    const [px] = cmToCanvas(cm, 0);
+    const [, py] = cmToCanvas(0, cm);
+    ctx.fillText(cm, px, H - 3);
+    ctx.textAlign = 'right';
+    ctx.fillText(cm, 22, py + 4);
+    ctx.textAlign = 'center';
+  }
+  ctx.fillStyle = 'rgba(90,112,128,0.9)';
+  ctx.fillText('X (cm)', W/2, H - 2);
+  ctx.save(); ctx.translate(10, H/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText('Y (cm)', 0, 0); ctx.restore();
+
+  // Platform rectangle
+  const [px0, py0] = cmToCanvas(-PLATFORM_SIZE_CM/2,  PLATFORM_SIZE_CM/2);
+  const [px1, py1] = cmToCanvas( PLATFORM_SIZE_CM/2, -PLATFORM_SIZE_CM/2);
+  ctx.strokeStyle = 'rgba(240,244,248,0.85)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(px0, py0, px1-px0, py1-py0);
+
+  // Platform fill
+  ctx.fillStyle = 'rgba(0,245,160,0.02)';
+  ctx.fillRect(px0, py0, px1-px0, py1-py0);
+
+  // Overlay traces
+  overlayTraces.forEach(ot => {
+    if (!ot.x.length) return;
+    ctx.beginPath();
+    ctx.strokeStyle = ot.color;
+    ctx.lineWidth = 1.5;
+    ctx.globalAlpha = 0.7;
+    const [sx, sy] = cmToCanvas(ot.x[0], ot.y[0]);
+    ctx.moveTo(sx, sy);
+    for (let i=1; i<ot.x.length; i++) {
+      const [ex, ey] = cmToCanvas(ot.x[i], ot.y[i]);
+      ctx.lineTo(ex, ey);
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    // Draw ellipse
+    if (ot.ellipse) {
+      const e = ot.ellipse;
+      const cx_px = cmScale(e.cx) + canvas.width/2;
+      const cy_px = canvas.height/2 - cmScale(e.cy);
+      const rx = cmScale(e.rx);
+      const ry = cmScale(e.ry);
+      const angle = e.angle * Math.PI / 180;
+      ctx.beginPath();
+      ctx.strokeStyle = ot.color;
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5,4]);
+      ctx.globalAlpha = 0.8;
+      ctx.ellipse(cx_px, cy_px, rx, ry, -angle, 0, 2*Math.PI);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+    }
+  });
+
+  // Live trace (green, fading)
+  if (trace.length > 1) {
+    ctx.beginPath();
+    ctx.strokeStyle = '#00f5a0';
+    ctx.lineWidth = 1.8;
+    ctx.globalAlpha = 0.8;
+    const [sx, sy] = cmToCanvas(trace[0].x, trace[0].y);
+    ctx.moveTo(sx, sy);
+    for (let i=1; i<trace.length; i++) {
+      const [ex, ey] = cmToCanvas(trace[i].x, trace[i].y);
+      ctx.lineTo(ex, ey);
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  // CoP dot
+  const [dx, dy] = cmToCanvas(copX, copY);
+  ctx.beginPath();
+  ctx.arc(dx, dy, 7, 0, 2*Math.PI);
+  ctx.fillStyle = '#ff3355';
+  ctx.shadowColor = '#ff3355';
+  ctx.shadowBlur = 12;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Recording indicator
+  if (recording) {
+    ctx.fillStyle = '#ff3355';
+    ctx.beginPath();
+    ctx.arc(W - 18, 16, 6, 0, 2*Math.PI);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(255,51,85,0.6)';
+    ctx.font = '11px Space Mono,monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText('REC', W - 26, 20);
+    ctx.textAlign = 'center';
+  }
+}
+
+// Animation loop
+function loop() {
+  drawFrame();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// ─────────────────────────────────────────────
+//  CoP CALCULATION  (mirrors compute_center_of_pressure)
+// ─────────────────────────────────────────────
+function computeCoP(fl, fr, rl, rr) {
+  const total = fl + fr + rl + rr;
+  if (Math.abs(total) < MIN_FORCE) return { x:0, y:0, valid:false };
+  const half = PLATFORM_SIZE_CM / 2;
+  const x = ((fr + rr) - (fl + rl)) * half / total;
+  const y = ((fl + fr) - (rl + rr)) * half / total;
+  const maxCoP = half + 1;
+  if (Math.abs(x) > maxCoP || Math.abs(y) > maxCoP) return { x:0, y:0, valid:false };
+  return { x, y, valid:true };
+}
+
+// ─────────────────────────────────────────────
+//  OUTLIER REMOVAL  (MAD-based, mirrors remove_outliers_df)
+// ─────────────────────────────────────────────
+function median(arr) {
+  const s = [...arr].sort((a,b)=>a-b);
+  const mid = Math.floor(s.length/2);
+  return s.length%2 ? s[mid] : (s[mid-1]+s[mid])/2;
+}
+function removeOutliers(xArr, yArr, thresh=3.5) {
+  if (xArr.length < 5) return {x:xArr, y:yArr};
+  const mx = median(xArr), my = median(yArr);
+  const madX = median(xArr.map(v=>Math.abs(v-mx)));
+  const madY = median(yArr.map(v=>Math.abs(v-my)));
+  if (madX===0 || madY===0) return {x:xArr, y:yArr};
+  const ox=[], oy=[];
+  for (let i=0;i<xArr.length;i++) {
+    const zx = 0.6745*(xArr[i]-mx)/madX;
+    const zy = 0.6745*(yArr[i]-my)/madY;
+    if (Math.abs(zx)<=thresh && Math.abs(zy)<=thresh) { ox.push(xArr[i]); oy.push(yArr[i]); }
+  }
+  return {x:ox, y:oy};
+}
+
+// ─────────────────────────────────────────────
+//  ELLIPSE (PCA — mirrors get_ellipse_params)
+// ─────────────────────────────────────────────
+function getEllipseParams(x, y) {
+  if (x.length < 3) return null;
+  const n = x.length;
+  const mx = x.reduce((a,b)=>a+b,0)/n;
+  const my = y.reduce((a,b)=>a+b,0)/n;
+  let cxx=0,cyy=0,cxy=0;
+  for (let i=0;i<n;i++) {
+    cxx += (x[i]-mx)**2;
+    cyy += (y[i]-my)**2;
+    cxy += (x[i]-mx)*(y[i]-my);
+  }
+  cxx/=(n-1); cyy/=(n-1); cxy/=(n-1);
+  // 2×2 eigenvalues
+  const trace2 = cxx+cyy;
+  const det    = cxx*cyy - cxy*cxy;
+  const disc   = Math.sqrt(Math.max(0,(trace2**2)/4 - det));
+  const e1 = trace2/2 + disc;
+  const e2 = trace2/2 - disc;
+  const rx = Math.sqrt(Math.max(0,e1));   // semi-axis
+  const ry = Math.sqrt(Math.max(0,e2));
+  const angle = Math.atan2(cxy, cxx-e2) * 180/Math.PI;
+  const area = Math.PI * rx * ry;
+  return { cx:mx, cy:my, rx, ry, angle, area };
+}
+
+// ─────────────────────────────────────────────
+//  SERIAL — connect
+// ─────────────────────────────────────────────
+async function connectSerial() {
+  if (!('serial' in navigator)) {
+    document.getElementById('browser-notice').style.display='block';
+    alert('Web Serial API not supported. Use Chrome or Edge (desktop).');
+    return;
+  }
+  try {
+    const baud = parseInt(document.getElementById('baud-select').value);
+    port = await navigator.serial.requestPort();
+    await port.open({ baudRate: baud });
+    setStatus('Calibrating…', 'connected');
+    document.getElementById('connect-btn').style.display='none';
+    document.getElementById('disconnect-btn').style.display='block';
+    offsets = null; offsetAcc={FL:0,FR:0,RL:0,RR:0}; offsetCount=0;
+    bufIdx=0; flBuf.fill(0); frBuf.fill(0); rlBuf.fill(0); rrBuf.fill(0);
+    readLoopActive = true;
+    readLoop();
+  } catch(e) {
+    if (e.name !== 'NotFoundError') alert('Connection failed: '+e.message);
+  }
+}
+
+async function disconnectSerial() {
+  readLoopActive = false;
+  try { if(reader){ await reader.cancel(); reader=null; } } catch(e){}
+  try { if(port) await port.close(); } catch(e){}
+  port=null;
+  setStatus('Disconnected','');
+  document.getElementById('connect-btn').style.display='block';
+  document.getElementById('disconnect-btn').style.display='none';
+}
+
+// ─────────────────────────────────────────────
+//  SERIAL READ LOOP
+// ─────────────────────────────────────────────
+async function readLoop() {
+  const decoder = new TextDecoder();
+  let buf = '';
+  while (readLoopActive && port && port.readable) {
+    try {
+      reader = port.readable.getReader();
+      while (readLoopActive) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let nl;
+        while ((nl = buf.indexOf('\n')) !== -1) {
+          const line = buf.slice(0, nl).trim();
+          buf = buf.slice(nl+1);
+          if (line) parseLine(line);
+        }
+      }
+    } catch(e) {
+      if (readLoopActive) console.warn('Read error:', e);
+    } finally {
+      try { reader.releaseLock(); } catch(e){}
+    }
+  }
+}
+
+function parseLine(line) {
+  const parts = line.split('\t');
+  if (parts.length !== 4) return;
+  const nums = parts.map(Number);
+  if (nums.some(isNaN)) return;
+  // Order: RL, FR, FL, RR  (matches Python: raw_rl, raw_fr, raw_fl, raw_rr)
+  const [rawRL, rawFR, rawFL, rawRR] = nums;
+
+  if (!offsets) {
+    offsetAcc.RL += rawRL; offsetAcc.FR += rawFR;
+    offsetAcc.FL += rawFL; offsetAcc.RR += rawRR;
+    offsetCount++;
+    if (offsetCount >= OFFSET_SAMPLES) {
+      offsets = {
+        RL: offsetAcc.RL/offsetCount, FR: offsetAcc.FR/offsetCount,
+        FL: offsetAcc.FL/offsetCount, RR: offsetAcc.RR/offsetCount
+      };
+      setStatus('Connected — Live', 'connected');
+    }
+    return;
+  }
+
+  const fl = rawFL - offsets.FL;
+  const fr = rawFR - offsets.FR;
+  const rl = rawRL - offsets.RL;
+  const rr = rawRR - offsets.RR;
+
+  // Rolling average
+  flBuf[bufIdx]=fl; frBuf[bufIdx]=fr; rlBuf[bufIdx]=rl; rrBuf[bufIdx]=rr;
+  bufIdx = (bufIdx+1) % AVG_SAMPLES;
+
+  const afl=avg(flBuf), afr=avg(frBuf), arl=avg(rlBuf), arr_=avg(rrBuf);
+  const cop = computeCoP(afl, afr, arl, arr_);
+  copX=cop.x; copY=cop.y;
+
+  const now = Date.now();
+  if (cop.valid) {
+    trace.push({x:cop.x, y:cop.y, t:now});
+    const cutoff = now - TRACE_SECS*1000;
+    trace = trace.filter(p=>p.t>=cutoff);
+  } else {
+    trace=[];
+  }
+
+  forces={FL:afl,FR:afr,RL:arl,RR:arr_};
+  updateMetrics();
+
+  if (recording && fileWritable && cop.valid) {
+    fileWritable.write(`${cop.x.toFixed(4)},${cop.y.toFixed(4)}\n`).catch(()=>{});
+  }
+}
+
+function avg(buf) { let s=0; for(let i=0;i<buf.length;i++) s+=buf[i]; return s/buf.length; }
+
+// ─────────────────────────────────────────────
+//  UI HELPERS
+// ─────────────────────────────────────────────
+function setStatus(text, cls) {
+  const dot = document.getElementById('status-dot');
+  document.getElementById('status-text').textContent = text;
+  dot.className = cls || '';
+}
+
+function updateMetrics() {
+  document.getElementById('m-fl').textContent = forces.FL.toFixed(1);
+  document.getElementById('m-fr').textContent = forces.FR.toFixed(1);
+  document.getElementById('m-rl').textContent = forces.RL.toFixed(1);
+  document.getElementById('m-rr').textContent = forces.RR.toFixed(1);
+  const tot = forces.FL+forces.FR+forces.RL+forces.RR;
+  document.getElementById('m-total').textContent = tot.toFixed(1);
+  document.getElementById('m-cop').textContent = `(${copX.toFixed(2)}, ${copY.toFixed(2)})`;
+}
+
+function clearTrace() { trace=[]; }
+function clearOverlays() {
+  overlayTraces=[];
+  document.getElementById('overlay-list').innerHTML='<div class="empty-state">No overlay loaded</div>';
+}
+
+// ─────────────────────────────────────────────
+//  STORAGE DIRECTORY
+// ─────────────────────────────────────────────
+async function selectDirectory() {
+  if (!('showDirectoryPicker' in window)) {
+    alert('File System Access API not supported in this browser.\nUse Chrome or Edge.');
+    return;
+  }
+  try {
+    storageDir = await window.showDirectoryPicker({ mode:'readwrite', id:'equilibsense' });
+    document.getElementById('dir-status').textContent = '📂 ' + storageDir.name;
+    document.getElementById('dir-status').style.color = 'var(--green)';
+  } catch(e) {
+    if (e.name!=='AbortError') alert('Could not open folder: '+e.message);
+  }
+}
+
+async function getOrCreateSessionDir(sessionName) {
+  if (!storageDir) throw new Error('No storage folder selected. Click "Choose Save Folder" first.');
+  return await storageDir.getDirectoryHandle(sessionName, { create:true });
+}
+
+// ─────────────────────────────────────────────
+//  RECORDING
+// ─────────────────────────────────────────────
+async function toggleRecording() {
+  if (recording) { stopRecording(); return; }
+
+  const session = document.getElementById('session-input').value.trim();
+  if (!session) { alert('Enter a session / person name first.'); return; }
+  if (!storageDir) { alert('Select a storage folder first.'); return; }
+
+  const exp = document.getElementById('experiment-select').value;
+  const secs = parseInt(document.getElementById('duration-select').value);
+
+  try {
+    const sdir = await getOrCreateSessionDir(session);
+    const fh   = await sdir.getFileHandle(exp+'.csv', { create:true });
+    const existing = await fh.getFile();
+    const isNew = existing.size === 0;
+    fileWritable = await fh.createWritable({ keepExistingData:true });
+    await fileWritable.seek(existing.size);
+    if (isNew) await fileWritable.write('x,y\n');
+
+    recording = true;
+    recordStart = Date.now();
+    document.getElementById('record-btn').className = 'btn active-rec';
+    document.getElementById('rec-icon').textContent = '⏹';
+    document.getElementById('rec-label').textContent = 'Stop Recording';
+    document.getElementById('status-dot').className = 'recording';
+
+    timerInterval = setInterval(() => {
+      const elapsed = ((Date.now()-recordStart)/1000).toFixed(1);
+      const remaining = Math.max(0, secs - parseFloat(elapsed));
+      document.getElementById('timer-display').textContent = remaining.toFixed(0)+'s';
+      if (parseFloat(elapsed) >= secs) stopRecording(true);
+    }, 100);
+
+  } catch(e) {
+    alert('Recording error: '+e.message);
+  }
+}
+
+async function stopRecording(auto=false) {
+  recording = false;
+  clearInterval(timerInterval);
+  document.getElementById('timer-display').textContent = '—';
+  document.getElementById('record-btn').className = 'btn success';
+  document.getElementById('rec-icon').textContent = '⏺';
+  document.getElementById('rec-label').textContent = 'Start Recording';
+  if (offsets) setStatus('Connected — Live','connected');
+  try { if (fileWritable) { await fileWritable.close(); fileWritable=null; } } catch(e){}
+  if (auto) {
+    setTimeout(()=>alert('✅ Recording complete! File saved to your folder.'), 100);
+  }
+}
+
+// ─────────────────────────────────────────────
+//  OVERLAY + ELLIPSES
+// ─────────────────────────────────────────────
+const OVERLAY_COLORS = [
+  '#e6194b','#3cb44b','#ffe119','#4363d8','#f58231',
+  '#911eb4','#46f0f0','#f032e6','#bcf60c','#ff7f50',
+  '#00ced1','#da70d6','#7fff00','#ff69b4','#ffa500',
+];
+
+const EXPERIMENTS = {
+  eyes_open:     'eyes_open.csv',
+  eyes_closed:   'eyes_closed.csv',
+  one_leg_right: 'one_leg_right.csv',
+  one_leg_left:  'one_leg_left.csv',
+  cognitive:     'cognitive.csv',
+};
+
+async function showOverlay() {
+  if (!storageDir) { alert('Select a storage folder first.'); return; }
+
+  overlayTraces=[];
+  const session = document.getElementById('session-input').value.trim();
+  if (!session) { alert('Enter a session name to overlay.'); return; }
+
+  let colorIdx = 0;
+  const list = document.getElementById('overlay-list');
+  list.innerHTML = '<div class="empty-state">Loading…</div>';
+
+  try {
+    const sdir = await storageDir.getDirectoryHandle(session, { create:false }).catch(()=>null);
+    if (!sdir) { list.innerHTML='<div class="empty-state">Session folder not found.</div>'; return; }
+
+    const results=[];
+    for (const [key, fname] of Object.entries(EXPERIMENTS)) {
+      try {
+        const fh   = await sdir.getFileHandle(fname);
+        const file = await fh.getFile();
+        const text = await file.text();
+        const rows = text.split('\n').slice(1).filter(r=>r.trim());
+        let xs=[], ys=[];
+        for (const row of rows) {
+          const [xv,yv] = row.split(',').map(Number);
+          if (!isNaN(xv)&&!isNaN(yv)) { xs.push(xv); ys.push(yv); }
+        }
+        const clean = removeOutliers(xs, ys);
+        xs = clean.x; ys = clean.y;
+        const color = OVERLAY_COLORS[colorIdx++ % OVERLAY_COLORS.length];
+        const ellipse = getEllipseParams(xs, ys);
+        overlayTraces.push({ name:`${session} — ${key}`, x:xs, y:ys, color, ellipse });
+        results.push({ name:key.replace(/_/g,' '), color, area: ellipse ? ellipse.area : 0 });
+      } catch(e) { /* file not found, skip */ }
+    }
+
+    if (!results.length) {
+      list.innerHTML='<div class="empty-state">No CSV files found in this session.</div>';
+      return;
+    }
+
+    list.innerHTML = results.map(r=>`
+      <div class="overlay-item">
+        <div class="overlay-color-dot" style="background:${r.color}"></div>
+        <div class="overlay-name">${r.name}</div>
+        <div class="overlay-area">${r.area.toFixed(2)} cm²</div>
+      </div>
+    `).join('');
+
+  } catch(e) {
+    list.innerHTML=`<div class="empty-state">Error: ${e.message}</div>`;
+  }
+}
+
+// ─────────────────────────────────────────────
+//  BROWSER CHECK
+// ─────────────────────────────────────────────
+if (!('serial' in navigator)) {
+  document.getElementById('browser-notice').style.display='block';
+}
+</script>
+</body>
+</html>
