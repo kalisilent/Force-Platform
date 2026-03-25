@@ -483,7 +483,7 @@ canvas.addEventListener('wheel',e=>{
   const mx=e.clientX-rect.left, my=e.clientY-rect.top;
   const[cmx,cmy]=p2c(mx,my);          // cm under cursor before zoom
   const factor=e.deltaY<0?1.12:1/1.12;
-  zoomScale=Math.max(0.4,Math.min(20,zoomScale*factor));
+  zoomScale=Math.max(0.01,Math.min(1000,zoomScale*factor));
   // After zoom, recalculate where cursor cm maps to; adjust pan so it stays fixed
   const[npx,npy]=c2p(cmx,cmy);       // new pixel position of same cm point
   panX+=(npx-mx)/canvas.width*(2*viewHalf());
@@ -528,7 +528,7 @@ canvas.addEventListener('touchmove',e=>{
     const midX=(t0.clientX+t1.clientX)/2, midY=(t0.clientY+t1.clientY)/2;
     const rect=canvas.getBoundingClientRect();
     const[cmx,cmy]=p2c(lastTouchMidX-rect.left,lastTouchMidY-rect.top);
-    zoomScale=Math.max(0.4,Math.min(20,zoomScale*(dist/lastTouchDist)));
+    zoomScale=Math.max(0.01,Math.min(1000,zoomScale*(dist/lastTouchDist)));
     lastTouchDist=dist;
     // pan correction
     const sc=getScale()/zoomScale;
