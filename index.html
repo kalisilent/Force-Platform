@@ -400,7 +400,12 @@ let bufIdx=0;
 let copX=0, copY=0;
 let trace=[];
 let forces={FL:0,FR:0,RL:0,RR:0};
-let recording=false, recWritable=null, recInterval=null;
+let recording=false, recInterval=null;
+let recBuffer=[];          // in-memory rows collected during recording
+let recSessionDir=null;    // FileSystemDirectoryHandle for current recording
+let recFileName='';        // e.g. 'eyes_open.csv'
+let recDurationSecs=0;     // total duration chosen
+let recElapsed=0;          // seconds elapsed
 
 // overlayMap: sessionName → [{name, x[], y[], color, ell}]
 // Allows multiple sessions to be shown simultaneously
@@ -809,9 +814,9 @@ function parseLine(line){
   document.getElementById('m-tot').textContent=(afl+afr+arl+arr).toFixed(1);
   document.getElementById('m-cop').textContent=`(${copX.toFixed(2)}, ${copY.toFixed(2)})`;
 
-  /* write to CSV if recording */
-  if(recording&&recWritable&&cop.v){
-    recWritable.write(cop.x.toFixed(4)+','+cop.y.toFixed(4)+'\n').catch(()=>{});
+  /* buffer row if recording */
+  if(recording&&cop.v){
+    recBuffer.push(cop.x.toFixed(4)+','+cop.y.toFixed(4));
   }
 }
 
@@ -943,42 +948,46 @@ function renderOverlayPanel(){
 //  RECORDING
 // ──────────────────────────────────────────────
 async function toggleRecording(){
-  if(recording){ stopRecording(false); return; }
+  if(recording){ await stopRecording(false); return; }
 
   const sess=document.getElementById('session-inp').value.trim();
   if(!sess){alert('Enter a session name first.');return;}
   if(!rootDir){alert('Choose a save folder first.');return;}
 
   const exp =document.getElementById('exp-sel').value;
-  const secs=+document.getElementById('dur-sel').value;
+  const secs=parseInt(document.getElementById('dur-sel').value,10);
 
   try{
-    const sdir=await getSessionHandle(sess,true);
-    const fh  =await sdir.getFileHandle(exp+'.csv',{create:true});
-    const file=await fh.getFile();
-    const isNew=file.size===0;
-    recWritable=await fh.createWritable({keepExistingData:true});
-    if(!isNew) await recWritable.seek(file.size);
-    if(isNew)  await recWritable.write('x,y\n');
+    recSessionDir=await getSessionHandle(sess,true);
+    recFileName=exp+'.csv';
+    recDurationSecs=secs;
+    recElapsed=0;
+    recBuffer=[];
 
     recording=true;
     const btn=document.getElementById('rec-btn');
-    btn.textContent='Stop Recording';
+    btn.innerHTML='Stop Recording<span id="rec-timer"> — '+secs+'s</span>';
     btn.className='ctrl-btn recording-active';
-    document.getElementById('rec-timer').textContent='';
     setStatus('Recording…','recording');
 
-    let elapsed=0;
-    recInterval=setInterval(()=>{
-      elapsed++;
-      const rem=Math.max(0,secs-elapsed);
-      document.getElementById('rec-timer').textContent=' — '+rem+'s';
-      if(elapsed>=secs) stopRecording(true);
+    /* countdown timer — fires every 1 second */
+    recInterval=setInterval(async()=>{
+      recElapsed++;
+      const rem=Math.max(0,recDurationSecs-recElapsed);
+      const timerEl=document.getElementById('rec-timer');
+      if(timerEl) timerEl.textContent=' — '+rem+'s';
+      if(recElapsed>=recDurationSecs){
+        clearInterval(recInterval);
+        recInterval=null;
+        await stopRecording(true);   // auto-stop: writes file + shows popup
+      }
     },1000);
 
-    /* refresh person list so new session appears */
+    /* refresh person list so new session appears in dropdowns */
     await refreshPersonList();
   }catch(e){
+    recording=false;
+    recBuffer=[];
     alert('Recording error:\n'+e.message);
   }
 }
@@ -986,16 +995,56 @@ async function toggleRecording(){
 async function stopRecording(auto=false){
   if(!recording) return;
   recording=false;
-  clearInterval(recInterval); recInterval=null;
 
+  if(recInterval){ clearInterval(recInterval); recInterval=null; }
+
+  /* reset button */
   const btn=document.getElementById('rec-btn');
-  btn.textContent='Start Recording';
+  btn.innerHTML='Start Recording<span id="rec-timer"></span>';
   btn.className='ctrl-btn';
-  document.getElementById('rec-timer').textContent='';
   if(offsets) setStatus('Connected — Live','connected');
 
-  try{ if(recWritable){await recWritable.close(); recWritable=null;} }catch(e){}
-  if(auto) setTimeout(()=>alert('✅ Recording complete!\nFile saved to your chosen folder.'),100);
+  /* ── Write buffered data to file (atomic, no .crswap left behind) ── */
+  try{
+    if(recSessionDir && recFileName && recBuffer.length>0){
+
+      const fh=await recSessionDir.getFileHandle(recFileName,{create:true});
+
+      /* read any existing content so we can APPEND to it */
+      const existing=await fh.getFile();
+      const existingText=await existing.text();
+
+      /* build final content */
+      let content='';
+      if(!existingText.trim()){
+        content='x,y\n';                         // new file: add header
+      } else {
+        content=existingText.endsWith('\n')
+          ? existingText
+          : existingText+'\n';                   // ensure trailing newline
+      }
+      content+=recBuffer.join('\n')+'\n';
+
+      /* write atomically — createWritable without keepExistingData
+         truncates the file, writes fresh, then close() commits it.
+         This is what prevents the .crswap from sticking around.       */
+      const w=await fh.createWritable();         // NO keepExistingData
+      await w.write(content);
+      await w.close();                           // ← commit; .crswap is gone
+    }
+  }catch(e){
+    console.error('Save error:',e);
+    alert('⚠ Could not save file:\n'+e.message);
+  }
+
+  recBuffer=[];
+  recSessionDir=null;
+  recFileName='';
+
+  if(auto){
+    /* match your original Python QMessageBox behaviour */
+    alert('Recording complete\n\nRecording finished (timer expired).');
+  }
 }
 
 function clearTrace(){ trace=[]; }
