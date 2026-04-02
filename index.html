@@ -304,7 +304,7 @@ document.querySelectorAll('.page').forEach(p=>p.style.display='none');
 document.getElementById('page-home').style.display='block';
 
 /* ── QR code (replace URL with your real survey link) ── */
-const SURVEY_URL='https://forms.gle/your-survey-link-here';
+const SURVEY_URL='c:\\Users\\Plaksha.PLAKSHA111\\AppData\\Local\\Packages\\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\\LocalState\\sessions\\92CB14F621F7E48F434282C139549B5862A04D7D\\transfers\\2026-14\\WhatsApp Image 2026-04-01 at 3.52.34 PM.jpeg';
 window.addEventListener('load',()=>{
   new QRCode(document.getElementById('qr-canvas'),{text:SURVEY_URL,width:180,height:180,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
   if(!('serial' in navigator)) document.getElementById('serial-warn').style.display='block';
