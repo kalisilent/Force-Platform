@@ -5,22 +5,12 @@ from scipy.stats import chi2
 import glob
 import os
 
-# ────────────────────────────────────────────────
-# SETTINGS - CHANGE ONLY THESE IF NEEDED
-# ────────────────────────────────────────────────
-TRIAL_TIME = 30.0                  # seconds (fixed for all trials)
-KERNEL_SIZE = 5                    # 5, 7 or 9
-SMOOTHED = True                    # recommended
+TRIAL_TIME = 30.0                
+KERNEL_SIZE = 5                 
+SMOOTHED = True                   
 
 FOLDER = r'C:\Users\Plaksha.PLAKSHA111\OneDrive - Plaksha University\Desktop\yts\Stable\EquiliSense\EquiliSense\ronak\csv_store\Deepan2_male_37'
-CSV_PATTERN = os.path.join(FOLDER, '*.csv')  # all csv files in this folder
-
-# ────────────────────────────────────────────────
-# FUNCTIONS
-# ────────────────────────────────────────────────
-
-
-
+CSV_PATTERN = os.path.join(FOLDER, '*.csv')  
 
 
 def compute_sway_metrics(x, y, duration, smoothed=True):
@@ -46,9 +36,6 @@ def compute_sway_metrics(x, y, duration, smoothed=True):
     }
 
 
-# ────────────────────────────────────────────────
-# MAIN
-# ────────────────────────────────────────────────
 files = glob.glob(CSV_PATTERN)
 if not files:
     print("No CSV files found in folder:")
