@@ -3,1092 +3,408 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>EquiliSense — Unified Interface</title>
+<title>EquiliSense — Plaksha University</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
-/* ── Reset ── */
+:root{
+  --teal:#1a9e8f;--teal-light:#23c9b6;--teal-dark:#0e6b62;
+  --navy:#0a1628;--navy2:#112038;--cream:#f5f0e8;
+  --text-dark:#1a1a2e;--text-mid:#4a5568;--red:#c0392b;--amber:#e6a817;
+}
 *{margin:0;padding:0;box-sizing:border-box;}
-html,body{height:100%;overflow:hidden;background:#1e1e1e;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;font-size:13px;}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);color:#fff;overflow:hidden;}
 
-/* ── Layout ── */
-#app{display:flex;height:100vh;width:100vw;}
+/* NAV */
+#nav{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(10,22,40,0.97);border-bottom:1px solid rgba(26,158,143,0.25);display:flex;align-items:center;z-index:1000;padding:0 24px;gap:0;}
+.nav-logo{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--teal-light);letter-spacing:0.02em;margin-right:auto;white-space:nowrap;}
+.nav-logo span{color:#fff;font-style:italic;}
+.nav-tabs{display:flex;gap:4px;}
+.nav-tab{padding:8px 20px;border:1px solid transparent;border-radius:4px;font-size:13px;font-weight:500;cursor:pointer;color:rgba(255,255,255,0.55);background:transparent;transition:all 0.2s;letter-spacing:0.02em;white-space:nowrap;font-family:'DM Sans',sans-serif;}
+.nav-tab:hover{color:#fff;border-color:rgba(26,158,143,0.3);background:rgba(26,158,143,0.08);}
+.nav-tab.active{color:#fff;border-color:var(--teal);background:rgba(26,158,143,0.18);}
 
-/* ── LEFT: Plot pane ── */
-#plot-pane{
-  flex:1 1 auto;
-  min-width:0;
-  background:#1a1a2e;
-  display:flex;
-  flex-direction:column;
-  position:relative;
-}
-#title-bar{
-  background:#2b2b2b;
-  color:#d0d0d0;
-  padding:6px 14px;
-  font-size:13px;
-  border-bottom:1px solid #3a3a3a;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  flex-shrink:0;
-}
+/* PAGES */
+.page{position:fixed;top:56px;left:0;right:0;bottom:0;display:none;overflow-y:auto;}
+.page.active{display:block;}
+
+/* ═══ PAGE 1 — HOME ═══ */
+#page-home{background:linear-gradient(160deg,var(--navy) 0%,#0d2240 50%,#0a1e35 100%);}
+
+.hero{min-height:calc(100vh - 56px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 24px 40px;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 30% 40%,rgba(26,158,143,0.1) 0%,transparent 60%),radial-gradient(ellipse 40% 60% at 75% 60%,rgba(26,158,143,0.06) 0%,transparent 60%);pointer-events:none;}
+.hero-rings{position:absolute;width:600px;height:600px;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;opacity:0.08;}
+.hero-ring{position:absolute;inset:0;border-radius:50%;border:1px solid var(--teal-light);animation:expand 6s linear infinite;}
+.hero-ring:nth-child(2){animation-delay:-2s;}
+.hero-ring:nth-child(3){animation-delay:-4s;}
+@keyframes expand{0%{transform:scale(0.3);opacity:0;}50%{opacity:1;}100%{transform:scale(1.4);opacity:0;}}
+.plaksha-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(26,158,143,0.12);border:1px solid rgba(26,158,143,0.3);border-radius:20px;padding:6px 16px;font-size:12px;color:var(--teal-light);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:28px;animation:fadeUp 0.8s ease both;}
+.plaksha-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--teal-light);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}
+.hero-title{font-family:'Playfair Display',serif;font-size:clamp(42px,7vw,88px);font-weight:900;line-height:1.0;color:#fff;margin-bottom:10px;animation:fadeUp 0.9s 0.1s ease both;}
+.hero-title em{font-style:italic;color:var(--teal-light);display:block;}
+.hero-subtitle-line{font-family:'Playfair Display',serif;font-size:clamp(18px,3vw,32px);font-weight:700;color:rgba(255,255,255,0.45);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:28px;animation:fadeUp 0.9s 0.2s ease both;}
+.hero-tagline{font-size:clamp(14px,1.6vw,18px);color:rgba(255,255,255,0.6);max-width:520px;line-height:1.7;margin:0 auto 48px;font-weight:300;animation:fadeUp 0.9s 0.3s ease both;}
+.hero-cta{display:inline-flex;align-items:center;gap:10px;background:var(--teal);color:#fff;border:none;border-radius:6px;padding:14px 32px;font-size:15px;font-weight:500;cursor:pointer;transition:all 0.2s;letter-spacing:0.02em;font-family:'DM Sans',sans-serif;animation:fadeUp 0.9s 0.4s ease both;}
+.hero-cta:hover{background:var(--teal-light);transform:translateY(-2px);box-shadow:0 8px 24px rgba(26,158,143,0.35);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+
+.stats-strip{display:flex;justify-content:center;gap:0;border-top:1px solid rgba(26,158,143,0.2);border-bottom:1px solid rgba(26,158,143,0.2);background:rgba(26,158,143,0.05);}
+.stat-cell{flex:1;max-width:200px;text-align:center;padding:28px 20px;border-right:1px solid rgba(26,158,143,0.15);}
+.stat-cell:last-child{border-right:none;}
+.stat-num{font-family:'Playfair Display',serif;font-size:36px;font-weight:900;color:var(--teal-light);line-height:1;margin-bottom:6px;}
+.stat-lbl{font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:0.08em;text-transform:uppercase;}
+
+.home-sections{padding:80px 24px 60px;max-width:1100px;margin:0 auto;}
+.section-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin-bottom:60px;}
+.info-card{background:rgba(255,255,255,0.04);border:1px solid rgba(26,158,143,0.18);border-radius:8px;padding:28px 24px;transition:border-color 0.2s,background 0.2s;}
+.info-card:hover{background:rgba(26,158,143,0.07);border-color:rgba(26,158,143,0.4);}
+.card-icon{font-size:28px;margin-bottom:14px;}
+.card-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:#fff;margin-bottom:10px;}
+.card-title.teal{color:var(--teal-light);}
+.card-body{font-size:13px;color:rgba(255,255,255,0.6);line-height:1.7;font-weight:300;}
+.card-body strong{color:rgba(255,255,255,0.85);font-weight:500;}
+
+.team-section{text-align:center;padding:0 0 60px;}
+.section-label{font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--teal);margin-bottom:16px;}
+.section-heading{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:#fff;margin-bottom:10px;}
+.section-sub{font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:40px;font-weight:300;}
+.team-grid{display:flex;justify-content:center;flex-wrap:wrap;gap:16px;}
+.team-chip{background:rgba(26,158,143,0.1);border:1px solid rgba(26,158,143,0.25);border-radius:30px;padding:10px 20px;font-size:13px;color:rgba(255,255,255,0.75);}
+.team-chip strong{color:#fff;font-weight:500;}
+
+/* ═══ PAGE 2 — PARTICIPATE ═══ */
+#page-participate{background:linear-gradient(145deg,#0d1f35 0%,#0a2218 50%,#0d1f35 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 56px);padding:40px 24px;}
+.participate-wrap{max-width:760px;width:100%;text-align:center;}
+.participate-badge{display:inline-block;background:rgba(26,158,143,0.15);border:1px solid rgba(26,158,143,0.35);border-radius:20px;padding:5px 16px;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--teal-light);margin-bottom:24px;}
+.participate-title{font-family:'Playfair Display',serif;font-size:clamp(32px,5vw,56px);font-weight:900;color:#fff;line-height:1.1;margin-bottom:16px;}
+.participate-title em{color:var(--teal-light);font-style:italic;}
+.participate-desc{font-size:15px;color:rgba(255,255,255,0.6);line-height:1.8;margin-bottom:40px;font-weight:300;max-width:520px;margin-left:auto;margin-right:auto;}
+.participate-layout{display:grid;grid-template-columns:auto 1px 1fr;gap:40px;align-items:start;margin-bottom:40px;}
+@media(max-width:600px){.participate-layout{grid-template-columns:1fr;}.divider-v{display:none;}}
+.qr-box{background:#fff;border-radius:12px;padding:20px;display:inline-flex;flex-direction:column;align-items:center;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,0.4);}
+.qr-label{font-size:12px;color:var(--text-mid);letter-spacing:0.04em;}
+.divider-v{width:1px;background:rgba(26,158,143,0.2);min-height:260px;}
+.participate-steps{text-align:left;}
+.step{display:flex;gap:14px;margin-bottom:24px;align-items:flex-start;}
+.step-num{width:28px;height:28px;border-radius:50%;background:rgba(26,158,143,0.2);border:1px solid var(--teal);color:var(--teal-light);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-title{font-size:14px;color:#fff;font-weight:500;margin-bottom:3px;}
+.step-desc{font-size:12px;color:rgba(255,255,255,0.5);line-height:1.6;font-weight:300;}
+.who-strip{padding:20px 24px;background:rgba(26,158,143,0.07);border:1px solid rgba(26,158,143,0.2);border-radius:8px;display:flex;gap:32px;justify-content:center;flex-wrap:wrap;}
+.who-item{text-align:center;}
+.who-icon{font-size:22px;margin-bottom:6px;}
+.who-title{font-size:12px;color:var(--teal-light);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px;}
+.who-text{font-size:12px;color:rgba(255,255,255,0.55);font-weight:300;}
+.survey-btn{display:inline-block;margin-top:16px;background:var(--teal);color:#fff;padding:12px 28px;border-radius:5px;font-size:14px;text-decoration:none;font-weight:500;transition:background 0.2s;}
+.survey-btn:hover{background:var(--teal-light);}
+
+/* ═══ PAGE 3 — EXPERIMENT ═══ */
+#page-experiment{background:#1e1e1e;overflow:hidden;}
+#exp-app{display:flex;height:100%;width:100%;}
+#plot-pane{flex:1 1 auto;min-width:0;background:#1a1a2e;display:flex;flex-direction:column;position:relative;}
+#title-bar{background:#2b2b2b;color:#d0d0d0;padding:6px 14px;font-size:13px;border-bottom:1px solid #3a3a3a;display:flex;align-items:center;gap:10px;flex-shrink:0;}
 #title-bar .title-text{flex:1;}
-#conn-status{
-  font-size:11px;
-  padding:2px 8px;
-  border-radius:2px;
-  background:#3a3a3a;
-  color:#888;
-}
+#conn-status{font-size:11px;padding:2px 8px;border-radius:2px;background:#3a3a3a;color:#888;}
 #conn-status.connected{background:#1a3a1a;color:#4caf50;}
 #conn-status.calibrating{background:#3a2a00;color:#ffc107;}
 #conn-status.recording{background:#3a1a1a;color:#f44336;}
-
-#canvas-wrap{
-  flex:1 1 auto;
-  min-height:0;
-  min-width:0;
-  position:relative;
-  overflow:hidden;
-}
-#cop-canvas{
-  display:block;
-  background:#000;
-  position:absolute;
-  top:0;left:0;
-  width:100%;
-  height:100%;
-}
-
-/* ── RIGHT: Controls pane ── */
-#ctrl-pane{
-  width:310px;
-  min-width:295px;
-  flex-shrink:0;
-  background:#f0f0f0;
-  border-left:1px solid #ccc;
-  display:flex;
-  flex-direction:column;
-  overflow-y:auto;
-  overflow-x:hidden;
-}
+#canvas-wrap{flex:1 1 auto;min-height:0;min-width:0;position:relative;overflow:hidden;}
+#cop-canvas{display:block;background:#000;position:absolute;top:0;left:0;width:100%;height:100%;}
+#ctrl-pane{width:310px;min-width:295px;flex-shrink:0;background:#f0f0f0;border-left:1px solid #ccc;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;}
 #ctrl-pane::-webkit-scrollbar{width:6px;}
 #ctrl-pane::-webkit-scrollbar-track{background:#e0e0e0;}
 #ctrl-pane::-webkit-scrollbar-thumb{background:#aaa;border-radius:3px;}
-
-/* Group boxes */
-.group-box{
-  border:1px solid #b0b0b0;
-  border-radius:3px;
-  margin:8px 8px 2px;
-  background:#fafafa;
-}
-.group-title{
-  font-size:11px;
-  font-weight:600;
-  color:#222;
-  background:#f0f0f0;
-  padding:2px 8px;
-  border-bottom:1px solid #c0c0c0;
-  border-radius:3px 3px 0 0;
-}
+.group-box{border:1px solid #b0b0b0;border-radius:3px;margin:8px 8px 2px;background:#fafafa;}
+.group-title{font-size:11px;font-weight:600;color:#222;background:#f0f0f0;padding:2px 8px;border-bottom:1px solid #c0c0c0;border-radius:3px 3px 0 0;}
 .group-body{padding:8px 10px 10px;}
-
-/* Form rows */
-.form-row{
-  display:flex;
-  align-items:center;
-  margin-bottom:6px;
-  gap:6px;
-}
-.form-row label{
-  width:105px;
-  min-width:105px;
-  font-size:12px;
-  color:#333;
-}
-.form-row input[type=text],.form-row select{
-  flex:1;
-  padding:3px 6px;
-  border:1px solid #aaa;
-  border-radius:2px;
-  background:#fff;
-  font-size:12px;
-  color:#111;
-  outline:none;
-}
+.form-row{display:flex;align-items:center;margin-bottom:6px;gap:6px;}
+.form-row label{width:105px;min-width:105px;font-size:12px;color:#333;}
+.form-row input[type=text],.form-row select{flex:1;padding:3px 6px;border:1px solid #aaa;border-radius:2px;background:#fff;font-size:12px;color:#111;outline:none;}
 .form-row input[type=text]:focus,.form-row select:focus{border-color:#0078d4;}
-
-/* Buttons */
-.ctrl-btn{
-  display:block;
-  width:calc(100% - 16px);
-  margin:4px 8px;
-  padding:6px 12px;
-  background:#e1e1e1;
-  border:1px solid #adadad;
-  border-radius:2px;
-  font-size:12px;
-  color:#111;
-  cursor:pointer;
-  text-align:center;
-  transition:background 0.15s,border-color 0.15s;
-  user-select:none;
-}
+.ctrl-btn{display:block;width:calc(100% - 16px);margin:4px 8px;padding:6px 12px;background:#e1e1e1;border:1px solid #adadad;border-radius:2px;font-size:12px;color:#111;cursor:pointer;text-align:center;transition:background 0.15s;user-select:none;}
 .ctrl-btn:hover{background:#d0d0d0;border-color:#999;}
-.ctrl-btn:active{background:#c0c0c0;}
 .ctrl-btn.recording-active{background:#ffdddd;border-color:#f44336;color:#b00;}
-.ctrl-btn.disabled{opacity:0.45;cursor:default;pointer-events:none;}
-
-/* Metrics table */
-.metric-row{
-  display:flex;
-  align-items:baseline;
-  margin-bottom:3px;
-  gap:6px;
-}
-.metric-lbl{
-  width:105px;
-  min-width:105px;
-  font-size:12px;
-  color:#333;
-}
-.metric-val{
-  font-size:12px;
-  color:#111;
-  font-variant-numeric:tabular-nums;
-  min-width:80px;
-}
-
-/* Overlay list */
-.overlay-item{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  margin-bottom:3px;
-  font-size:11px;
-  color:#111;
-}
+.metric-row{display:flex;align-items:baseline;margin-bottom:3px;gap:6px;}
+.metric-lbl{width:105px;min-width:105px;font-size:12px;color:#333;}
+.metric-val{font-size:12px;color:#111;font-variant-numeric:tabular-nums;min-width:80px;}
+.overlay-item{display:flex;align-items:center;gap:6px;margin-bottom:3px;font-size:11px;color:#111;}
 .ov-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
 .ov-area{color:#666;font-size:11px;}
-
-/* Bottom spacer */
+#serial-warn{background:#fff3cd;border:1px solid #ffc107;border-radius:3px;margin:6px 8px;padding:6px 8px;font-size:11px;color:#856404;display:none;}
+#fs-warn{background:#d1ecf1;border:1px solid #bee5eb;border-radius:3px;margin:4px 8px;padding:5px 8px;font-size:11px;color:#0c5460;display:none;}
+#rec-timer{display:inline-block;margin-left:8px;font-size:11px;color:#f44336;font-weight:700;min-width:30px;}
+#dir-display{font-size:11px;color:#0078d4;word-break:break-all;margin:2px 10px 4px;min-height:14px;}
 .spacer{flex:1;}
-
-/* Browser warning */
-#serial-warn{
-  background:#fff3cd;
-  border:1px solid #ffc107;
-  border-radius:3px;
-  margin:6px 8px;
-  padding:6px 8px;
-  font-size:11px;
-  color:#856404;
-  display:none;
-}
-#fs-warn{
-  background:#d1ecf1;
-  border:1px solid #bee5eb;
-  border-radius:3px;
-  margin:4px 8px;
-  padding:5px 8px;
-  font-size:11px;
-  color:#0c5460;
-  display:none;
-}
-
-/* Timer badge */
-#rec-timer{
-  display:inline-block;
-  margin-left:8px;
-  font-size:11px;
-  color:#f44336;
-  font-weight:700;
-  min-width:30px;
-}
-
-/* Dir display */
-#dir-display{
-  font-size:11px;
-  color:#0078d4;
-  word-break:break-all;
-  margin:2px 10px 4px;
-  min-height:14px;
-}
 </style>
 </head>
 <body>
-<div id="app">
 
-  <!-- ═══════════ LEFT PANEL ═══════════ -->
-  <div id="plot-pane">
-    <div id="title-bar">
-      <span class="title-text">EquiliSense — Unified Interface</span>
-      <span id="conn-status">● Disconnected</span>
+<!-- ══════ NAV ══════ -->
+<nav id="nav">
+  <div class="nav-logo">Equili<span>Sense</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('home',this)">🏠 About</button>
+    <button class="nav-tab" onclick="showPage('participate',this)">📋 Participate</button>
+    <button class="nav-tab" onclick="showPage('experiment',this)">⚗️ Experiment</button>
+  </div>
+</nav>
+
+<!-- ══════ PAGE 1: HOME ══════ -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <div class="hero-rings"><div class="hero-ring"></div><div class="hero-ring"></div><div class="hero-ring"></div></div>
+    <div class="plaksha-badge">Plaksha University · Academic Research</div>
+    <div class="hero-title">Balance <em>Today</em></div>
+    <div class="hero-subtitle-line">Independence Tomorrow</div>
+    <p class="hero-tagline">Good balance is key for safe movement and long-term independence. We are building the first age- and gender-specific balance database for the Indian population.</p>
+    <button class="hero-cta" onclick="showPage('participate',document.querySelectorAll('.nav-tab')[1])">Join the Study →</button>
+  </div>
+  <div class="stats-strip">
+    <div class="stat-cell"><div class="stat-num">31M</div><div class="stat-lbl">Indians 65+ in 2023</div></div>
+    <div class="stat-cell"><div class="stat-num">247M</div><div class="stat-lbl">Projected by 2050</div></div>
+    <div class="stat-cell"><div class="stat-num">↑</div><div class="stat-lbl">Fall risk with age</div></div>
+    <div class="stat-cell"><div class="stat-num">0</div><div class="stat-lbl">Existing Indian DB</div></div>
+  </div>
+  <div class="home-sections">
+    <div class="section-grid">
+      <div class="info-card"><div class="card-icon">⚠️</div><div class="card-title teal">The Challenge</div><div class="card-body">Balance changes with age and can be an early sign of neurological conditions like <strong>Parkinson's disease</strong>. Yet there is very little data on how balance changes with age in the Indian population.</div></div>
+      <div class="info-card"><div class="card-icon">💡</div><div class="card-title teal">The Promise</div><div class="card-body">With <strong>early diagnosis and intervention</strong>, balance can be improved through simple exercises — preventing falls and reducing the severity of neuromuscular symptoms before they become debilitating.</div></div>
+      <div class="info-card"><div class="card-icon">🔬</div><div class="card-title teal">The Bottleneck</div><div class="card-body">Lack of <strong>affordable medical devices</strong> to objectively measure balance in low-resource settings. We have built a low-cost force platform as accurate as clinical-grade equipment.</div></div>
+      <div class="info-card"><div class="card-icon">🏗️</div><div class="card-title teal">Our Solution</div><div class="card-body">A custom-built <strong>force platform</strong> measuring Center of Pressure (CoP) in real time — a non-invasive biomarker for early detection of neuromuscular conditions and neurodegeneration.</div></div>
+      <div class="info-card"><div class="card-icon">🧠</div><div class="card-title teal">What is Balance?</div><div class="card-body">A complex neuro-muscular function integrating <strong>sensory input</strong> (eyes, inner ear, touch), <strong>brain processing</strong>, and <strong>motor output</strong> (muscles &amp; joints) to maintain posture against gravity.</div></div>
+      <div class="info-card"><div class="card-icon">📊</div><div class="card-title teal">The Goal</div><div class="card-body">Build the first <strong>Indian balance database</strong> across age groups and genders — feeding AI/ML models to identify risk profiles and generate personalised balance improvement interventions.</div></div>
     </div>
-    <div id="canvas-wrap">
-      <canvas id="cop-canvas"></canvas>
-      <div id="zoom-hint" style="position:absolute;bottom:8px;right:10px;font-size:10px;color:rgba(120,160,120,0.6);pointer-events:none;font-family:Consolas,monospace;">
-        scroll=zoom &nbsp;|&nbsp; drag=pan &nbsp;|&nbsp; dbl-click=reset
+    <div class="team-section">
+      <div class="section-label">Our Team</div>
+      <div class="section-heading">Academic Research Study</div>
+      <div class="section-sub">Plaksha University, Mohali, Punjab, India</div>
+      <div class="team-grid">
+        <div class="team-chip"><strong>Dr. Arshdeep Sidhu</strong> — Principal Scientist</div>
+        <div class="team-chip"><strong>Dr. Deepan Muthirayan</strong> — Principal Scientist</div>
+        <div class="team-chip"><strong>Prof. Andy Ruina</strong> — Principal Scientist</div>
+        <div class="team-chip"><strong>Ronak Tiwari</strong> — Volunteer</div>
+        <div class="team-chip"><strong>Aanya Shah</strong> — Volunteer</div>
       </div>
     </div>
   </div>
-
-  <!-- ═══════════ RIGHT PANEL ═══════════ -->
-  <div id="ctrl-pane">
-
-    <!-- Connect section -->
-    <div class="group-box" style="margin-top:10px;">
-      <div class="group-title">Device Connection</div>
-      <div class="group-body">
-        <div class="form-row">
-          <label>Baud Rate:</label>
-          <select id="baud-sel">
-            <option value="2000000" selected>2,000,000</option>
-            <option value="921600">921,600</option>
-            <option value="115200">115,200</option>
-            <option value="1000000">1,000,000</option>
-          </select>
-        </div>
-        <button class="ctrl-btn" id="connect-btn" onclick="connectSerial()" style="width:calc(100% - 0px);margin:0;">
-          ⚡ Connect Device
-        </button>
-        <button class="ctrl-btn" id="disconnect-btn" onclick="disconnectSerial()"
-          style="width:calc(100%);margin:4px 0 0;display:none;background:#ffe0e0;border-color:#f44336;color:#b00;">
-          ✕ Disconnect
-        </button>
-      </div>
-    </div>
-    <div id="serial-warn">⚠ Web Serial requires Chrome or Edge (desktop only).</div>
-
-    <!-- Storage -->
-    <div class="group-box">
-      <div class="group-title">Save Location (Local Folder)</div>
-      <div class="group-body" style="padding-bottom:6px;">
-        <button class="ctrl-btn" id="dir-btn" onclick="selectDir()" style="margin:0 0 4px;">
-          📁 Choose Save Folder
-        </button>
-        <div id="dir-display">No folder selected</div>
-      </div>
-    </div>
-    <div id="fs-warn">ℹ File System Access requires Chrome or Edge.</div>
-
-    <!-- Session Settings -->
-    <div class="group-box">
-      <div class="group-title">Session Settings</div>
-      <div class="group-body">
-        <div class="form-row">
-          <label>Session:</label>
-          <input type="text" id="session-inp" placeholder="e.g. Abhishek_male_33"/>
-        </div>
-        <div class="form-row">
-          <label>Select Existing:</label>
-          <select id="existing-sel" onchange="onExistingSelect(this.value)">
-            <option value=""></option>
-          </select>
-        </div>
-        <div class="form-row">
-          <label>Experiment:</label>
-          <select id="exp-sel">
-            <option value="eyes_open">eyes_open</option>
-            <option value="eyes_closed">eyes_closed</option>
-            <option value="one_leg_right">one_leg_right</option>
-            <option value="one_leg_left">one_leg_left</option>
-            <option value="cognitive">cognitive</option>
-          </select>
-        </div>
-        <div class="form-row">
-          <label>Duration (s):</label>
-          <select id="dur-sel">
-            <option value="5">5</option>
-            <option value="10" selected>10</option>
-            <option value="20">20</option>
-            <option value="30">30</option>
-            <option value="60">60</option>
-            <option value="120">120</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <!-- Select Person -->
-    <div class="group-box">
-      <div class="group-title">Select Person (from save folder)</div>
-      <div class="group-body" style="padding-bottom:8px;">
-        <select id="person-sel" onchange="onPersonSelect(this.value)" style="width:100%;padding:3px 6px;border:1px solid #aaa;border-radius:2px;font-size:12px;">
-          <option value=""></option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Action Buttons -->
-    <button class="ctrl-btn" id="rec-btn" onclick="toggleRecording()">
-      Start Recording<span id="rec-timer"></span>
-    </button>
-    <button class="ctrl-btn" onclick="showOverlay()">Show Overlay + Ellipses</button>
-    <button class="ctrl-btn" onclick="clearTrace()">Clear Trace</button>
-    <button class="ctrl-btn" onclick="clearOverlays()">Clear Overlays</button>
-
-    <!-- Live Metrics -->
-    <div class="group-box">
-      <div class="group-title">Live Metrics</div>
-      <div class="group-body">
-        <div class="metric-row"><span class="metric-lbl">FL:</span><span class="metric-val" id="m-fl">0.0</span></div>
-        <div class="metric-row"><span class="metric-lbl">FR:</span><span class="metric-val" id="m-fr">0.0</span></div>
-        <div class="metric-row"><span class="metric-lbl">RL:</span><span class="metric-val" id="m-rl">0.0</span></div>
-        <div class="metric-row"><span class="metric-lbl">RR:</span><span class="metric-val" id="m-rr">0.0</span></div>
-        <div class="metric-row"><span class="metric-lbl">Total:</span><span class="metric-val" id="m-tot">0.0</span></div>
-        <div class="metric-row"><span class="metric-lbl">CoP (cm):</span><span class="metric-val" id="m-cop">(0.00, 0.00)</span></div>
-      </div>
-    </div>
-
-    <!-- Overlay Areas -->
-    <div class="group-box">
-      <div class="group-title">Overlay Areas (per CSV)</div>
-      <div class="group-body" id="overlay-body" style="max-height:160px;overflow-y:auto;">
-        <div style="font-size:12px;color:#666;">Overlay: not computed</div>
-      </div>
-    </div>
-
-    <!-- Bottom summary label (mirrors Python's overlay_info QLabel) -->
-    <div id="overlay-summary" style="font-size:11px;color:#555;margin:4px 10px 8px;white-space:pre-wrap;word-break:break-word;">
-      Overlay: not computed
-    </div>
-
-    <div class="spacer"></div>
-  </div><!-- /ctrl-pane -->
 </div>
 
-<!-- ═══════════════════════════════════
-     JAVASCRIPT — all logic
-════════════════════════════════════ -->
+<!-- ══════ PAGE 2: PARTICIPATE ══════ -->
+<div class="page" id="page-participate">
+  <div class="participate-wrap">
+    <div class="participate-badge">Volunteer Recruitment</div>
+    <div class="participate-title">Help us understand<br><em>balance</em> better</div>
+    <p class="participate-desc">We are looking for volunteers to participate in our academic study and help us create an age, gender and lifestyle-specific balance database for Indian populations.</p>
+    <div class="participate-layout">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:14px;">
+        <div class="qr-box">
+          <div id="qr-canvas"></div>
+          <div class="qr-label">Scan to open survey</div>
+        </div>
+        <a class="survey-btn" href="https://forms.gle/your-survey-link-here" target="_blank">Open Survey ↗</a>
+      </div>
+      <div class="divider-v"></div>
+      <div class="participate-steps">
+        <div class="step"><div class="step-num">1</div><div><div class="step-title">Scan the QR code</div><div class="step-desc">Use your smartphone camera to scan and open the survey link.</div></div></div>
+        <div class="step"><div class="step-num">2</div><div><div class="step-title">Complete the questionnaire</div><div class="step-desc">Fill in basic demographic info — takes about 3 minutes. Data stored securely in the university database.</div></div></div>
+        <div class="step"><div class="step-num">3</div><div><div class="step-title">We'll contact you</div><div class="step-desc">If you indicate interest, our team will reach out to schedule a short balance assessment session.</div></div></div>
+        <div class="step"><div class="step-num">4</div><div><div class="step-title">Contribute to science</div><div class="step-desc">Your data will not be shared with any other agency and is used only for our academic study.</div></div></div>
+      </div>
+    </div>
+    <div class="who-strip">
+      <div class="who-item"><div class="who-icon">🙋</div><div class="who-title">Who can join?</div><div class="who-text">Anyone interested in understanding their balance</div></div>
+      <div class="who-item"><div class="who-icon">🔒</div><div class="who-title">Privacy</div><div class="who-text">Data stored only in university database</div></div>
+      <div class="who-item"><div class="who-icon">⏱️</div><div class="who-title">Time needed</div><div class="who-text">~3 min survey, ~30 min assessment</div></div>
+      <div class="who-item"><div class="who-icon">🆓</div><div class="who-title">Cost</div><div class="who-text">Completely free</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ PAGE 3: EXPERIMENT ══════ -->
+<div class="page" id="page-experiment">
+  <div id="exp-app">
+    <div id="plot-pane">
+      <div id="title-bar">
+        <span class="title-text">EquiliSense — Unified Interface</span>
+        <span id="conn-status">● Disconnected</span>
+      </div>
+      <div id="canvas-wrap">
+        <canvas id="cop-canvas"></canvas>
+        <div style="position:absolute;bottom:8px;right:10px;font-size:10px;color:rgba(120,160,120,0.6);pointer-events:none;font-family:Consolas,monospace;">scroll=zoom | drag=pan | dbl-click=reset</div>
+      </div>
+    </div>
+    <div id="ctrl-pane">
+      <div class="group-box" style="margin-top:10px;">
+        <div class="group-title">Device Connection</div>
+        <div class="group-body">
+          <div class="form-row"><label>Baud Rate:</label><select id="baud-sel"><option value="2000000" selected>2,000,000</option><option value="921600">921,600</option><option value="115200">115,200</option><option value="1000000">1,000,000</option></select></div>
+          <button class="ctrl-btn" id="connect-btn" onclick="connectSerial()" style="width:100%;margin:0;">⚡ Connect Device</button>
+          <button class="ctrl-btn" id="disconnect-btn" onclick="disconnectSerial()" style="width:100%;margin:4px 0 0;display:none;background:#ffe0e0;border-color:#f44336;color:#b00;">✕ Disconnect</button>
+        </div>
+      </div>
+      <div id="serial-warn">⚠ Web Serial requires Chrome or Edge (desktop only).</div>
+      <div class="group-box">
+        <div class="group-title">Save Location (Local Folder)</div>
+        <div class="group-body" style="padding-bottom:6px;">
+          <button class="ctrl-btn" onclick="selectDir()" style="margin:0 0 4px;">📁 Choose Save Folder</button>
+          <div id="dir-display">No folder selected</div>
+        </div>
+      </div>
+      <div id="fs-warn">ℹ File System Access requires Chrome or Edge.</div>
+      <div class="group-box">
+        <div class="group-title">Session Settings</div>
+        <div class="group-body">
+          <div class="form-row"><label>Session:</label><input type="text" id="session-inp" placeholder="e.g. Abhishek_male_33"/></div>
+          <div class="form-row"><label>Select Existing:</label><select id="existing-sel" onchange="onExistingSelect(this.value)"><option value=""></option></select></div>
+          <div class="form-row"><label>Experiment:</label><select id="exp-sel"><option value="eyes_open">eyes_open</option><option value="eyes_closed">eyes_closed</option><option value="one_leg_right">one_leg_right</option><option value="one_leg_left">one_leg_left</option><option value="cognitive">cognitive</option></select></div>
+          <div class="form-row"><label>Duration (s):</label><select id="dur-sel"><option value="5">5</option><option value="10" selected>10</option><option value="20">20</option><option value="30">30</option><option value="60">60</option><option value="120">120</option></select></div>
+        </div>
+      </div>
+      <div class="group-box">
+        <div class="group-title">Select Person (from save folder)</div>
+        <div class="group-body" style="padding-bottom:8px;"><select id="person-sel" onchange="onPersonSelect(this.value)" style="width:100%;padding:3px 6px;border:1px solid #aaa;border-radius:2px;font-size:12px;"><option value=""></option></select></div>
+      </div>
+      <button class="ctrl-btn" id="rec-btn" onclick="toggleRecording()">Start Recording<span id="rec-timer"></span></button>
+      <button class="ctrl-btn" onclick="showOverlay()">Show Overlay + Ellipses</button>
+      <button class="ctrl-btn" onclick="clearTrace()">Clear Trace</button>
+      <button class="ctrl-btn" onclick="clearOverlays()">Clear Overlays</button>
+      <div class="group-box">
+        <div class="group-title">Live Metrics</div>
+        <div class="group-body">
+          <div class="metric-row"><span class="metric-lbl">FL:</span><span class="metric-val" id="m-fl">0.0</span></div>
+          <div class="metric-row"><span class="metric-lbl">FR:</span><span class="metric-val" id="m-fr">0.0</span></div>
+          <div class="metric-row"><span class="metric-lbl">RL:</span><span class="metric-val" id="m-rl">0.0</span></div>
+          <div class="metric-row"><span class="metric-lbl">RR:</span><span class="metric-val" id="m-rr">0.0</span></div>
+          <div class="metric-row"><span class="metric-lbl">Total:</span><span class="metric-val" id="m-tot">0.0</span></div>
+          <div class="metric-row"><span class="metric-lbl">CoP (cm):</span><span class="metric-val" id="m-cop">(0.00, 0.00)</span></div>
+        </div>
+      </div>
+      <div class="group-box">
+        <div class="group-title">Overlay Areas (per CSV)</div>
+        <div class="group-body" id="overlay-body" style="max-height:160px;overflow-y:auto;"><div style="font-size:12px;color:#666;">Overlay: not computed</div></div>
+      </div>
+      <div id="overlay-summary" style="font-size:11px;color:#555;margin:4px 10px 8px;white-space:pre-wrap;word-break:break-word;">Overlay: not computed</div>
+      <div class="spacer"></div>
+    </div>
+  </div>
+</div>
+
 <script>
 'use strict';
-// ──────────────────────────────────────────────
-//  CONSTANTS  (mirror rk.py)
-// ──────────────────────────────────────────────
-const PLATFORM_SIZE_CM = 47;
-const PLOT_RANGE_CM    = 60;
-const OFFSET_SAMPLES   = 50;
-const MIN_FORCE        = 1000;
-const TRACE_SECS       = 15;
-const AVG_N            = 50;
 
-const EXPERIMENTS = {
-  eyes_open:     'eyes_open.csv',
-  eyes_closed:   'eyes_closed.csv',
-  one_leg_right: 'one_leg_right.csv',
-  one_leg_left:  'one_leg_left.csv',
-  cognitive:     'cognitive.csv',
-};
-
-// 15 distinct colors per session slot — sessions cycle through blocks of 5
-const SESSION_COLOR_BANKS = [
-  ['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4'],  // session 1
-  ['#46f0f0','#f032e6','#bcf60c','#ff7f50','#00ced1'],  // session 2
-  ['#da70d6','#ffa500','#7fff00','#ff69b4','#1e90ff'],  // session 3
-  ['#ffec00','#a52a2a','#00fa9a','#dc143c','#4169e1'],  // session 4
-];
-
-// ──────────────────────────────────────────────
-//  RUNTIME STATE
-// ──────────────────────────────────────────────
-let port=null, reader=null, readActive=false;
-let rootDir=null;
-let sessionDirs={};
-
-let offsets=null, offsetAcc={FL:0,FR:0,RL:0,RR:0}, offsetCount=0;
-let flBuf=new Float32Array(AVG_N), frBuf=new Float32Array(AVG_N);
-let rlBuf=new Float32Array(AVG_N), rrBuf=new Float32Array(AVG_N);
-let bufIdx=0;
-
-let copX=0, copY=0;
-let trace=[];
-let forces={FL:0,FR:0,RL:0,RR:0};
-let recording=false, recInterval=null;
-let recBuffer=[];          // in-memory rows collected during recording
-let recSessionDir=null;    // FileSystemDirectoryHandle for current recording
-let recFileName='';        // e.g. 'eyes_open.csv'
-let recDurationSecs=0;     // total duration chosen
-let recElapsed=0;          // seconds elapsed
-
-// overlayMap: sessionName → [{name, x[], y[], color, ell}]
-// Allows multiple sessions to be shown simultaneously
-let overlayMap={};
-let sessionColorIdx=0; // which color bank to assign next new session
-
-// ──────────────────────────────────────────────
-//  CANVAS + ZOOM/PAN STATE
-// ──────────────────────────────────────────────
-const canvas=document.getElementById('cop-canvas');
-const ctx=canvas.getContext('2d');
-
-let zoomScale=1.0;      // >1 = zoomed in
-let panX=0, panY=0;     // view centre offset in cm (0,0 = origin)
-let isPanning=false;
-let panStartX=0, panStartY=0, panStartCmX=0, panStartCmY=0;
-
-function resetView(){ zoomScale=1; panX=0; panY=0; }
-
-function resizeCanvas(){
-  const wrap=document.getElementById('canvas-wrap');
-  canvas.width=wrap.clientWidth;
-  canvas.height=wrap.clientHeight;
+/* ── Navigation ── */
+function showPage(id,tabEl){
+  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).style.display='block';
+  tabEl.classList.add('active');
+  if(id==='experiment') setTimeout(resizeCanvas,60);
 }
-window.addEventListener('resize',resizeCanvas);
-setTimeout(resizeCanvas,50);
-
-/* ── Aspect-locked coordinate helpers ──
-   We keep the canvas filling the full pane, but we compute a single
-   cm-per-pixel scale from the SHORTER side so X and Y are always equal.
-   The plot area is centred; surplus space on the longer side gets black border. */
-function getScale(){
-  // pixels per cm  (same for both axes → square grid squares, square platform)
-  return Math.min(canvas.width, canvas.height) / PLOT_RANGE_CM;
-}
-function getOrigin(){
-  // canvas pixel position of the cm (0,0) point
-  const sc=getScale();
-  return [canvas.width/2  - panX*sc,
-          canvas.height/2 + panY*sc];
-}
-
-/* cm → canvas pixels */
-function c2p(cx,cy){
-  const sc=getScale()/zoomScale;
-  const[ox,oy]=getOrigin();
-  // with zoom we also shift origin by panX/panY which getOrigin already does
-  const px=(canvas.width/2)  + (cx - panX)*sc;
-  const py=(canvas.height/2) - (cy - panY)*sc;
-  return[px,py];
-}
-/* canvas pixels → cm */
-function p2c(px,py){
-  const sc=getScale()/zoomScale;
-  const cx=panX + (px - canvas.width/2)  / sc;
-  const cy=panY - (py - canvas.height/2) / sc;
-  return[cx,cy];
-}
-/* cm length → pixel length */
-function cmPx(cm){ return cm * getScale() / zoomScale; }
-
-/* effective half-range visible in cm for each axis */
-function viewHalfX(){ return (canvas.width /2) / (getScale()/zoomScale); }
-function viewHalfY(){ return (canvas.height/2) / (getScale()/zoomScale); }
-
-// ── Mouse wheel zoom (centred on cursor) ──
-canvas.addEventListener('wheel',e=>{
-  e.preventDefault();
-  const rect=canvas.getBoundingClientRect();
-  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
-  const[cmx,cmy]=p2c(mx,my);          // cm under cursor before zoom
-  const factor=e.deltaY<0?1.12:1/1.12;
-  zoomScale=Math.max(0.01,Math.min(1000,zoomScale*factor));
-  // After zoom, recalculate where cursor cm maps to; adjust pan so it stays fixed
-  const[npx,npy]=c2p(cmx,cmy);       // new pixel position of same cm point
-  panX+=(npx-mx)/canvas.width*(2*viewHalf());
-  panY-=(npy-my)/canvas.height*(2*viewHalf());
-},{passive:false});
-
-// ── Mouse drag pan ──
-canvas.addEventListener('mousedown',e=>{
-  isPanning=true;
-  panStartX=e.clientX; panStartY=e.clientY;
-  panStartCmX=panX; panStartCmY=panY;
-  canvas.style.cursor='grabbing';
-});
-window.addEventListener('mousemove',e=>{
-  if(!isPanning) return;
-  const dx=e.clientX-panStartX, dy=e.clientY-panStartY;
-  const sc=getScale()/zoomScale;
-  panX=panStartCmX - dx/sc;
-  panY=panStartCmY + dy/sc;
-});
-window.addEventListener('mouseup',()=>{ isPanning=false; canvas.style.cursor='crosshair'; });
-
-// ── Double-click reset ──
-canvas.addEventListener('dblclick',resetView);
-
-// ── Touch zoom/pan ──
-let lastTouchDist=0, lastTouchMidX=0, lastTouchMidY=0, lastTouchPanX=0, lastTouchPanY=0;
-canvas.addEventListener('touchstart',e=>{
-  if(e.touches.length===2){
-    const t0=e.touches[0], t1=e.touches[1];
-    lastTouchDist=Math.hypot(t1.clientX-t0.clientX,t1.clientY-t0.clientY);
-    lastTouchMidX=(t0.clientX+t1.clientX)/2;
-    lastTouchMidY=(t0.clientY+t1.clientY)/2;
-    lastTouchPanX=panX; lastTouchPanY=panY;
-  }
-},{passive:true});
-canvas.addEventListener('touchmove',e=>{
-  if(e.touches.length===2){
-    e.preventDefault();
-    const t0=e.touches[0], t1=e.touches[1];
-    const dist=Math.hypot(t1.clientX-t0.clientX,t1.clientY-t0.clientY);
-    const midX=(t0.clientX+t1.clientX)/2, midY=(t0.clientY+t1.clientY)/2;
-    const rect=canvas.getBoundingClientRect();
-    const[cmx,cmy]=p2c(lastTouchMidX-rect.left,lastTouchMidY-rect.top);
-    zoomScale=Math.max(0.01,Math.min(1000,zoomScale*(dist/lastTouchDist)));
-    lastTouchDist=dist;
-    // pan correction
-    const sc=getScale()/zoomScale;
-    panX=lastTouchPanX-(midX-lastTouchMidX)/sc;
-    panY=lastTouchPanY+(midY-lastTouchMidY)/sc;
-  }
-},{passive:false});
-
-// ──────────────────────────────────────────────
-//  DRAW
-// ──────────────────────────────────────────────
-function drawAll(){
-  const W=canvas.width, H=canvas.height;
-  if(!W||!H) return;
-
-  ctx.fillStyle='#000';
-  ctx.fillRect(0,0,W,H);
-
-  /* adaptive grid step based on zoom */
-  let gridStep=5;
-  if(cmPx(1)>40)      gridStep=1;
-  else if(cmPx(1)>20) gridStep=2;
-  else if(cmPx(10)<30) gridStep=10;
-
-  ctx.strokeStyle='rgba(50,80,50,0.9)';
-  ctx.lineWidth=0.6;
-
-  const vhx=viewHalfX(), vhy=viewHalfY();
-  const lo =Math.ceil((-vhx+panX)/gridStep)*gridStep;
-  const hi =Math.floor(( vhx+panX)/gridStep)*gridStep;
-  const lo2=Math.ceil((-vhy+panY)/gridStep)*gridStep;
-  const hi2=Math.floor(( vhy+panY)/gridStep)*gridStep;
-  for(let cm=lo;cm<=hi;cm+=gridStep){
-    const[px]=c2p(cm,0);
-    ctx.beginPath(); ctx.moveTo(px,0); ctx.lineTo(px,H); ctx.stroke();
-  }
-  for(let cm=lo2;cm<=hi2;cm+=gridStep){
-    const[,py]=c2p(0,cm);
-    ctx.beginPath(); ctx.moveTo(0,py); ctx.lineTo(W,py); ctx.stroke();
-  }
-
-  /* tick labels */
-  const fs=Math.max(9,Math.min(12,W/70));
-  ctx.font=`${fs}px Consolas,monospace`;
-  ctx.fillStyle='rgba(160,180,160,0.8)';
-  ctx.textAlign='center';
-  for(let cm=lo;cm<=hi;cm+=gridStep){
-    if(Math.abs(cm)<0.01) continue;
-    const[px]=c2p(cm,0);
-    ctx.fillText(cm,px,H-3);
-  }
-  ctx.textAlign='right';
-  for(let cm=lo2;cm<=hi2;cm+=gridStep){
-    if(Math.abs(cm)<0.01) continue;
-    const[,py]=c2p(0,cm);
-    ctx.fillText(cm,22,py+4);
-  }
-  ctx.fillStyle='rgba(160,180,160,0.7)';
-  ctx.textAlign='center';
-  ctx.fillText('X (cm)',W/2,H-1);
-  ctx.save(); ctx.translate(10,H/2); ctx.rotate(-Math.PI/2);
-  ctx.fillText('Y (cm)',0,0); ctx.restore();
-
-  /* zoom level badge */
-  if(zoomScale!==1){
-    ctx.fillStyle='rgba(100,160,100,0.55)';
-    ctx.font='10px Consolas,monospace';
-    ctx.textAlign='left';
-    ctx.fillText(`×${zoomScale.toFixed(1)}`,6,14);
-  }
-
-  /* platform rectangle */
-  const[rx0,ry0]=c2p(-PLATFORM_SIZE_CM/2, PLATFORM_SIZE_CM/2);
-  const[rx1,ry1]=c2p( PLATFORM_SIZE_CM/2,-PLATFORM_SIZE_CM/2);
-  ctx.strokeStyle='#ffffff';
-  ctx.lineWidth=2;
-  ctx.strokeRect(rx0,ry0,rx1-rx0,ry1-ry0);
-
-  /* overlay traces + ellipses (all sessions) */
-  Object.values(overlayMap).forEach(ovList=>{
-    ovList.forEach(ov=>{
-      if(!ov.x.length) return;
-      ctx.save();
-      ctx.strokeStyle=ov.color;
-      ctx.lineWidth=1.5;
-      ctx.globalAlpha=0.75;
-      ctx.beginPath();
-      const[sx,sy]=c2p(ov.x[0],ov.y[0]);
-      ctx.moveTo(sx,sy);
-      for(let i=1;i<ov.x.length;i++){
-        const[ex,ey]=c2p(ov.x[i],ov.y[i]);
-        ctx.lineTo(ex,ey);
-      }
-      ctx.stroke();
-      ctx.restore();
-    });
-  });
-
-  /* live trace */
-  if(trace.length>1){
-    ctx.save();
-    ctx.strokeStyle='#00cc44';
-    ctx.lineWidth=1.8;
-    ctx.beginPath();
-    const[sx,sy]=c2p(trace[0].x,trace[0].y);
-    ctx.moveTo(sx,sy);
-    trace.forEach(p=>{ const[ex,ey]=c2p(p.x,p.y); ctx.lineTo(ex,ey); });
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  /* CoP dot */
-  const[dx,dy]=c2p(copX,copY);
-  ctx.save();
-  ctx.shadowColor='#ff3333'; ctx.shadowBlur=10;
-  ctx.fillStyle='#ff2200';
-  ctx.beginPath(); ctx.arc(dx,dy,6,0,2*Math.PI); ctx.fill();
-  ctx.restore();
-
-  /* REC indicator */
-  if(recording){
-    ctx.save();
-    ctx.fillStyle='rgba(255,0,0,0.85)';
-    ctx.beginPath(); ctx.arc(W-14,12,5,0,2*Math.PI); ctx.fill();
-    ctx.restore();
-  }
-}
-
-(function loop(){ drawAll(); requestAnimationFrame(loop); })();
-
-// ──────────────────────────────────────────────
-//  CoP calc  (identical to Python)
-// ──────────────────────────────────────────────
-function computeCoP(fl,fr,rl,rr){
-  const tot=fl+fr+rl+rr;
-  if(Math.abs(tot)<MIN_FORCE) return{x:0,y:0,v:false};
-  const h=PLATFORM_SIZE_CM/2;
-  const x=((fr+rr)-(fl+rl))*h/tot;
-  const y=((fl+fr)-(rl+rr))*h/tot;
-  if(Math.abs(x)>h+1||Math.abs(y)>h+1) return{x:0,y:0,v:false};
-  return{x,y,v:true};
-}
-
-function bufAvg(b){ let s=0; for(let i=0;i<b.length;i++) s+=b[i]; return s/b.length; }
-
-// ──────────────────────────────────────────────
-//  Outlier removal  (MAD, mirror Python)
-// ──────────────────────────────────────────────
-function median(a){
-  const s=[...a].sort((x,y)=>x-y),m=Math.floor(s.length/2);
-  return s.length%2?s[m]:(s[m-1]+s[m])/2;
-}
-function removeOutliers(xa,ya,th=3.5){
-  if(xa.length<5) return{x:xa,y:ya};
-  const mx=median(xa),my=median(ya);
-  const madX=median(xa.map(v=>Math.abs(v-mx)));
-  const madY=median(ya.map(v=>Math.abs(v-my)));
-  if(!madX||!madY) return{x:xa,y:ya};
-  const ox=[],oy=[];
-  for(let i=0;i<xa.length;i++){
-    if(Math.abs(0.6745*(xa[i]-mx)/madX)<=th && Math.abs(0.6745*(ya[i]-my)/madY)<=th){
-      ox.push(xa[i]); oy.push(ya[i]);
-    }
-  }
-  return{x:ox,y:oy};
-}
-
-// ──────────────────────────────────────────────
-//  Ellipse (PCA)
-// ──────────────────────────────────────────────
-function ellipseParams(x,y){
-  const n=x.length; if(n<3) return null;
-  const mx=x.reduce((a,b)=>a+b,0)/n, my=y.reduce((a,b)=>a+b,0)/n;
-  let cxx=0,cyy=0,cxy=0;
-  for(let i=0;i<n;i++){cxx+=(x[i]-mx)**2;cyy+=(y[i]-my)**2;cxy+=(x[i]-mx)*(y[i]-my);}
-  cxx/=(n-1);cyy/=(n-1);cxy/=(n-1);
-  const tr=cxx+cyy, det=cxx*cyy-cxy*cxy;
-  const disc=Math.sqrt(Math.max(0,tr*tr/4-det));
-  const e1=tr/2+disc, e2=tr/2-disc;
-  const rx=Math.sqrt(Math.max(0,e1)), ry=Math.sqrt(Math.max(0,e2));
-  const angle=Math.atan2(cxy,cxx-e2)*180/Math.PI;
-  return{cx:mx,cy:my,rx,ry,angle,area:Math.PI*rx*ry};
-}
-
-// ──────────────────────────────────────────────
-//  STATUS helper
-// ──────────────────────────────────────────────
-function setStatus(txt,cls){
-  const el=document.getElementById('conn-status');
-  el.textContent='● '+txt;
-  el.className=cls||'';
-}
-
-// ──────────────────────────────────────────────
-//  SERIAL CONNECT
-// ──────────────────────────────────────────────
-async function connectSerial(){
-  if(!('serial' in navigator)){
-    document.getElementById('serial-warn').style.display='block';
-    return;
-  }
-  try{
-    const baud=+document.getElementById('baud-sel').value;
-    port=await navigator.serial.requestPort();
-    await port.open({baudRate:baud});
-    offsets=null; offsetAcc={FL:0,FR:0,RL:0,RR:0}; offsetCount=0;
-    bufIdx=0; flBuf.fill(0); frBuf.fill(0); rlBuf.fill(0); rrBuf.fill(0);
-    setStatus('Calibrating…','calibrating');
-    document.getElementById('connect-btn').style.display='none';
-    document.getElementById('disconnect-btn').style.display='block';
-    readActive=true;
-    readLoop();
-  }catch(e){
-    if(e.name!=='NotFoundError') alert('Connection failed:\n'+e.message);
-  }
-}
-
-async function disconnectSerial(){
-  readActive=false;
-  try{if(reader){await reader.cancel();reader=null;}}catch(e){}
-  try{if(port) await port.close();}catch(e){}
-  port=null;
-  setStatus('Disconnected','');
-  document.getElementById('connect-btn').style.display='block';
-  document.getElementById('disconnect-btn').style.display='none';
-}
-
-// ──────────────────────────────────────────────
-//  SERIAL READ LOOP
-// ──────────────────────────────────────────────
-async function readLoop(){
-  const dec=new TextDecoder();
-  let buf='';
-  while(readActive&&port&&port.readable){
-    try{
-      reader=port.readable.getReader();
-      while(readActive){
-        const{value,done}=await reader.read();
-        if(done) break;
-        buf+=dec.decode(value,{stream:true});
-        let nl;
-        while((nl=buf.indexOf('\n'))!==-1){
-          parseLine(buf.slice(0,nl).trim());
-          buf=buf.slice(nl+1);
-        }
-      }
-    }catch(e){if(readActive)console.warn(e);}
-    finally{try{reader.releaseLock();}catch(e){}}
-  }
-}
-
-function parseLine(line){
-  if(!line) return;
-  const p=line.split('\t');
-  if(p.length!==4) return;
-  const nums=p.map(Number);
-  if(nums.some(isNaN)) return;
-  const[rawRL,rawFR,rawFL,rawRR]=nums;
-
-  /* calibration phase */
-  if(!offsets){
-    offsetAcc.RL+=rawRL; offsetAcc.FR+=rawFR;
-    offsetAcc.FL+=rawFL; offsetAcc.RR+=rawRR;
-    offsetCount++;
-    if(offsetCount>=OFFSET_SAMPLES){
-      offsets={RL:offsetAcc.RL/offsetCount,FR:offsetAcc.FR/offsetCount,
-               FL:offsetAcc.FL/offsetCount,RR:offsetAcc.RR/offsetCount};
-      setStatus('Connected — Live','connected');
-    }
-    return;
-  }
-
-  const fl=rawFL-offsets.FL, fr=rawFR-offsets.FR;
-  const rl=rawRL-offsets.RL, rr=rawRR-offsets.RR;
-
-  flBuf[bufIdx]=fl; frBuf[bufIdx]=fr; rlBuf[bufIdx]=rl; rrBuf[bufIdx]=rr;
-  bufIdx=(bufIdx+1)%AVG_N;
-
-  const afl=bufAvg(flBuf),afr=bufAvg(frBuf);
-  const arl=bufAvg(rlBuf),arr=bufAvg(rrBuf);
-  const cop=computeCoP(afl,afr,arl,arr);
-
-  copX=cop.x; copY=cop.y;
-  forces={FL:afl,FR:afr,RL:arl,RR:arr};
-
-  const now=Date.now();
-  if(cop.v){
-    trace.push({x:cop.x,y:cop.y,t:now});
-    const cut=now-TRACE_SECS*1000;
-    while(trace.length&&trace[0].t<cut) trace.shift();
-  } else { trace=[]; }
-
-  /* update metrics display */
-  document.getElementById('m-fl').textContent=afl.toFixed(1);
-  document.getElementById('m-fr').textContent=afr.toFixed(1);
-  document.getElementById('m-rl').textContent=arl.toFixed(1);
-  document.getElementById('m-rr').textContent=arr.toFixed(1);
-  document.getElementById('m-tot').textContent=(afl+afr+arl+arr).toFixed(1);
-  document.getElementById('m-cop').textContent=`(${copX.toFixed(2)}, ${copY.toFixed(2)})`;
-
-  /* buffer row if recording */
-  if(recording&&cop.v){
-    recBuffer.push(cop.x.toFixed(4)+','+cop.y.toFixed(4));
-  }
-}
-
-// ──────────────────────────────────────────────
-//  FILE SYSTEM — choose directory
-// ──────────────────────────────────────────────
-async function selectDir(){
-  if(!('showDirectoryPicker' in window)){
-    document.getElementById('fs-warn').style.display='block';
-    return;
-  }
-  try{
-    rootDir=await window.showDirectoryPicker({mode:'readwrite',id:'equilibsense'});
-    document.getElementById('dir-display').textContent='📂 '+rootDir.name;
-    await refreshPersonList();
-  }catch(e){
-    if(e.name!=='AbortError') alert('Folder error: '+e.message);
-  }
-}
-
-async function getSessionHandle(name,create=false){
-  if(!rootDir) throw new Error('Choose a save folder first.');
-  return await rootDir.getDirectoryHandle(name,{create});
-}
-
-async function refreshPersonList(){
-  if(!rootDir) return;
-  const names=[];
-  for await(const[name,h] of rootDir.entries()){
-    if(h.kind==='directory') names.push(name);
-  }
-  names.sort();
-  sessionDirs={};
-  names.forEach(n=>sessionDirs[n]=true);
-
-  const existing=document.getElementById('existing-sel');
-  const person  =document.getElementById('person-sel');
-  const preserve=existing.value;
-
-  existing.innerHTML='<option value=""></option>';
-  person.innerHTML  ='<option value=""></option>';
-  names.forEach(n=>{
-    existing.innerHTML+=`<option value="${n}">${n}</option>`;
-    person.innerHTML  +=`<option value="${n}">${n}</option>`;
-  });
-  existing.value=preserve;
-}
-
-function onExistingSelect(v){
-  if(!v) return;
-  document.getElementById('session-inp').value=v;
-  loadSessionOverlay(v);
-}
-function onPersonSelect(v){
-  if(!v) return;
-  document.getElementById('session-inp').value=v;
-  loadSessionOverlay(v);
-}
-
-/* Load all CSVs for a session and add/replace its entry in overlayMap */
-async function loadSessionOverlay(sessionName){
-  if(!rootDir) return;   // silently skip if no folder chosen yet
-
-  // assign a stable color bank to this session
-  if(!(sessionName in overlayMap)){
-    const bank=SESSION_COLOR_BANKS[sessionColorIdx%SESSION_COLOR_BANKS.length];
-    sessionColorIdx++;
-    overlayMap[sessionName]=[];
-    overlayMap[sessionName]._bank=bank;
-  }
-
-  const bank=overlayMap[sessionName]._bank||SESSION_COLOR_BANKS[0];
-  const entries=[];
-  let colorIdx=0;
-
-  let sdir;
-  try{ sdir=await getSessionHandle(sessionName,false); }
-  catch(e){ return; }  // session folder doesn't exist yet — silent
-
-  for(const[key,fname] of Object.entries(EXPERIMENTS)){
-    try{
-      const fh  =await sdir.getFileHandle(fname);
-      const file=await fh.getFile();
-      const text=await file.text();
-      const rows=text.split('\n').slice(1).filter(r=>r.trim());
-      let xs=[],ys=[];
-      rows.forEach(r=>{ const[a,b]=r.split(',').map(Number); if(!isNaN(a)&&!isNaN(b)){xs.push(a);ys.push(b);} });
-      const cl=removeOutliers(xs,ys);
-      xs=cl.x; ys=cl.y;
-      const color=bank[colorIdx++%bank.length];
-      const ell=ellipseParams(xs,ys);
-      entries.push({name:`${sessionName} — ${key.replace(/_/g,' ')}`,x:xs,y:ys,color,ell});
-    }catch(e){}
-  }
-
-  overlayMap[sessionName]=entries;
-  overlayMap[sessionName]._bank=bank;
-  renderOverlayPanel();
-}
-
-function renderOverlayPanel(){
-  const body=document.getElementById('overlay-body');
-  const lines=[];
-  const items=[];
-
-  Object.entries(overlayMap).forEach(([sess,entries])=>{
-    if(!Array.isArray(entries)) return;
-    entries.forEach(ov=>{
-      items.push({name:ov.name,color:ov.color,area:ov.ell?ov.ell.area:0});
-      lines.push(`${ov.name}: area = ${(ov.ell?ov.ell.area:0).toFixed(2)} cm^2`);
-    });
-  });
-
-  if(!items.length){
-    body.innerHTML='<div style="font-size:12px;color:#666;">Overlay: not computed</div>';
-    document.getElementById('overlay-summary').textContent='Overlay: not computed';
-    return;
-  }
-  body.innerHTML=items.map(it=>`
-    <div class="overlay-item">
-      <div class="ov-dot" style="background:${it.color}"></div>
-      <span style="flex:1;font-size:11px;">${it.name}</span>
-      <span class="ov-area">${it.area.toFixed(2)} cm²</span>
-    </div>`).join('');
-  document.getElementById('overlay-summary').textContent=lines.join('\n');
-}
-
-// ──────────────────────────────────────────────
-//  RECORDING
-// ──────────────────────────────────────────────
-async function toggleRecording(){
-  if(recording){ await stopRecording(false); return; }
-
-  const sess=document.getElementById('session-inp').value.trim();
-  if(!sess){alert('Enter a session name first.');return;}
-  if(!rootDir){alert('Choose a save folder first.');return;}
-
-  const exp =document.getElementById('exp-sel').value;
-  const secs=parseInt(document.getElementById('dur-sel').value,10);
-
-  try{
-    recSessionDir=await getSessionHandle(sess,true);
-    recFileName=exp+'.csv';
-    recDurationSecs=secs;
-    recElapsed=0;
-    recBuffer=[];
-
-    recording=true;
-    const btn=document.getElementById('rec-btn');
-    btn.innerHTML='Stop Recording<span id="rec-timer"> — '+secs+'s</span>';
-    btn.className='ctrl-btn recording-active';
-    setStatus('Recording…','recording');
-
-    /* countdown timer — fires every 1 second */
-    recInterval=setInterval(async()=>{
-      recElapsed++;
-      const rem=Math.max(0,recDurationSecs-recElapsed);
-      const timerEl=document.getElementById('rec-timer');
-      if(timerEl) timerEl.textContent=' — '+rem+'s';
-      if(recElapsed>=recDurationSecs){
-        clearInterval(recInterval);
-        recInterval=null;
-        await stopRecording(true);   // auto-stop: writes file + shows popup
-      }
-    },1000);
-
-    /* refresh person list so new session appears in dropdowns */
-    await refreshPersonList();
-  }catch(e){
-    recording=false;
-    recBuffer=[];
-    alert('Recording error:\n'+e.message);
-  }
-}
-
-async function stopRecording(auto=false){
-  if(!recording) return;
-  recording=false;
-
-  if(recInterval){ clearInterval(recInterval); recInterval=null; }
-
-  /* reset button */
-  const btn=document.getElementById('rec-btn');
-  btn.innerHTML='Start Recording<span id="rec-timer"></span>';
-  btn.className='ctrl-btn';
-  if(offsets) setStatus('Connected — Live','connected');
-
-  /* ── Write buffered data to file (atomic, no .crswap left behind) ── */
-  try{
-    if(recSessionDir && recFileName && recBuffer.length>0){
-
-      const fh=await recSessionDir.getFileHandle(recFileName,{create:true});
-
-      /* read any existing content so we can APPEND to it */
-      const existing=await fh.getFile();
-      const existingText=await existing.text();
-
-      /* build final content */
-      let content='';
-      if(!existingText.trim()){
-        content='x,y\n';                         // new file: add header
-      } else {
-        content=existingText.endsWith('\n')
-          ? existingText
-          : existingText+'\n';                   // ensure trailing newline
-      }
-      content+=recBuffer.join('\n')+'\n';
-
-      /* write atomically — createWritable without keepExistingData
-         truncates the file, writes fresh, then close() commits it.
-         This is what prevents the .crswap from sticking around.       */
-      const w=await fh.createWritable();         // NO keepExistingData
-      await w.write(content);
-      await w.close();                           // ← commit; .crswap is gone
-    }
-  }catch(e){
-    console.error('Save error:',e);
-    alert('⚠ Could not save file:\n'+e.message);
-  }
-
-  recBuffer=[];
-  recSessionDir=null;
-  recFileName='';
-
-  if(auto){
-    /* match your original Python QMessageBox behaviour */
-    alert('Recording complete\n\nRecording finished (timer expired).');
-  }
-}
-
-function clearTrace(){ trace=[]; }
-
-function clearOverlays(){
-  overlayMap={};
-  sessionColorIdx=0;
-  document.getElementById('overlay-body').innerHTML='<div style="font-size:12px;color:#666;">Overlay: not computed</div>';
-  document.getElementById('overlay-summary').textContent='Overlay: not computed';
-}
-
-/* "Show Overlay + Ellipses" button — loads the session currently typed in the session input */
-async function showOverlay(){
-  if(!rootDir){alert('Choose a save folder first.');return;}
-  const sess=document.getElementById('session-inp').value.trim();
-  if(!sess){alert('Enter a session name to overlay.');return;}
-  await loadSessionOverlay(sess);
-  if(!overlayMap[sess]||!overlayMap[sess].length){
-    alert('No CSV files found for session "'+sess+'".');
-  }
-}
-
-// ──────────────────────────────────────────────
-//  BROWSER COMPATIBILITY CHECK
-// ──────────────────────────────────────────────
+document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+document.getElementById('page-home').style.display='block';
+
+/* ── QR code (replace URL with your real survey link) ── */
+const SURVEY_URL='https://forms.gle/your-survey-link-here';
 window.addEventListener('load',()=>{
+  new QRCode(document.getElementById('qr-canvas'),{text:SURVEY_URL,width:180,height:180,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
   if(!('serial' in navigator)) document.getElementById('serial-warn').style.display='block';
   if(!('showDirectoryPicker' in window)) document.getElementById('fs-warn').style.display='block';
 });
+
+/* ══ EXPERIMENT CONSTANTS ══ */
+const PLATFORM_SIZE_CM=47,PLOT_RANGE_CM=60,OFFSET_SAMPLES=50,MIN_FORCE=1000,TRACE_SECS=15,AVG_N=50;
+const EXPERIMENTS={eyes_open:'eyes_open.csv',eyes_closed:'eyes_closed.csv',one_leg_right:'one_leg_right.csv',one_leg_left:'one_leg_left.csv',cognitive:'cognitive.csv'};
+const SESSION_COLOR_BANKS=[['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4'],['#46f0f0','#f032e6','#bcf60c','#ff7f50','#00ced1'],['#da70d6','#ffa500','#7fff00','#ff69b4','#1e90ff'],['#ffec00','#a52a2a','#00fa9a','#dc143c','#4169e1']];
+
+/* State */
+let port=null,reader=null,readActive=false,rootDir=null,sessionDirs={};
+let offsets=null,offsetAcc={FL:0,FR:0,RL:0,RR:0},offsetCount=0;
+let flBuf=new Float32Array(AVG_N),frBuf=new Float32Array(AVG_N),rlBuf=new Float32Array(AVG_N),rrBuf=new Float32Array(AVG_N),bufIdx=0;
+let copX=0,copY=0,trace=[],forces={FL:0,FR:0,RL:0,RR:0};
+let recording=false,recInterval=null,recBuffer=[],recSessionDir=null,recFileName='',recDurationSecs=0,recElapsed=0;
+let overlayMap={},sessionColorIdx=0;
+
+/* Canvas */
+const canvas=document.getElementById('cop-canvas');
+const ctx=canvas.getContext('2d');
+let zoomScale=1,panX=0,panY=0,isPanning=false,panStartX=0,panStartY=0,panStartCmX=0,panStartCmY=0;
+function resetView(){zoomScale=1;panX=0;panY=0;}
+function resizeCanvas(){const w=document.getElementById('canvas-wrap');if(!w)return;canvas.width=w.clientWidth;canvas.height=w.clientHeight;}
+window.addEventListener('resize',resizeCanvas);
+
+function getScale(){return Math.min(canvas.width,canvas.height)/PLOT_RANGE_CM;}
+function c2p(cx,cy){const sc=getScale()/zoomScale;return[canvas.width/2+(cx-panX)*sc,canvas.height/2-(cy-panY)*sc];}
+function p2c(px,py){const sc=getScale()/zoomScale;return[panX+(px-canvas.width/2)/sc,panY-(py-canvas.height/2)/sc];}
+function cmPx(cm){return cm*getScale()/zoomScale;}
+function viewHalfX(){return(canvas.width/2)/(getScale()/zoomScale);}
+function viewHalfY(){return(canvas.height/2)/(getScale()/zoomScale);}
+
+canvas.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const rect=canvas.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;
+  const[cmx,cmy]=p2c(mx,my),factor=e.deltaY<0?1.12:1/1.12;
+  zoomScale=Math.max(0.01,Math.min(1000,zoomScale*factor));
+  const sc=getScale()/zoomScale;panX=cmx-(mx-canvas.width/2)/sc;panY=cmy+(my-canvas.height/2)/sc;
+},{passive:false});
+canvas.addEventListener('mousedown',e=>{isPanning=true;panStartX=e.clientX;panStartY=e.clientY;panStartCmX=panX;panStartCmY=panY;canvas.style.cursor='grabbing';});
+window.addEventListener('mousemove',e=>{if(!isPanning)return;const sc=getScale()/zoomScale;panX=panStartCmX-(e.clientX-panStartX)/sc;panY=panStartCmY+(e.clientY-panStartY)/sc;});
+window.addEventListener('mouseup',()=>{isPanning=false;canvas.style.cursor='crosshair';});
+canvas.addEventListener('dblclick',resetView);
+let ltd=0,ltmx=0,ltmy=0,ltpx=0,ltpy=0;
+canvas.addEventListener('touchstart',e=>{if(e.touches.length===2){const t0=e.touches[0],t1=e.touches[1];ltd=Math.hypot(t1.clientX-t0.clientX,t1.clientY-t0.clientY);ltmx=(t0.clientX+t1.clientX)/2;ltmy=(t0.clientY+t1.clientY)/2;ltpx=panX;ltpy=panY;}},{passive:true});
+canvas.addEventListener('touchmove',e=>{if(e.touches.length===2){e.preventDefault();const t0=e.touches[0],t1=e.touches[1],dist=Math.hypot(t1.clientX-t0.clientX,t1.clientY-t0.clientY),midX=(t0.clientX+t1.clientX)/2,midY=(t0.clientY+t1.clientY)/2;zoomScale=Math.max(0.01,Math.min(1000,zoomScale*(dist/ltd)));ltd=dist;const sc=getScale()/zoomScale;panX=ltpx-(midX-ltmx)/sc;panY=ltpy+(midY-ltmy)/sc;}},{passive:false});
+
+function drawAll(){
+  const W=canvas.width,H=canvas.height;if(!W||!H)return;
+  ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
+  let gs=5;if(cmPx(1)>40)gs=1;else if(cmPx(1)>20)gs=2;else if(cmPx(10)<30)gs=10;
+  ctx.strokeStyle='rgba(50,80,50,0.9)';ctx.lineWidth=0.6;
+  const vhx=viewHalfX(),vhy=viewHalfY();
+  const lo=Math.ceil((-vhx+panX)/gs)*gs,hi=Math.floor((vhx+panX)/gs)*gs;
+  const lo2=Math.ceil((-vhy+panY)/gs)*gs,hi2=Math.floor((vhy+panY)/gs)*gs;
+  for(let cm=lo;cm<=hi;cm+=gs){const[px]=c2p(cm,0);ctx.beginPath();ctx.moveTo(px,0);ctx.lineTo(px,H);ctx.stroke();}
+  for(let cm=lo2;cm<=hi2;cm+=gs){const[,py]=c2p(0,cm);ctx.beginPath();ctx.moveTo(0,py);ctx.lineTo(W,py);ctx.stroke();}
+  const fs=Math.max(9,Math.min(12,W/70));ctx.font=`${fs}px Consolas,monospace`;ctx.fillStyle='rgba(160,180,160,0.8)';
+  ctx.textAlign='center';for(let cm=lo;cm<=hi;cm+=gs){if(Math.abs(cm)<0.01)continue;const[px]=c2p(cm,0);ctx.fillText(cm,px,H-3);}
+  ctx.textAlign='right';for(let cm=lo2;cm<=hi2;cm+=gs){if(Math.abs(cm)<0.01)continue;const[,py]=c2p(0,cm);ctx.fillText(cm,22,py+4);}
+  ctx.fillStyle='rgba(160,180,160,0.7)';ctx.textAlign='center';ctx.fillText('X (cm)',W/2,H-1);
+  ctx.save();ctx.translate(10,H/2);ctx.rotate(-Math.PI/2);ctx.fillText('Y (cm)',0,0);ctx.restore();
+  if(zoomScale!==1){ctx.fillStyle='rgba(100,160,100,0.55)';ctx.font='10px Consolas,monospace';ctx.textAlign='left';ctx.fillText(`×${zoomScale.toFixed(1)}`,6,14);}
+  const[rx0,ry0]=c2p(-PLATFORM_SIZE_CM/2,PLATFORM_SIZE_CM/2),[rx1,ry1]=c2p(PLATFORM_SIZE_CM/2,-PLATFORM_SIZE_CM/2);
+  ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(rx0,ry0,rx1-rx0,ry1-ry0);
+  Object.values(overlayMap).forEach(ovList=>{ovList.forEach(ov=>{if(!ov.x.length)return;ctx.save();ctx.strokeStyle=ov.color;ctx.lineWidth=1.5;ctx.globalAlpha=0.75;ctx.beginPath();const[sx,sy]=c2p(ov.x[0],ov.y[0]);ctx.moveTo(sx,sy);for(let i=1;i<ov.x.length;i++){const[ex,ey]=c2p(ov.x[i],ov.y[i]);ctx.lineTo(ex,ey);}ctx.stroke();ctx.restore();});});
+  if(trace.length>1){ctx.save();ctx.strokeStyle='#00cc44';ctx.lineWidth=1.8;ctx.beginPath();const[sx,sy]=c2p(trace[0].x,trace[0].y);ctx.moveTo(sx,sy);trace.forEach(p=>{const[ex,ey]=c2p(p.x,p.y);ctx.lineTo(ex,ey);});ctx.stroke();ctx.restore();}
+  const[dx,dy]=c2p(copX,copY);ctx.save();ctx.shadowColor='#ff3333';ctx.shadowBlur=10;ctx.fillStyle='#ff2200';ctx.beginPath();ctx.arc(dx,dy,6,0,2*Math.PI);ctx.fill();ctx.restore();
+  if(recording){ctx.save();ctx.fillStyle='rgba(255,0,0,0.85)';ctx.beginPath();ctx.arc(W-14,12,5,0,2*Math.PI);ctx.fill();ctx.restore();}
+}
+(function loop(){drawAll();requestAnimationFrame(loop);})();
+
+function computeCoP(fl,fr,rl,rr){const tot=fl+fr+rl+rr;if(Math.abs(tot)<MIN_FORCE)return{x:0,y:0,v:false};const h=PLATFORM_SIZE_CM/2,x=((fr+rr)-(fl+rl))*h/tot,y=((fl+fr)-(rl+rr))*h/tot;if(Math.abs(x)>h+1||Math.abs(y)>h+1)return{x:0,y:0,v:false};return{x,y,v:true};}
+function bufAvg(b){let s=0;for(let i=0;i<b.length;i++)s+=b[i];return s/b.length;}
+function median(a){const s=[...a].sort((x,y)=>x-y),m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;}
+function removeOutliers(xa,ya,th=3.5){if(xa.length<5)return{x:xa,y:ya};const mx=median(xa),my=median(ya),madX=median(xa.map(v=>Math.abs(v-mx))),madY=median(ya.map(v=>Math.abs(v-my)));if(!madX||!madY)return{x:xa,y:ya};const ox=[],oy=[];for(let i=0;i<xa.length;i++){if(Math.abs(0.6745*(xa[i]-mx)/madX)<=th&&Math.abs(0.6745*(ya[i]-my)/madY)<=th){ox.push(xa[i]);oy.push(ya[i]);}}return{x:ox,y:oy};}
+function ellipseParams(x,y){const n=x.length;if(n<3)return null;const mx=x.reduce((a,b)=>a+b,0)/n,my=y.reduce((a,b)=>a+b,0)/n;let cxx=0,cyy=0,cxy=0;for(let i=0;i<n;i++){cxx+=(x[i]-mx)**2;cyy+=(y[i]-my)**2;cxy+=(x[i]-mx)*(y[i]-my);}cxx/=(n-1);cyy/=(n-1);cxy/=(n-1);const tr=cxx+cyy,det=cxx*cyy-cxy*cxy,disc=Math.sqrt(Math.max(0,tr*tr/4-det)),e1=tr/2+disc,e2=tr/2-disc,rx=Math.sqrt(Math.max(0,e1)),ry=Math.sqrt(Math.max(0,e2));return{cx:mx,cy:my,rx,ry,angle:Math.atan2(cxy,cxx-e2)*180/Math.PI,area:Math.PI*rx*ry};}
+function setStatus(txt,cls){const el=document.getElementById('conn-status');el.textContent='● '+txt;el.className=cls||'';}
+
+async function connectSerial(){if(!('serial' in navigator)){document.getElementById('serial-warn').style.display='block';return;}try{const baud=+document.getElementById('baud-sel').value;port=await navigator.serial.requestPort();await port.open({baudRate:baud});offsets=null;offsetAcc={FL:0,FR:0,RL:0,RR:0};offsetCount=0;bufIdx=0;flBuf.fill(0);frBuf.fill(0);rlBuf.fill(0);rrBuf.fill(0);setStatus('Calibrating…','calibrating');document.getElementById('connect-btn').style.display='none';document.getElementById('disconnect-btn').style.display='block';readActive=true;readLoop();}catch(e){if(e.name!=='NotFoundError')alert('Connection failed:\n'+e.message);}}
+async function disconnectSerial(){readActive=false;try{if(reader){await reader.cancel();reader=null;}}catch(e){}try{if(port)await port.close();}catch(e){}port=null;setStatus('Disconnected','');document.getElementById('connect-btn').style.display='block';document.getElementById('disconnect-btn').style.display='none';}
+async function readLoop(){const dec=new TextDecoder();let buf='';while(readActive&&port&&port.readable){try{reader=port.readable.getReader();while(readActive){const{value,done}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});let nl;while((nl=buf.indexOf('\n'))!==-1){parseLine(buf.slice(0,nl).trim());buf=buf.slice(nl+1);}}}catch(e){if(readActive)console.warn(e);}finally{try{reader.releaseLock();}catch(e){}}}}
+function parseLine(line){if(!line)return;const p=line.split('\t');if(p.length!==4)return;const nums=p.map(Number);if(nums.some(isNaN))return;const[rawRL,rawFR,rawFL,rawRR]=nums;if(!offsets){offsetAcc.RL+=rawRL;offsetAcc.FR+=rawFR;offsetAcc.FL+=rawFL;offsetAcc.RR+=rawRR;offsetCount++;if(offsetCount>=OFFSET_SAMPLES){offsets={RL:offsetAcc.RL/offsetCount,FR:offsetAcc.FR/offsetCount,FL:offsetAcc.FL/offsetCount,RR:offsetAcc.RR/offsetCount};setStatus('Connected — Live','connected');}return;}const fl=rawFL-offsets.FL,fr=rawFR-offsets.FR,rl=rawRL-offsets.RL,rr=rawRR-offsets.RR;flBuf[bufIdx]=fl;frBuf[bufIdx]=fr;rlBuf[bufIdx]=rl;rrBuf[bufIdx]=rr;bufIdx=(bufIdx+1)%AVG_N;const afl=bufAvg(flBuf),afr=bufAvg(frBuf),arl=bufAvg(rlBuf),arr=bufAvg(rrBuf),cop=computeCoP(afl,afr,arl,arr);copX=cop.x;copY=cop.y;forces={FL:afl,FR:afr,RL:arl,RR:arr};const now=Date.now();if(cop.v){trace.push({x:cop.x,y:cop.y,t:now});const cut=now-TRACE_SECS*1000;while(trace.length&&trace[0].t<cut)trace.shift();}else trace=[];document.getElementById('m-fl').textContent=afl.toFixed(1);document.getElementById('m-fr').textContent=afr.toFixed(1);document.getElementById('m-rl').textContent=arl.toFixed(1);document.getElementById('m-rr').textContent=arr.toFixed(1);document.getElementById('m-tot').textContent=(afl+afr+arl+arr).toFixed(1);document.getElementById('m-cop').textContent=`(${copX.toFixed(2)}, ${copY.toFixed(2)})`;if(recording&&cop.v)recBuffer.push(cop.x.toFixed(4)+','+cop.y.toFixed(4));}
+
+async function selectDir(){if(!('showDirectoryPicker' in window)){document.getElementById('fs-warn').style.display='block';return;}try{rootDir=await window.showDirectoryPicker({mode:'readwrite',id:'equilibsense'});document.getElementById('dir-display').textContent='📂 '+rootDir.name;await refreshPersonList();}catch(e){if(e.name!=='AbortError')alert('Folder error: '+e.message);}}
+async function getSessionHandle(name,create=false){if(!rootDir)throw new Error('Choose a save folder first.');return await rootDir.getDirectoryHandle(name,{create});}
+async function refreshPersonList(){if(!rootDir)return;const names=[];for await(const[name,h] of rootDir.entries()){if(h.kind==='directory')names.push(name);}names.sort();sessionDirs={};names.forEach(n=>sessionDirs[n]=true);const existing=document.getElementById('existing-sel'),person=document.getElementById('person-sel'),preserve=existing.value;existing.innerHTML='<option value=""></option>';person.innerHTML='<option value=""></option>';names.forEach(n=>{existing.innerHTML+=`<option value="${n}">${n}</option>`;person.innerHTML+=`<option value="${n}">${n}</option>`;});existing.value=preserve;}
+function onExistingSelect(v){if(!v)return;document.getElementById('session-inp').value=v;loadSessionOverlay(v);}
+function onPersonSelect(v){if(!v)return;document.getElementById('session-inp').value=v;loadSessionOverlay(v);}
+
+async function loadSessionOverlay(sessionName){if(!rootDir)return;if(!(sessionName in overlayMap)){const bank=SESSION_COLOR_BANKS[sessionColorIdx%SESSION_COLOR_BANKS.length];sessionColorIdx++;overlayMap[sessionName]=[];overlayMap[sessionName]._bank=bank;}const bank=overlayMap[sessionName]._bank||SESSION_COLOR_BANKS[0];const entries=[];let colorIdx=0;let sdir;try{sdir=await getSessionHandle(sessionName,false);}catch(e){return;}for(const[key,fname] of Object.entries(EXPERIMENTS)){try{const fh=await sdir.getFileHandle(fname),file=await fh.getFile(),text=await file.text();const rows=text.split('\n').slice(1).filter(r=>r.trim());let xs=[],ys=[];rows.forEach(r=>{const[a,b]=r.split(',').map(Number);if(!isNaN(a)&&!isNaN(b)){xs.push(a);ys.push(b);}});const cl=removeOutliers(xs,ys);xs=cl.x;ys=cl.y;const color=bank[colorIdx++%bank.length],ell=ellipseParams(xs,ys);entries.push({name:`${sessionName} — ${key.replace(/_/g,' ')}`,x:xs,y:ys,color,ell});}catch(e){}}overlayMap[sessionName]=entries;overlayMap[sessionName]._bank=bank;renderOverlayPanel();}
+function renderOverlayPanel(){const body=document.getElementById('overlay-body'),lines=[],items=[];Object.entries(overlayMap).forEach(([sess,entries])=>{if(!Array.isArray(entries))return;entries.forEach(ov=>{items.push({name:ov.name,color:ov.color,area:ov.ell?ov.ell.area:0});lines.push(`${ov.name}: area = ${(ov.ell?ov.ell.area:0).toFixed(2)} cm^2`);});});if(!items.length){body.innerHTML='<div style="font-size:12px;color:#666;">Overlay: not computed</div>';document.getElementById('overlay-summary').textContent='Overlay: not computed';return;}body.innerHTML=items.map(it=>`<div class="overlay-item"><div class="ov-dot" style="background:${it.color}"></div><span style="flex:1;font-size:11px;">${it.name}</span><span class="ov-area">${it.area.toFixed(2)} cm²</span></div>`).join('');document.getElementById('overlay-summary').textContent=lines.join('\n');}
+
+async function toggleRecording(){if(recording){await stopRecording(false);return;}const sess=document.getElementById('session-inp').value.trim();if(!sess){alert('Enter a session name first.');return;}if(!rootDir){alert('Choose a save folder first.');return;}const exp=document.getElementById('exp-sel').value,secs=parseInt(document.getElementById('dur-sel').value,10);try{recSessionDir=await getSessionHandle(sess,true);recFileName=exp+'.csv';recDurationSecs=secs;recElapsed=0;recBuffer=[];recording=true;const btn=document.getElementById('rec-btn');btn.innerHTML='Stop Recording<span id="rec-timer"> — '+secs+'s</span>';btn.className='ctrl-btn recording-active';setStatus('Recording…','recording');recInterval=setInterval(async()=>{recElapsed++;const rem=Math.max(0,recDurationSecs-recElapsed);const timerEl=document.getElementById('rec-timer');if(timerEl)timerEl.textContent=' — '+rem+'s';if(recElapsed>=recDurationSecs){clearInterval(recInterval);recInterval=null;await stopRecording(true);}},1000);await refreshPersonList();}catch(e){recording=false;recBuffer=[];alert('Recording error:\n'+e.message);}}
+async function stopRecording(auto=false){if(!recording)return;recording=false;if(recInterval){clearInterval(recInterval);recInterval=null;}const btn=document.getElementById('rec-btn');btn.innerHTML='Start Recording<span id="rec-timer"></span>';btn.className='ctrl-btn';if(offsets)setStatus('Connected — Live','connected');try{if(recSessionDir&&recFileName&&recBuffer.length>0){const fh=await recSessionDir.getFileHandle(recFileName,{create:true}),existing=await fh.getFile(),existingText=await existing.text();let content=!existingText.trim()?'x,y\n':(existingText.endsWith('\n')?existingText:existingText+'\n');content+=recBuffer.join('\n')+'\n';const w=await fh.createWritable();await w.write(content);await w.close();}}catch(e){console.error('Save error:',e);alert('⚠ Could not save file:\n'+e.message);}recBuffer=[];recSessionDir=null;recFileName='';if(auto)alert('Recording complete\n\nRecording finished (timer expired).');}
+function clearTrace(){trace=[];}
+function clearOverlays(){overlayMap={};sessionColorIdx=0;document.getElementById('overlay-body').innerHTML='<div style="font-size:12px;color:#666;">Overlay: not computed</div>';document.getElementById('overlay-summary').textContent='Overlay: not computed';}
+async function showOverlay(){if(!rootDir){alert('Choose a save folder first.');return;}const sess=document.getElementById('session-inp').value.trim();if(!sess){alert('Enter a session name to overlay.');return;}await loadSessionOverlay(sess);if(!overlayMap[sess]||!overlayMap[sess].length)alert('No CSV files found for session "'+sess+'".');}
 </script>
 </body>
 </html>
