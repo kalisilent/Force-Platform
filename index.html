@@ -201,7 +201,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);co
           <div id="qr-canvas"></div>
           <div class="qr-label">Scan to open survey</div>
         </div>
-        <a class="survey-btn" href="https://forms.gle/your-survey-link-here" target="_blank">Open Survey ↗</a>
+        <a class="survey-btn" href="https://forms.office.com/pages/responsepage.aspx?id=M4x5RUMbAUy_PtjWVdM4nINwyiotTBlLqKAH0V8_kCdUNVhMMUhMT1U2QjE1UlJZMTM4SVNCTlo2NS4u&route=shorturl" target="_blank">Open Survey ↗</a>
       </div>
       <div class="divider-v"></div>
       <div class="participate-steps">
@@ -304,7 +304,7 @@ document.querySelectorAll('.page').forEach(p=>p.style.display='none');
 document.getElementById('page-home').style.display='block';
 
 /* ── QR code (replace URL with your real survey link) ── */
-const SURVEY_URL='c:\\Users\\Plaksha.PLAKSHA111\\AppData\\Local\\Packages\\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\\LocalState\\sessions\\92CB14F621F7E48F434282C139549B5862A04D7D\\transfers\\2026-14\\WhatsApp Image 2026-04-01 at 3.52.34 PM.jpeg';
+const SURVEY_URL='https://forms.office.com/pages/responsepage.aspx?id=M4x5RUMbAUy_PtjWVdM4nINwyiotTBlLqKAH0V8_kCdUNVhMMUhMT1U2QjE1UlJZMTM4SVNCTlo2NS4u&route=shorturl';
 window.addEventListener('load',()=>{
   new QRCode(document.getElementById('qr-canvas'),{text:SURVEY_URL,width:180,height:180,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
   if(!('serial' in navigator)) document.getElementById('serial-warn').style.display='block';
