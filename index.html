@@ -3,65 +3,131 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>EquiliSense — Plaksha University</title>
+<title>Sthir — Indian Balance Database for Stability &amp; Healthy Aging</title>
+<meta name="description" content="Sthir: Indian balance database for stability &amp; healthy aging — Plaksha University Research Study"/>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
+/* ═══════════════════════════════
+   CSS VARIABLES & RESET
+═══════════════════════════════ */
 :root{
   --teal:#1a9e8f;--teal-light:#23c9b6;--teal-dark:#0e6b62;
-  --navy:#0a1628;--navy2:#112038;--cream:#f5f0e8;
-  --text-dark:#1a1a2e;--text-mid:#4a5568;--red:#c0392b;--amber:#e6a817;
+  --navy:#0a1628;--navy2:#112038;
+  --text-mid:#4a5568;--red:#c0392b;--amber:#e6a817;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);color:#fff;overflow:hidden;}
 
-/* NAV */
-#nav{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(10,22,40,0.97);border-bottom:1px solid rgba(26,158,143,0.25);display:flex;align-items:center;z-index:1000;padding:0 24px;gap:0;}
-.nav-logo{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--teal-light);letter-spacing:0.02em;margin-right:auto;white-space:nowrap;}
+/* ═══════════════════════════════
+   TOP NAV
+═══════════════════════════════ */
+#nav{
+  position:fixed;top:0;left:0;right:0;height:56px;
+  background:rgba(10,22,40,0.97);
+  border-bottom:1px solid rgba(26,158,143,0.25);
+  display:flex;align-items:center;z-index:1000;padding:0 24px;gap:0;
+}
+.nav-logo{
+  font-family:'Playfair Display',serif;font-size:18px;font-weight:700;
+  color:var(--teal-light);letter-spacing:0.02em;margin-right:auto;white-space:nowrap;
+}
 .nav-logo span{color:#fff;font-style:italic;}
 .nav-tabs{display:flex;gap:4px;}
-.nav-tab{padding:8px 20px;border:1px solid transparent;border-radius:4px;font-size:13px;font-weight:500;cursor:pointer;color:rgba(255,255,255,0.55);background:transparent;transition:all 0.2s;letter-spacing:0.02em;white-space:nowrap;font-family:'DM Sans',sans-serif;}
+.nav-tab{
+  padding:8px 20px;border:1px solid transparent;border-radius:4px;
+  font-size:13px;font-weight:500;cursor:pointer;color:rgba(255,255,255,0.55);
+  background:transparent;transition:all 0.2s;letter-spacing:0.02em;
+  white-space:nowrap;font-family:'DM Sans',sans-serif;
+}
 .nav-tab:hover{color:#fff;border-color:rgba(26,158,143,0.3);background:rgba(26,158,143,0.08);}
 .nav-tab.active{color:#fff;border-color:var(--teal);background:rgba(26,158,143,0.18);}
 
-/* PAGES */
+/* ═══════════════════════════════
+   PAGES
+═══════════════════════════════ */
 .page{position:fixed;top:56px;left:0;right:0;bottom:0;display:none;overflow-y:auto;}
 .page.active{display:block;}
 
-/* ═══ PAGE 1 — HOME ═══ */
+/* ═══════════════════════════════
+   PAGE 1 — ABOUT / HOME
+═══════════════════════════════ */
 #page-home{background:linear-gradient(160deg,var(--navy) 0%,#0d2240 50%,#0a1e35 100%);}
 
-.hero{min-height:calc(100vh - 56px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 24px 40px;position:relative;overflow:hidden;}
-.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 30% 40%,rgba(26,158,143,0.1) 0%,transparent 60%),radial-gradient(ellipse 40% 60% at 75% 60%,rgba(26,158,143,0.06) 0%,transparent 60%);pointer-events:none;}
+.hero{
+  min-height:calc(100vh - 56px);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;
+  padding:60px 24px 40px;position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 60% 50% at 30% 40%,rgba(26,158,143,0.1) 0%,transparent 60%),
+    radial-gradient(ellipse 40% 60% at 75% 60%,rgba(26,158,143,0.06) 0%,transparent 60%);
+  pointer-events:none;
+}
 .hero-rings{position:absolute;width:600px;height:600px;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;opacity:0.08;}
 .hero-ring{position:absolute;inset:0;border-radius:50%;border:1px solid var(--teal-light);animation:expand 6s linear infinite;}
 .hero-ring:nth-child(2){animation-delay:-2s;}
 .hero-ring:nth-child(3){animation-delay:-4s;}
 @keyframes expand{0%{transform:scale(0.3);opacity:0;}50%{opacity:1;}100%{transform:scale(1.4);opacity:0;}}
-.plaksha-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(26,158,143,0.12);border:1px solid rgba(26,158,143,0.3);border-radius:20px;padding:6px 16px;font-size:12px;color:var(--teal-light);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:28px;animation:fadeUp 0.8s ease both;}
+
+.plaksha-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(26,158,143,0.12);border:1px solid rgba(26,158,143,0.3);
+  border-radius:20px;padding:6px 16px;font-size:12px;
+  color:var(--teal-light);letter-spacing:0.1em;text-transform:uppercase;
+  margin-bottom:28px;animation:fadeUp 0.8s ease both;
+}
 .plaksha-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--teal-light);animation:blink 2s infinite;}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}
-.hero-title{font-family:'Playfair Display',serif;font-size:clamp(42px,7vw,88px);font-weight:900;line-height:1.0;color:#fff;margin-bottom:10px;animation:fadeUp 0.9s 0.1s ease both;}
+
+.hero-title{
+  font-family:'Playfair Display',serif;font-size:clamp(42px,7vw,88px);
+  font-weight:900;line-height:1.0;color:#fff;margin-bottom:10px;
+  animation:fadeUp 0.9s 0.1s ease both;
+}
 .hero-title em{font-style:italic;color:var(--teal-light);display:block;}
-.hero-subtitle-line{font-family:'Playfair Display',serif;font-size:clamp(18px,3vw,32px);font-weight:700;color:rgba(255,255,255,0.45);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:28px;animation:fadeUp 0.9s 0.2s ease both;}
-.hero-tagline{font-size:clamp(14px,1.6vw,18px);color:rgba(255,255,255,0.6);max-width:520px;line-height:1.7;margin:0 auto 48px;font-weight:300;animation:fadeUp 0.9s 0.3s ease both;}
-.hero-cta{display:inline-flex;align-items:center;gap:10px;background:var(--teal);color:#fff;border:none;border-radius:6px;padding:14px 32px;font-size:15px;font-weight:500;cursor:pointer;transition:all 0.2s;letter-spacing:0.02em;font-family:'DM Sans',sans-serif;animation:fadeUp 0.9s 0.4s ease both;}
+.hero-subtitle-line{
+  font-family:'Playfair Display',serif;font-size:clamp(16px,2.5vw,26px);
+  font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.08em;
+  margin-bottom:28px;animation:fadeUp 0.9s 0.2s ease both;
+}
+.hero-tagline{
+  font-size:clamp(14px,1.6vw,17px);color:rgba(255,255,255,0.6);
+  max-width:540px;line-height:1.75;margin:0 auto 48px;
+  font-weight:300;animation:fadeUp 0.9s 0.3s ease both;
+}
+.hero-cta{
+  display:inline-flex;align-items:center;gap:10px;background:var(--teal);
+  color:#fff;border:none;border-radius:6px;padding:14px 32px;
+  font-size:15px;font-weight:500;cursor:pointer;transition:all 0.2s;
+  font-family:'DM Sans',sans-serif;animation:fadeUp 0.9s 0.4s ease both;
+}
 .hero-cta:hover{background:var(--teal-light);transform:translateY(-2px);box-shadow:0 8px 24px rgba(26,158,143,0.35);}
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
 
-.stats-strip{display:flex;justify-content:center;gap:0;border-top:1px solid rgba(26,158,143,0.2);border-bottom:1px solid rgba(26,158,143,0.2);background:rgba(26,158,143,0.05);}
+.stats-strip{
+  display:flex;justify-content:center;
+  border-top:1px solid rgba(26,158,143,0.2);border-bottom:1px solid rgba(26,158,143,0.2);
+  background:rgba(26,158,143,0.05);
+}
 .stat-cell{flex:1;max-width:200px;text-align:center;padding:28px 20px;border-right:1px solid rgba(26,158,143,0.15);}
 .stat-cell:last-child{border-right:none;}
 .stat-num{font-family:'Playfair Display',serif;font-size:36px;font-weight:900;color:var(--teal-light);line-height:1;margin-bottom:6px;}
 .stat-lbl{font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:0.08em;text-transform:uppercase;}
 
-.home-sections{padding:80px 24px 60px;max-width:1100px;margin:0 auto;}
-.section-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin-bottom:60px;}
-.info-card{background:rgba(255,255,255,0.04);border:1px solid rgba(26,158,143,0.18);border-radius:8px;padding:28px 24px;transition:border-color 0.2s,background 0.2s;}
+.home-sections{padding:80px 24px 60px;max-width:1000px;margin:0 auto;}
+/* Exactly 3 cards */
+.section-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:60px;}
+@media(max-width:800px){.section-grid{grid-template-columns:1fr;}}
+.info-card{
+  background:rgba(255,255,255,0.04);border:1px solid rgba(26,158,143,0.18);
+  border-radius:8px;padding:28px 24px;transition:border-color 0.2s,background 0.2s;
+}
 .info-card:hover{background:rgba(26,158,143,0.07);border-color:rgba(26,158,143,0.4);}
 .card-icon{font-size:28px;margin-bottom:14px;}
-.card-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:#fff;margin-bottom:10px;}
-.card-title.teal{color:var(--teal-light);}
+.card-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--teal-light);margin-bottom:10px;}
 .card-body{font-size:13px;color:rgba(255,255,255,0.6);line-height:1.7;font-weight:300;}
 .card-body strong{color:rgba(255,255,255,0.85);font-weight:500;}
 
@@ -69,36 +135,118 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);co
 .section-label{font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--teal);margin-bottom:16px;}
 .section-heading{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:#fff;margin-bottom:10px;}
 .section-sub{font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:40px;font-weight:300;}
-.team-grid{display:flex;justify-content:center;flex-wrap:wrap;gap:16px;}
-.team-chip{background:rgba(26,158,143,0.1);border:1px solid rgba(26,158,143,0.25);border-radius:30px;padding:10px 20px;font-size:13px;color:rgba(255,255,255,0.75);}
+.team-grid{display:flex;justify-content:center;flex-wrap:wrap;gap:14px;}
+.team-chip{
+  background:rgba(26,158,143,0.1);border:1px solid rgba(26,158,143,0.25);
+  border-radius:30px;padding:10px 20px;font-size:13px;color:rgba(255,255,255,0.75);
+}
 .team-chip strong{color:#fff;font-weight:500;}
 
-/* ═══ PAGE 2 — PARTICIPATE ═══ */
-#page-participate{background:linear-gradient(145deg,#0d1f35 0%,#0a2218 50%,#0d1f35 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 56px);padding:40px 24px;}
-.participate-wrap{max-width:760px;width:100%;text-align:center;}
-.participate-badge{display:inline-block;background:rgba(26,158,143,0.15);border:1px solid rgba(26,158,143,0.35);border-radius:20px;padding:5px 16px;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--teal-light);margin-bottom:24px;}
-.participate-title{font-family:'Playfair Display',serif;font-size:clamp(32px,5vw,56px);font-weight:900;color:#fff;line-height:1.1;margin-bottom:16px;}
+/* ═══════════════════════════════
+   PAGE 2 — PARTICIPATE
+═══════════════════════════════ */
+#page-participate{
+  background:linear-gradient(145deg,#0d1f35 0%,#0a2218 50%,#0d1f35 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  padding:40px 24px 60px;overflow-y:auto;
+}
+.participate-wrap{max-width:780px;width:100%;text-align:center;}
+.participate-badge{
+  display:inline-block;background:rgba(26,158,143,0.15);border:1px solid rgba(26,158,143,0.35);
+  border-radius:20px;padding:5px 16px;font-size:11px;letter-spacing:0.15em;
+  text-transform:uppercase;color:var(--teal-light);margin-bottom:24px;
+}
+.participate-title{font-family:'Playfair Display',serif;font-size:clamp(30px,5vw,52px);font-weight:900;color:#fff;line-height:1.1;margin-bottom:16px;}
 .participate-title em{color:var(--teal-light);font-style:italic;}
-.participate-desc{font-size:15px;color:rgba(255,255,255,0.6);line-height:1.8;margin-bottom:40px;font-weight:300;max-width:520px;margin-left:auto;margin-right:auto;}
+.participate-desc{font-size:15px;color:rgba(255,255,255,0.6);line-height:1.8;margin-bottom:36px;font-weight:300;max-width:520px;margin-left:auto;margin-right:auto;}
+
 .participate-layout{display:grid;grid-template-columns:auto 1px 1fr;gap:40px;align-items:start;margin-bottom:40px;}
 @media(max-width:600px){.participate-layout{grid-template-columns:1fr;}.divider-v{display:none;}}
 .qr-box{background:#fff;border-radius:12px;padding:20px;display:inline-flex;flex-direction:column;align-items:center;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,0.4);}
 .qr-label{font-size:12px;color:var(--text-mid);letter-spacing:0.04em;}
 .divider-v{width:1px;background:rgba(26,158,143,0.2);min-height:260px;}
 .participate-steps{text-align:left;}
-.step{display:flex;gap:14px;margin-bottom:24px;align-items:flex-start;}
+.step{display:flex;gap:14px;margin-bottom:22px;align-items:flex-start;}
 .step-num{width:28px;height:28px;border-radius:50%;background:rgba(26,158,143,0.2);border:1px solid var(--teal);color:var(--teal-light);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .step-title{font-size:14px;color:#fff;font-weight:500;margin-bottom:3px;}
 .step-desc{font-size:12px;color:rgba(255,255,255,0.5);line-height:1.6;font-weight:300;}
-.who-strip{padding:20px 24px;background:rgba(26,158,143,0.07);border:1px solid rgba(26,158,143,0.2);border-radius:8px;display:flex;gap:32px;justify-content:center;flex-wrap:wrap;}
+.survey-btn{display:inline-block;margin-top:14px;background:var(--teal);color:#fff;padding:11px 26px;border-radius:5px;font-size:14px;text-decoration:none;font-weight:500;transition:background 0.2s;}
+.survey-btn:hover{background:var(--teal-light);}
+
+.who-strip{padding:20px 24px;background:rgba(26,158,143,0.07);border:1px solid rgba(26,158,143,0.2);border-radius:8px;display:flex;gap:28px;justify-content:center;flex-wrap:wrap;margin-bottom:48px;}
 .who-item{text-align:center;}
 .who-icon{font-size:22px;margin-bottom:6px;}
 .who-title{font-size:12px;color:var(--teal-light);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px;}
 .who-text{font-size:12px;color:rgba(255,255,255,0.55);font-weight:300;}
-.survey-btn{display:inline-block;margin-top:16px;background:var(--teal);color:#fff;padding:12px 28px;border-radius:5px;font-size:14px;text-decoration:none;font-weight:500;transition:background 0.2s;}
-.survey-btn:hover{background:var(--teal-light);}
 
-/* ═══ PAGE 3 — EXPERIMENT ═══ */
+/* ── Contact form ── */
+.contact-section{
+  background:rgba(255,255,255,0.04);border:1px solid rgba(26,158,143,0.2);
+  border-radius:10px;padding:36px 32px 32px;text-align:left;
+}
+.contact-heading{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:#fff;margin-bottom:6px;}
+.contact-sub{font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:24px;font-weight:300;}
+.cf-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+@media(max-width:520px){.cf-row{grid-template-columns:1fr;}}
+.cf-field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.cf-label{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.5);}
+.cf-input,.cf-textarea{
+  padding:10px 12px;background:rgba(255,255,255,0.06);
+  border:1px solid rgba(26,158,143,0.25);border-radius:5px;
+  color:#fff;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;
+  transition:border-color 0.2s;
+}
+.cf-input:focus,.cf-textarea:focus{border-color:var(--teal-light);}
+.cf-textarea{resize:vertical;min-height:100px;}
+.cf-submit{
+  background:var(--teal);color:#fff;border:none;border-radius:5px;
+  padding:11px 28px;font-size:14px;font-weight:500;cursor:pointer;
+  font-family:'DM Sans',sans-serif;transition:background 0.2s;
+}
+.cf-submit:hover{background:var(--teal-light);}
+.cf-submit:disabled{opacity:0.5;cursor:default;}
+.cf-status{font-size:13px;margin-top:12px;min-height:18px;}
+.cf-status.ok{color:var(--teal-light);}
+.cf-status.err{color:#f87171;}
+
+/* ═══════════════════════════════
+   LOGIN MODAL (Experiment gate)
+═══════════════════════════════ */
+#login-overlay{
+  position:fixed;inset:0;background:rgba(5,12,25,0.97);
+  z-index:2000;display:none;align-items:center;justify-content:center;
+  flex-direction:column;
+}
+#login-overlay.visible{display:flex;}
+.login-box{
+  background:#0c1a2e;border:1px solid rgba(26,158,143,0.35);
+  border-radius:10px;padding:40px 40px 36px;width:360px;max-width:90vw;
+  box-shadow:0 20px 60px rgba(0,0,0,0.6);
+}
+.login-logo{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--teal-light);text-align:center;margin-bottom:6px;}
+.login-logo span{color:#fff;font-style:italic;}
+.login-subtitle{font-size:12px;color:rgba(255,255,255,0.4);text-align:center;margin-bottom:28px;letter-spacing:0.04em;}
+.login-field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.login-label{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.5);}
+.login-input{
+  padding:10px 12px;background:rgba(255,255,255,0.06);
+  border:1px solid rgba(26,158,143,0.25);border-radius:5px;
+  color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;
+  transition:border-color 0.2s;
+}
+.login-input:focus{border-color:var(--teal-light);}
+.login-btn{
+  width:100%;margin-top:6px;padding:12px;background:var(--teal);color:#fff;
+  border:none;border-radius:5px;font-size:14px;font-weight:500;cursor:pointer;
+  font-family:'DM Sans',sans-serif;transition:background 0.2s;
+}
+.login-btn:hover{background:var(--teal-light);}
+.login-err{font-size:12px;color:#f87171;min-height:16px;margin-top:8px;text-align:center;}
+.login-attempts{font-size:11px;color:rgba(255,255,255,0.3);text-align:center;margin-top:10px;}
+
+/* ═══════════════════════════════
+   PAGE 3 — EXPERIMENT
+═══════════════════════════════ */
 #page-experiment{background:#1e1e1e;overflow:hidden;}
 #exp-app{display:flex;height:100%;width:100%;}
 #plot-pane{flex:1 1 auto;min-width:0;background:#1a1a2e;display:flex;flex-direction:column;position:relative;}
@@ -135,45 +283,114 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);co
 #rec-timer{display:inline-block;margin-left:8px;font-size:11px;color:#f44336;font-weight:700;min-width:30px;}
 #dir-display{font-size:11px;color:#0078d4;word-break:break-all;margin:2px 10px 4px;min-height:14px;}
 .spacer{flex:1;}
+/* logged-in chip in title bar */
+#logged-user-chip{font-size:11px;color:rgba(255,255,255,0.4);margin-right:4px;}
 </style>
 </head>
 <body>
 
+<!-- ══════ LOGIN MODAL (Experiment gate) ══════ -->
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">S<span>thir</span></div>
+    <div class="login-subtitle">Researcher Access — Experiment Module</div>
+    <div class="login-field">
+      <div class="login-label">Username</div>
+      <input class="login-input" type="text" id="login-user" placeholder="Enter username" autocomplete="username"/>
+    </div>
+    <div class="login-field">
+      <div class="login-label">Password</div>
+      <input class="login-input" type="password" id="login-pass" placeholder="Enter password" autocomplete="current-password"/>
+    </div>
+    <button class="login-btn" onclick="attemptLogin()">Sign In →</button>
+    <div class="login-err" id="login-err"></div>
+    <div class="login-attempts" id="login-attempts"></div>
+  </div>
+</div>
+
 <!-- ══════ NAV ══════ -->
 <nav id="nav">
-  <div class="nav-logo">Equili<span>Sense</span></div>
+  <div class="nav-logo">S<span>thir</span></div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('home',this)">🏠 About</button>
     <button class="nav-tab" onclick="showPage('participate',this)">📋 Participate</button>
-    <button class="nav-tab" onclick="showPage('experiment',this)">⚗️ Experiment</button>
+    <button class="nav-tab" onclick="requireLogin(this)">⚗️ Experiment</button>
   </div>
 </nav>
 
-<!-- ══════ PAGE 1: HOME ══════ -->
+<!-- ══════════════════════════════════════════
+     PAGE 1 — ABOUT
+══════════════════════════════════════════ -->
 <div class="page active" id="page-home">
   <div class="hero">
     <div class="hero-rings"><div class="hero-ring"></div><div class="hero-ring"></div><div class="hero-ring"></div></div>
     <div class="plaksha-badge">Plaksha University · Academic Research</div>
     <div class="hero-title">Balance <em>Today</em></div>
-    <div class="hero-subtitle-line">Independence Tomorrow</div>
-    <p class="hero-tagline">Good balance is key for safe movement and long-term independence. We are building the first age- and gender-specific balance database for the Indian population.</p>
-    <button class="hero-cta" onclick="showPage('participate',document.querySelectorAll('.nav-tab')[1])">Join the Study →</button>
+    <div class="hero-subtitle-line">Sthir: Indian balance database for stability &amp; healthy aging</div>
+    <p class="hero-tagline">
+      Good balance is the foundation of safe, independent movement across every age.
+      We are building India's first age- and gender-specific balance reference database —
+      and we need your participation.
+    </p>
+    <button class="hero-cta" onclick="showPage('participate',document.querySelectorAll('.nav-tab')[1])">Enroll in the Study →</button>
   </div>
+
   <div class="stats-strip">
     <div class="stat-cell"><div class="stat-num">31M</div><div class="stat-lbl">Indians 65+ in 2023</div></div>
     <div class="stat-cell"><div class="stat-num">247M</div><div class="stat-lbl">Projected by 2050</div></div>
-    <div class="stat-cell"><div class="stat-num">↑</div><div class="stat-lbl">Fall risk with age</div></div>
+    <div class="stat-cell"><div class="stat-num">↑3×</div><div class="stat-lbl">Fall risk after 65</div></div>
     <div class="stat-cell"><div class="stat-num">0</div><div class="stat-lbl">Existing Indian DB</div></div>
   </div>
+
   <div class="home-sections">
+    <!-- EXACTLY 3 CARDS -->
     <div class="section-grid">
-      <div class="info-card"><div class="card-icon">⚠️</div><div class="card-title teal">The Challenge</div><div class="card-body">Balance changes with age and can be an early sign of neurological conditions like <strong>Parkinson's disease</strong>. Yet there is very little data on how balance changes with age in the Indian population.</div></div>
-      <div class="info-card"><div class="card-icon">💡</div><div class="card-title teal">The Promise</div><div class="card-body">With <strong>early diagnosis and intervention</strong>, balance can be improved through simple exercises — preventing falls and reducing the severity of neuromuscular symptoms before they become debilitating.</div></div>
-      <div class="info-card"><div class="card-icon">🔬</div><div class="card-title teal">The Bottleneck</div><div class="card-body">Lack of <strong>affordable medical devices</strong> to objectively measure balance in low-resource settings. We have built a low-cost force platform as accurate as clinical-grade equipment.</div></div>
-      <div class="info-card"><div class="card-icon">🏗️</div><div class="card-title teal">Our Solution</div><div class="card-body">A custom-built <strong>force platform</strong> measuring Center of Pressure (CoP) in real time — a non-invasive biomarker for early detection of neuromuscular conditions and neurodegeneration.</div></div>
-      <div class="info-card"><div class="card-icon">🧠</div><div class="card-title teal">What is Balance?</div><div class="card-body">A complex neuro-muscular function integrating <strong>sensory input</strong> (eyes, inner ear, touch), <strong>brain processing</strong>, and <strong>motor output</strong> (muscles &amp; joints) to maintain posture against gravity.</div></div>
-      <div class="info-card"><div class="card-icon">📊</div><div class="card-title teal">The Goal</div><div class="card-body">Build the first <strong>Indian balance database</strong> across age groups and genders — feeding AI/ML models to identify risk profiles and generate personalised balance improvement interventions.</div></div>
-    </div>
+
+      <!-- Card 1: What is balance? -->
+      <div class="info-card">
+        <div class="card-icon">🧠</div>
+        <div class="card-title">What is balance?</div>
+        <div class="card-body">
+          Balance is the body's ability to maintain its <strong>center of mass over its base of support</strong> — a continuous, automatic process that most of us never consciously think about.
+          <br/><br/>
+          It depends on the real-time integration of three sensory systems: <strong>the visual system</strong> (what your eyes tell you about the world), <strong>the vestibular system</strong> (your inner ear's sense of gravity and motion), and <strong>proprioception</strong> (feedback from muscles and joints about body position).
+          <br/><br/>
+          The brain synthesises all three streams and sends corrective motor commands to muscles every fraction of a second. Any disruption to this loop — whether from age, injury, or neurological disease — impairs balance.
+        </div>
+      </div>
+
+      <!-- Card 2: Balance with age (The Challenge) -->
+      <div class="info-card">
+        <div class="card-icon">⚠️</div>
+        <div class="card-title">Balance with age</div>
+        <div class="card-body">
+          Balance <strong>gradually declines with age</strong> as sensory acuity, muscle strength, and neural processing speed all reduce. This gradual change makes it a <strong>major risk factor for falls</strong> in the elderly — falls are one of the leading causes of injury-related death in older adults worldwide.
+          <br/><br/>
+          Research now suggests that subtle changes in balance and gait may be among the <strong>earliest detectable signs of neurological conditions</strong> such as Parkinson's disease, often appearing years before a clinical diagnosis is made.
+          <br/><br/>
+          Despite this, the existing Indian balance database is currently <strong>zero</strong>. There is no normative data on how balance changes with age, gender, or lifestyle within the Indian population — meaning clinicians in India have no local reference point to assess whether a patient's balance is normal for their age.
+        </div>
+      </div>
+
+      <!-- Card 3: Good balance as we age (The Promise) -->
+      <div class="info-card">
+        <div class="card-icon">💡</div>
+        <div class="card-title">Good balance as we age</div>
+        <div class="card-body">
+          The encouraging news is that balance decline is <strong>not inevitable</strong>. With early detection and targeted intervention, balance can be meaningfully improved at almost any age.
+          <br/><br/>
+          Simple, evidence-based exercises — balance training, tai-chi, strength work — have been shown to <strong>significantly reduce fall risk</strong> and slow the progression of balance-related decline when started early enough.
+          <br/><br/>
+          The Sthir study aims to build the normative reference data that makes early detection possible for Indian populations, enabling clinicians to flag at-risk individuals before a fall or diagnosis occurs — and giving people the chance to act while it still makes a difference.
+          <br/><br/>
+          <strong>Your participation directly contributes to this goal.</strong>
+          <a href="#" onclick="showPage('participate',document.querySelectorAll('.nav-tab')[1]);return false;" style="color:var(--teal-light);text-decoration:none;font-weight:500;">Enroll today →</a>
+        </div>
+      </div>
+
+    </div><!-- /section-grid -->
+
+    <!-- Team -->
     <div class="team-section">
       <div class="section-label">Our Team</div>
       <div class="section-heading">Academic Research Study</div>
@@ -182,6 +399,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);co
         <div class="team-chip"><strong>Dr. Arshdeep Sidhu</strong> — Principal Scientist</div>
         <div class="team-chip"><strong>Dr. Deepan Muthirayan</strong> — Principal Scientist</div>
         <div class="team-chip"><strong>Prof. Andy Ruina</strong> — Principal Scientist</div>
+        <div class="team-chip"><strong>Dr. Navjot Kaur</strong> — Clinical Scientist</div>
         <div class="team-chip"><strong>Ronak Tiwari</strong> — Volunteer</div>
         <div class="team-chip"><strong>Aanya Shah</strong> — Volunteer</div>
       </div>
@@ -189,43 +407,89 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);co
   </div>
 </div>
 
-<!-- ══════ PAGE 2: PARTICIPATE ══════ -->
+<!-- ══════════════════════════════════════════
+     PAGE 2 — PARTICIPATE
+══════════════════════════════════════════ -->
 <div class="page" id="page-participate">
   <div class="participate-wrap">
     <div class="participate-badge">Volunteer Recruitment</div>
     <div class="participate-title">Help us understand<br><em>balance</em> better</div>
-    <p class="participate-desc">We are looking for volunteers to participate in our academic study and help us create an age, gender and lifestyle-specific balance database for Indian populations.</p>
+    <p class="participate-desc">
+      We are looking for volunteers to help us create India's first age, gender and lifestyle-specific balance reference database. The study is completely non-invasive, free, and takes under 45 minutes.
+    </p>
+
     <div class="participate-layout">
+      <!-- QR -->
       <div style="display:flex;flex-direction:column;align-items:center;gap:14px;">
         <div class="qr-box">
           <div id="qr-canvas"></div>
           <div class="qr-label">Scan to open survey</div>
         </div>
-        <a class="survey-btn" href="https://forms.office.com/pages/responsepage.aspx?id=M4x5RUMbAUy_PtjWVdM4nINwyiotTBlLqKAH0V8_kCdUNVhMMUhMT1U2QjE1UlJZMTM4SVNCTlo2NS4u&route=shorturl" target="_blank">Open Survey ↗</a>
+        <a class="survey-btn" href="https://forms.gle/your-survey-link-here" target="_blank" rel="noopener">Open Survey ↗</a>
       </div>
       <div class="divider-v"></div>
+      <!-- Steps -->
       <div class="participate-steps">
-        <div class="step"><div class="step-num">1</div><div><div class="step-title">Scan the QR code</div><div class="step-desc">Use your smartphone camera to scan and open the survey link.</div></div></div>
-        <div class="step"><div class="step-num">2</div><div><div class="step-title">Complete the questionnaire</div><div class="step-desc">Fill in basic demographic info — takes about 3 minutes. Data stored securely in the university database.</div></div></div>
-        <div class="step"><div class="step-num">3</div><div><div class="step-title">We'll contact you</div><div class="step-desc">If you indicate interest, our team will reach out to schedule a short balance assessment session.</div></div></div>
-        <div class="step"><div class="step-num">4</div><div><div class="step-title">Contribute to science</div><div class="step-desc">Your data will not be shared with any other agency and is used only for our academic study.</div></div></div>
+        <div class="step"><div class="step-num">1</div><div><div class="step-title">Scan the QR code</div><div class="step-desc">Use your smartphone camera to open the survey link directly.</div></div></div>
+        <div class="step"><div class="step-num">2</div><div><div class="step-title">Complete the questionnaire</div><div class="step-desc">Fill in basic demographic information — takes about 3 minutes. Stored securely in the university database.</div></div></div>
+        <div class="step"><div class="step-num">3</div><div><div class="step-title">We will contact you</div><div class="step-desc">If you indicate interest, our team will schedule a short balance assessment session at Plaksha University.</div></div></div>
+        <div class="step"><div class="step-num">4</div><div><div class="step-title">Contribute to science</div><div class="step-desc">Your data will not be shared with any third party and is used exclusively for this academic study.</div></div></div>
       </div>
     </div>
+
     <div class="who-strip">
-      <div class="who-item"><div class="who-icon">🙋</div><div class="who-title">Who can join?</div><div class="who-text">Anyone interested in understanding their balance</div></div>
-      <div class="who-item"><div class="who-icon">🔒</div><div class="who-title">Privacy</div><div class="who-text">Data stored only in university database</div></div>
-      <div class="who-item"><div class="who-icon">⏱️</div><div class="who-title">Time needed</div><div class="who-text">~3 min survey, ~30 min assessment</div></div>
+      <div class="who-item"><div class="who-icon">🙋</div><div class="who-title">Who can join?</div><div class="who-text">Anyone interested in balance health</div></div>
+      <div class="who-item"><div class="who-icon">🔒</div><div class="who-title">Privacy</div><div class="who-text">University database only</div></div>
+      <div class="who-item"><div class="who-icon">⏱️</div><div class="who-title">Time</div><div class="who-text">~3 min survey · ~30 min session</div></div>
       <div class="who-item"><div class="who-icon">🆓</div><div class="who-title">Cost</div><div class="who-text">Completely free</div></div>
     </div>
+
+    <!-- ── CONTACT / KNOW MORE SECTION ── -->
+    <div class="contact-section">
+      <div class="contact-heading">Know more about the study</div>
+      <div class="contact-sub">
+        Have a question or want more information before enrolling? Send us a message and a member of our research team will get back to you within 2 working days.
+        <!-- NOTE: No email address is displayed here. Messages are routed server-side. -->
+      </div>
+      <form id="contact-form" onsubmit="submitContact(event)">
+        <div class="cf-row">
+          <div class="cf-field">
+            <div class="cf-label">Full Name</div>
+            <input class="cf-input" type="text" id="cf-name" placeholder="Your name" required autocomplete="name"/>
+          </div>
+          <div class="cf-field">
+            <div class="cf-label">Email Address</div>
+            <!-- Honeypot anti-spam: real email collected via cf-email -->
+            <input class="cf-input" type="email" id="cf-email" placeholder="your@email.com" required autocomplete="email"/>
+            <!-- Honeypot hidden field — bots fill this, humans don't -->
+            <input type="text" name="_gotcha" style="display:none" tabindex="-1" autocomplete="off"/>
+          </div>
+        </div>
+        <div class="cf-field">
+          <div class="cf-label">Subject</div>
+          <input class="cf-input" type="text" id="cf-subject" placeholder="e.g. Question about the assessment session" required/>
+        </div>
+        <div class="cf-field">
+          <div class="cf-label">Message</div>
+          <textarea class="cf-textarea" id="cf-message" placeholder="Your question or message…" required></textarea>
+        </div>
+        <button class="cf-submit" type="submit" id="cf-btn">Send Message</button>
+        <div class="cf-status" id="cf-status"></div>
+      </form>
+    </div>
+
   </div>
 </div>
 
-<!-- ══════ PAGE 3: EXPERIMENT ══════ -->
+<!-- ══════════════════════════════════════════
+     PAGE 3 — EXPERIMENT (login-gated)
+══════════════════════════════════════════ -->
 <div class="page" id="page-experiment">
   <div id="exp-app">
     <div id="plot-pane">
       <div id="title-bar">
-        <span class="title-text">EquiliSense — Unified Interface</span>
+        <span class="title-text">Sthir — Experiment Interface</span>
+        <span id="logged-user-chip"></span>
         <span id="conn-status">● Disconnected</span>
       </div>
       <div id="canvas-wrap">
@@ -234,15 +498,20 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);co
       </div>
     </div>
     <div id="ctrl-pane">
+
       <div class="group-box" style="margin-top:10px;">
         <div class="group-title">Device Connection</div>
         <div class="group-body">
-          <div class="form-row"><label>Baud Rate:</label><select id="baud-sel"><option value="2000000" selected>2,000,000</option><option value="921600">921,600</option><option value="115200">115,200</option><option value="1000000">1,000,000</option></select></div>
+          <!-- Baud rate select is HIDDEN from UI; value is fixed at 2,000,000 in JS -->
+          <select id="baud-sel" style="display:none;" aria-hidden="true">
+            <option value="2000000" selected>2000000</option>
+          </select>
           <button class="ctrl-btn" id="connect-btn" onclick="connectSerial()" style="width:100%;margin:0;">⚡ Connect Device</button>
           <button class="ctrl-btn" id="disconnect-btn" onclick="disconnectSerial()" style="width:100%;margin:4px 0 0;display:none;background:#ffe0e0;border-color:#f44336;color:#b00;">✕ Disconnect</button>
         </div>
       </div>
       <div id="serial-warn">⚠ Web Serial requires Chrome or Edge (desktop only).</div>
+
       <div class="group-box">
         <div class="group-title">Save Location (Local Folder)</div>
         <div class="group-body" style="padding-bottom:6px;">
@@ -251,23 +520,29 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);co
         </div>
       </div>
       <div id="fs-warn">ℹ File System Access requires Chrome or Edge.</div>
+
       <div class="group-box">
         <div class="group-title">Session Settings</div>
         <div class="group-body">
-          <div class="form-row"><label>Session:</label><input type="text" id="session-inp" placeholder="e.g. Abhishek_male_33"/></div>
+          <div class="form-row"><label>Session:</label><input type="text" id="session-inp" placeholder="e.g. Participant_Name_Age"/></div>
           <div class="form-row"><label>Select Existing:</label><select id="existing-sel" onchange="onExistingSelect(this.value)"><option value=""></option></select></div>
           <div class="form-row"><label>Experiment:</label><select id="exp-sel"><option value="eyes_open">eyes_open</option><option value="eyes_closed">eyes_closed</option><option value="one_leg_right">one_leg_right</option><option value="one_leg_left">one_leg_left</option><option value="cognitive">cognitive</option></select></div>
           <div class="form-row"><label>Duration (s):</label><select id="dur-sel"><option value="5">5</option><option value="10" selected>10</option><option value="20">20</option><option value="30">30</option><option value="60">60</option><option value="120">120</option></select></div>
         </div>
       </div>
+
       <div class="group-box">
         <div class="group-title">Select Person (from save folder)</div>
-        <div class="group-body" style="padding-bottom:8px;"><select id="person-sel" onchange="onPersonSelect(this.value)" style="width:100%;padding:3px 6px;border:1px solid #aaa;border-radius:2px;font-size:12px;"><option value=""></option></select></div>
+        <div class="group-body" style="padding-bottom:8px;">
+          <select id="person-sel" onchange="onPersonSelect(this.value)" style="width:100%;padding:3px 6px;border:1px solid #aaa;border-radius:2px;font-size:12px;"><option value=""></option></select>
+        </div>
       </div>
+
       <button class="ctrl-btn" id="rec-btn" onclick="toggleRecording()">Start Recording<span id="rec-timer"></span></button>
       <button class="ctrl-btn" onclick="showOverlay()">Show Overlay + Ellipses</button>
       <button class="ctrl-btn" onclick="clearTrace()">Clear Trace</button>
       <button class="ctrl-btn" onclick="clearOverlays()">Clear Overlays</button>
+
       <div class="group-box">
         <div class="group-title">Live Metrics</div>
         <div class="group-body">
@@ -279,6 +554,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);co
           <div class="metric-row"><span class="metric-lbl">CoP (cm):</span><span class="metric-val" id="m-cop">(0.00, 0.00)</span></div>
         </div>
       </div>
+
       <div class="group-box">
         <div class="group-title">Overlay Areas (per CSV)</div>
         <div class="group-body" id="overlay-body" style="max-height:160px;overflow-y:auto;"><div style="font-size:12px;color:#666;">Overlay: not computed</div></div>
@@ -289,45 +565,244 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);co
   </div>
 </div>
 
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════ -->
 <script>
 'use strict';
 
-/* ── Navigation ── */
-function showPage(id,tabEl){
-  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('page-'+id).style.display='block';
-  tabEl.classList.add('active');
-  if(id==='experiment') setTimeout(resizeCanvas,60);
-}
-document.querySelectorAll('.page').forEach(p=>p.style.display='none');
-document.getElementById('page-home').style.display='block';
+/* ═══════════════════════════════════════════════
+   AUTH / LOGIN
+   ─────────────────────────────────────────────
+   Credentials are validated against a SHA-256
+   hash of the password — the plaintext is never
+   stored in source.
 
-/* ── QR code (replace URL with your real survey link) ── */
-const SURVEY_URL='https://forms.office.com/pages/responsepage.aspx?id=M4x5RUMbAUy_PtjWVdM4nINwyiotTBlLqKAH0V8_kCdUNVhMMUhMT1U2QjE1UlJZMTM4SVNCTlo2NS4u&route=shorturl';
-window.addEventListener('load',()=>{
-  new QRCode(document.getElementById('qr-canvas'),{text:SURVEY_URL,width:180,height:180,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
-  if(!('serial' in navigator)) document.getElementById('serial-warn').style.display='block';
-  if(!('showDirectoryPicker' in window)) document.getElementById('fs-warn').style.display='block';
+   DEFAULT CREDENTIALS (CHANGE BEFORE DEPLOYING):
+     Username : researcher
+     Password : Sthir@2024
+
+   To change: replace CRED_HASH with:
+     SHA-256( newPassword )
+   in lowercase hex. You can generate a new hash at
+   https://emn178.github.io/online-tools/sha256.html
+   or via:  python3 -c "import hashlib; print(hashlib.sha256('YourNewPass'.encode()).hexdigest())"
+═══════════════════════════════════════════════ */
+const VALID_USER   = 'researcher';
+const CRED_HASH    = 'dbbf4eb534521816a837c8d85de3d8643fcc6eb58215274f49a3593c7a097ac1'; // SHA-256("Sthir@2024")
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS   = 5 * 60 * 1000; // 5-minute lockout after max attempts
+
+let loginAttempts = parseInt(sessionStorage.getItem('sthir_attempts') || '0');
+let pendingTab    = null; // the nav-tab element that triggered login
+
+async function sha256hex(str) {
+  const buf  = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function requireLogin(tabEl) {
+  if (sessionStorage.getItem('sthir_auth') === 'ok') {
+    showPage('experiment', tabEl);
+    return;
+  }
+  // Check lockout
+  const lockUntil = parseInt(sessionStorage.getItem('sthir_lock') || '0');
+  if (Date.now() < lockUntil) {
+    const rem = Math.ceil((lockUntil - Date.now()) / 60000);
+    document.getElementById('login-err').textContent = `Too many attempts. Try again in ${rem} min.`;
+    document.getElementById('login-overlay').classList.add('visible');
+    return;
+  }
+  pendingTab = tabEl;
+  document.getElementById('login-err').textContent = '';
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+  updateAttemptsDisplay();
+  document.getElementById('login-overlay').classList.add('visible');
+  setTimeout(() => document.getElementById('login-user').focus(), 60);
+}
+
+function updateAttemptsDisplay() {
+  const rem = MAX_ATTEMPTS - loginAttempts;
+  const el  = document.getElementById('login-attempts');
+  el.textContent = loginAttempts > 0 ? `${rem} attempt${rem===1?'':'s'} remaining` : '';
+}
+
+async function attemptLogin() {
+  const lockUntil = parseInt(sessionStorage.getItem('sthir_lock') || '0');
+  if (Date.now() < lockUntil) return;
+
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const hash = await sha256hex(pass);
+
+  if (user === VALID_USER && hash === CRED_HASH) {
+    /* ── SUCCESS ── */
+    sessionStorage.setItem('sthir_auth', 'ok');
+    sessionStorage.setItem('sthir_user', user);
+    sessionStorage.setItem('sthir_attempts', '0');
+    loginAttempts = 0;
+    document.getElementById('login-overlay').classList.remove('visible');
+
+    /* Log identity + timestamp (console + sessionStorage audit trail) */
+    const loginEvent = { user, timestamp: new Date().toISOString(), ua: navigator.userAgent.slice(0,80) };
+    console.log('[STHIR-LOGIN]', loginEvent);
+    // Append to in-browser audit log (persists for this session)
+    const log = JSON.parse(sessionStorage.getItem('sthir_login_log') || '[]');
+    log.push(loginEvent);
+    sessionStorage.setItem('sthir_login_log', JSON.stringify(log));
+
+    /* ── BACKEND HOOK (optional) ──
+       Uncomment and fill in your endpoint to send login events server-side:
+    fetch('/api/auth-log', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(loginEvent)
+    }).catch(()=>{});
+    */
+
+    if (pendingTab) { showPage('experiment', pendingTab); pendingTab = null; }
+    document.getElementById('logged-user-chip').textContent = `👤 ${user}`;
+  } else {
+    /* ── FAILURE ── */
+    loginAttempts++;
+    sessionStorage.setItem('sthir_attempts', String(loginAttempts));
+    console.warn('[STHIR-LOGIN-FAIL]', { user, timestamp: new Date().toISOString(), attempt: loginAttempts });
+    if (loginAttempts >= MAX_ATTEMPTS) {
+      sessionStorage.setItem('sthir_lock', String(Date.now() + LOCKOUT_MS));
+      document.getElementById('login-err').textContent = 'Account locked for 5 minutes.';
+    } else {
+      document.getElementById('login-err').textContent = 'Incorrect username or password.';
+      updateAttemptsDisplay();
+    }
+  }
+}
+
+// Allow Enter key in login form
+document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') attemptLogin(); });
+document.getElementById('login-user').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('login-pass').focus(); });
+
+/* ═══════════════════════════════════════════════
+   PAGE NAVIGATION
+═══════════════════════════════════════════════ */
+function showPage(id, tabEl) {
+  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).style.display = 'block';
+  tabEl.classList.add('active');
+  if (id === 'experiment') setTimeout(resizeCanvas, 60);
+}
+document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+document.getElementById('page-home').style.display = 'block';
+
+/* ═══════════════════════════════════════════════
+   QR CODE
+═══════════════════════════════════════════════ */
+const SURVEY_URL = 'https://forms.gle/your-survey-link-here'; // ← replace with real URL
+window.addEventListener('load', () => {
+  new QRCode(document.getElementById('qr-canvas'), {
+    text: SURVEY_URL, width: 180, height: 180,
+    colorDark: '#000', colorLight: '#fff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+  if (!('serial' in navigator)) document.getElementById('serial-warn').style.display = 'block';
+  if (!('showDirectoryPicker' in window)) document.getElementById('fs-warn').style.display = 'block';
 });
 
-/* ══ EXPERIMENT CONSTANTS ══ */
-const PLATFORM_SIZE_CM=47,PLOT_RANGE_CM=60,OFFSET_SAMPLES=50,MIN_FORCE=1000,TRACE_SECS=15,AVG_N=50;
-const EXPERIMENTS={eyes_open:'eyes_open.csv',eyes_closed:'eyes_closed.csv',one_leg_right:'one_leg_right.csv',one_leg_left:'one_leg_left.csv',cognitive:'cognitive.csv'};
-const SESSION_COLOR_BANKS=[['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4'],['#46f0f0','#f032e6','#bcf60c','#ff7f50','#00ced1'],['#da70d6','#ffa500','#7fff00','#ff69b4','#1e90ff'],['#ffec00','#a52a2a','#00fa9a','#dc143c','#4169e1']];
+/* ═══════════════════════════════════════════════
+   CONTACT FORM
+   ─────────────────────────────────────────────
+   Submits to Formspree (or any REST endpoint).
+   The destination email is stored ONLY on the
+   Formspree backend — never exposed in this file.
 
-/* State */
+   Setup:
+   1. Create a free form at https://formspree.io
+   2. Replace CONTACT_ENDPOINT with your form URL
+      e.g. 'https://formspree.io/f/xpznwqab'
+   3. Formspree will forward submissions to your
+      configured inbox. No email address in code.
+═══════════════════════════════════════════════ */
+const CONTACT_ENDPOINT = '/api/contact'; // ← replace with Formspree URL or your own API route
+
+async function submitContact(e) {
+  e.preventDefault();
+  const btn    = document.getElementById('cf-btn');
+  const status = document.getElementById('cf-status');
+  const honey  = document.querySelector('input[name="_gotcha"]');
+
+  // Honeypot anti-spam check
+  if (honey && honey.value) { status.textContent = ''; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  status.className = 'cf-status';
+  status.textContent = '';
+
+  const payload = {
+    name:    document.getElementById('cf-name').value.trim(),
+    email:   document.getElementById('cf-email').value.trim(),
+    subject: document.getElementById('cf-subject').value.trim(),
+    message: document.getElementById('cf-message').value.trim(),
+    _subject:`[Sthir Study] ${document.getElementById('cf-subject').value.trim()}`,
+  };
+
+  try {
+    const res = await fetch(CONTACT_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      status.textContent = '✓ Message sent! We will reply within 2 working days.';
+      status.className   = 'cf-status ok';
+      document.getElementById('contact-form').reset();
+    } else {
+      throw new Error('Server error ' + res.status);
+    }
+  } catch (err) {
+    status.textContent = '⚠ Could not send — please try again or contact us directly via the survey link.';
+    status.className   = 'cf-status err';
+    console.error('[STHIR-CONTACT-ERROR]', err);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Send Message';
+}
+
+/* ═══════════════════════════════════════════════
+   EXPERIMENT CONSTANTS  (mirrors rk.py)
+═══════════════════════════════════════════════ */
+const PLATFORM_SIZE_CM = 47, PLOT_RANGE_CM = 60, OFFSET_SAMPLES = 50;
+const MIN_FORCE = 1000, TRACE_SECS = 15, AVG_N = 50;
+const FIXED_BAUD = 2000000; // baud rate fixed; not exposed to UI
+
+const EXPERIMENTS = {
+  eyes_open:'eyes_open.csv', eyes_closed:'eyes_closed.csv',
+  one_leg_right:'one_leg_right.csv', one_leg_left:'one_leg_left.csv', cognitive:'cognitive.csv'
+};
+const SESSION_COLOR_BANKS = [
+  ['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4'],
+  ['#46f0f0','#f032e6','#bcf60c','#ff7f50','#00ced1'],
+  ['#da70d6','#ffa500','#7fff00','#ff69b4','#1e90ff'],
+  ['#ffec00','#a52a2a','#00fa9a','#dc143c','#4169e1'],
+];
+
+/* ── Runtime state ── */
 let port=null,reader=null,readActive=false,rootDir=null,sessionDirs={};
 let offsets=null,offsetAcc={FL:0,FR:0,RL:0,RR:0},offsetCount=0;
-let flBuf=new Float32Array(AVG_N),frBuf=new Float32Array(AVG_N),rlBuf=new Float32Array(AVG_N),rrBuf=new Float32Array(AVG_N),bufIdx=0;
+let flBuf=new Float32Array(AVG_N),frBuf=new Float32Array(AVG_N);
+let rlBuf=new Float32Array(AVG_N),rrBuf=new Float32Array(AVG_N),bufIdx=0;
 let copX=0,copY=0,trace=[],forces={FL:0,FR:0,RL:0,RR:0};
 let recording=false,recInterval=null,recBuffer=[],recSessionDir=null,recFileName='',recDurationSecs=0,recElapsed=0;
 let overlayMap={},sessionColorIdx=0;
 
-/* Canvas */
-const canvas=document.getElementById('cop-canvas');
-const ctx=canvas.getContext('2d');
-let zoomScale=1,panX=0,panY=0,isPanning=false,panStartX=0,panStartY=0,panStartCmX=0,panStartCmY=0;
+/* ── Canvas + zoom/pan ── */
+const canvas = document.getElementById('cop-canvas');
+const ctx    = canvas.getContext('2d');
+let zoomScale=1,panX=0,panY=0,isPanning=false;
+let panStartX=0,panStartY=0,panStartCmX=0,panStartCmY=0;
 function resetView(){zoomScale=1;panX=0;panY=0;}
 function resizeCanvas(){const w=document.getElementById('canvas-wrap');if(!w)return;canvas.width=w.clientWidth;canvas.height=w.clientHeight;}
 window.addEventListener('resize',resizeCanvas);
@@ -339,20 +814,14 @@ function cmPx(cm){return cm*getScale()/zoomScale;}
 function viewHalfX(){return(canvas.width/2)/(getScale()/zoomScale);}
 function viewHalfY(){return(canvas.height/2)/(getScale()/zoomScale);}
 
-canvas.addEventListener('wheel',e=>{
-  e.preventDefault();
-  const rect=canvas.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;
-  const[cmx,cmy]=p2c(mx,my),factor=e.deltaY<0?1.12:1/1.12;
-  zoomScale=Math.max(0.01,Math.min(1000,zoomScale*factor));
-  const sc=getScale()/zoomScale;panX=cmx-(mx-canvas.width/2)/sc;panY=cmy+(my-canvas.height/2)/sc;
-},{passive:false});
+canvas.addEventListener('wheel',e=>{e.preventDefault();const rect=canvas.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;const[cmx,cmy]=p2c(mx,my),f=e.deltaY<0?1.12:1/1.12;zoomScale=Math.max(0.01,Math.min(1000,zoomScale*f));const sc=getScale()/zoomScale;panX=cmx-(mx-canvas.width/2)/sc;panY=cmy+(my-canvas.height/2)/sc;},{passive:false});
 canvas.addEventListener('mousedown',e=>{isPanning=true;panStartX=e.clientX;panStartY=e.clientY;panStartCmX=panX;panStartCmY=panY;canvas.style.cursor='grabbing';});
 window.addEventListener('mousemove',e=>{if(!isPanning)return;const sc=getScale()/zoomScale;panX=panStartCmX-(e.clientX-panStartX)/sc;panY=panStartCmY+(e.clientY-panStartY)/sc;});
 window.addEventListener('mouseup',()=>{isPanning=false;canvas.style.cursor='crosshair';});
 canvas.addEventListener('dblclick',resetView);
 let ltd=0,ltmx=0,ltmy=0,ltpx=0,ltpy=0;
 canvas.addEventListener('touchstart',e=>{if(e.touches.length===2){const t0=e.touches[0],t1=e.touches[1];ltd=Math.hypot(t1.clientX-t0.clientX,t1.clientY-t0.clientY);ltmx=(t0.clientX+t1.clientX)/2;ltmy=(t0.clientY+t1.clientY)/2;ltpx=panX;ltpy=panY;}},{passive:true});
-canvas.addEventListener('touchmove',e=>{if(e.touches.length===2){e.preventDefault();const t0=e.touches[0],t1=e.touches[1],dist=Math.hypot(t1.clientX-t0.clientX,t1.clientY-t0.clientY),midX=(t0.clientX+t1.clientX)/2,midY=(t0.clientY+t1.clientY)/2;zoomScale=Math.max(0.01,Math.min(1000,zoomScale*(dist/ltd)));ltd=dist;const sc=getScale()/zoomScale;panX=ltpx-(midX-ltmx)/sc;panY=ltpy+(midY-ltmy)/sc;}},{passive:false});
+canvas.addEventListener('touchmove',e=>{if(e.touches.length===2){e.preventDefault();const t0=e.touches[0],t1=e.touches[1],d=Math.hypot(t1.clientX-t0.clientX,t1.clientY-t0.clientY),mx=(t0.clientX+t1.clientX)/2,my=(t0.clientY+t1.clientY)/2;zoomScale=Math.max(0.01,Math.min(1000,zoomScale*(d/ltd)));ltd=d;const sc=getScale()/zoomScale;panX=ltpx-(mx-ltmx)/sc;panY=ltpy+(my-ltmy)/sc;}},{passive:false});
 
 function drawAll(){
   const W=canvas.width,H=canvas.height;if(!W||!H)return;
@@ -364,9 +833,11 @@ function drawAll(){
   const lo2=Math.ceil((-vhy+panY)/gs)*gs,hi2=Math.floor((vhy+panY)/gs)*gs;
   for(let cm=lo;cm<=hi;cm+=gs){const[px]=c2p(cm,0);ctx.beginPath();ctx.moveTo(px,0);ctx.lineTo(px,H);ctx.stroke();}
   for(let cm=lo2;cm<=hi2;cm+=gs){const[,py]=c2p(0,cm);ctx.beginPath();ctx.moveTo(0,py);ctx.lineTo(W,py);ctx.stroke();}
-  const fs=Math.max(9,Math.min(12,W/70));ctx.font=`${fs}px Consolas,monospace`;ctx.fillStyle='rgba(160,180,160,0.8)';
-  ctx.textAlign='center';for(let cm=lo;cm<=hi;cm+=gs){if(Math.abs(cm)<0.01)continue;const[px]=c2p(cm,0);ctx.fillText(cm,px,H-3);}
-  ctx.textAlign='right';for(let cm=lo2;cm<=hi2;cm+=gs){if(Math.abs(cm)<0.01)continue;const[,py]=c2p(0,cm);ctx.fillText(cm,22,py+4);}
+  const fs=Math.max(9,Math.min(12,W/70));ctx.font=`${fs}px Consolas,monospace`;
+  ctx.fillStyle='rgba(160,180,160,0.8)';ctx.textAlign='center';
+  for(let cm=lo;cm<=hi;cm+=gs){if(Math.abs(cm)<0.01)continue;const[px]=c2p(cm,0);ctx.fillText(cm,px,H-3);}
+  ctx.textAlign='right';
+  for(let cm=lo2;cm<=hi2;cm+=gs){if(Math.abs(cm)<0.01)continue;const[,py]=c2p(0,cm);ctx.fillText(cm,22,py+4);}
   ctx.fillStyle='rgba(160,180,160,0.7)';ctx.textAlign='center';ctx.fillText('X (cm)',W/2,H-1);
   ctx.save();ctx.translate(10,H/2);ctx.rotate(-Math.PI/2);ctx.fillText('Y (cm)',0,0);ctx.restore();
   if(zoomScale!==1){ctx.fillStyle='rgba(100,160,100,0.55)';ctx.font='10px Consolas,monospace';ctx.textAlign='left';ctx.fillText(`×${zoomScale.toFixed(1)}`,6,14);}
@@ -383,20 +854,31 @@ function computeCoP(fl,fr,rl,rr){const tot=fl+fr+rl+rr;if(Math.abs(tot)<MIN_FORC
 function bufAvg(b){let s=0;for(let i=0;i<b.length;i++)s+=b[i];return s/b.length;}
 function median(a){const s=[...a].sort((x,y)=>x-y),m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;}
 function removeOutliers(xa,ya,th=3.5){if(xa.length<5)return{x:xa,y:ya};const mx=median(xa),my=median(ya),madX=median(xa.map(v=>Math.abs(v-mx))),madY=median(ya.map(v=>Math.abs(v-my)));if(!madX||!madY)return{x:xa,y:ya};const ox=[],oy=[];for(let i=0;i<xa.length;i++){if(Math.abs(0.6745*(xa[i]-mx)/madX)<=th&&Math.abs(0.6745*(ya[i]-my)/madY)<=th){ox.push(xa[i]);oy.push(ya[i]);}}return{x:ox,y:oy};}
-function ellipseParams(x,y){const n=x.length;if(n<3)return null;const mx=x.reduce((a,b)=>a+b,0)/n,my=y.reduce((a,b)=>a+b,0)/n;let cxx=0,cyy=0,cxy=0;for(let i=0;i<n;i++){cxx+=(x[i]-mx)**2;cyy+=(y[i]-my)**2;cxy+=(x[i]-mx)*(y[i]-my);}cxx/=(n-1);cyy/=(n-1);cxy/=(n-1);const tr=cxx+cyy,det=cxx*cyy-cxy*cxy,disc=Math.sqrt(Math.max(0,tr*tr/4-det)),e1=tr/2+disc,e2=tr/2-disc,rx=Math.sqrt(Math.max(0,e1)),ry=Math.sqrt(Math.max(0,e2));return{cx:mx,cy:my,rx,ry,angle:Math.atan2(cxy,cxx-e2)*180/Math.PI,area:Math.PI*rx*ry};}
+function ellipseParams(x,y){const n=x.length;if(n<3)return null;const mx=x.reduce((a,b)=>a+b,0)/n,my=y.reduce((a,b)=>a+b,0)/n;let cxx=0,cyy=0,cxy=0;for(let i=0;i<n;i++){cxx+=(x[i]-mx)**2;cyy+=(y[i]-my)**2;cxy+=(x[i]-mx)*(y[i]-my);}cxx/=(n-1);cyy/=(n-1);cxy/=(n-1);const tr=cxx+cyy,det=cxx*cyy-cxy*cxy,disc=Math.sqrt(Math.max(0,tr*tr/4-det)),e1=tr/2+disc,e2=tr/2-disc;return{cx:mx,cy:my,rx:Math.sqrt(Math.max(0,e1)),ry:Math.sqrt(Math.max(0,e2)),angle:Math.atan2(cxy,cxx-e2)*180/Math.PI,area:Math.PI*Math.sqrt(Math.max(0,e1))*Math.sqrt(Math.max(0,e2))};}
 function setStatus(txt,cls){const el=document.getElementById('conn-status');el.textContent='● '+txt;el.className=cls||'';}
 
-async function connectSerial(){if(!('serial' in navigator)){document.getElementById('serial-warn').style.display='block';return;}try{const baud=+document.getElementById('baud-sel').value;port=await navigator.serial.requestPort();await port.open({baudRate:baud});offsets=null;offsetAcc={FL:0,FR:0,RL:0,RR:0};offsetCount=0;bufIdx=0;flBuf.fill(0);frBuf.fill(0);rlBuf.fill(0);rrBuf.fill(0);setStatus('Calibrating…','calibrating');document.getElementById('connect-btn').style.display='none';document.getElementById('disconnect-btn').style.display='block';readActive=true;readLoop();}catch(e){if(e.name!=='NotFoundError')alert('Connection failed:\n'+e.message);}}
+async function connectSerial(){
+  if(!('serial' in navigator)){document.getElementById('serial-warn').style.display='block';return;}
+  try{
+    port=await navigator.serial.requestPort();
+    await port.open({baudRate:FIXED_BAUD}); // always 2,000,000 — not user-configurable
+    offsets=null;offsetAcc={FL:0,FR:0,RL:0,RR:0};offsetCount=0;
+    bufIdx=0;flBuf.fill(0);frBuf.fill(0);rlBuf.fill(0);rrBuf.fill(0);
+    setStatus('Calibrating…','calibrating');
+    document.getElementById('connect-btn').style.display='none';
+    document.getElementById('disconnect-btn').style.display='block';
+    readActive=true;readLoop();
+  }catch(e){if(e.name!=='NotFoundError')alert('Connection failed:\n'+e.message);}
+}
 async function disconnectSerial(){readActive=false;try{if(reader){await reader.cancel();reader=null;}}catch(e){}try{if(port)await port.close();}catch(e){}port=null;setStatus('Disconnected','');document.getElementById('connect-btn').style.display='block';document.getElementById('disconnect-btn').style.display='none';}
 async function readLoop(){const dec=new TextDecoder();let buf='';while(readActive&&port&&port.readable){try{reader=port.readable.getReader();while(readActive){const{value,done}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});let nl;while((nl=buf.indexOf('\n'))!==-1){parseLine(buf.slice(0,nl).trim());buf=buf.slice(nl+1);}}}catch(e){if(readActive)console.warn(e);}finally{try{reader.releaseLock();}catch(e){}}}}
 function parseLine(line){if(!line)return;const p=line.split('\t');if(p.length!==4)return;const nums=p.map(Number);if(nums.some(isNaN))return;const[rawRL,rawFR,rawFL,rawRR]=nums;if(!offsets){offsetAcc.RL+=rawRL;offsetAcc.FR+=rawFR;offsetAcc.FL+=rawFL;offsetAcc.RR+=rawRR;offsetCount++;if(offsetCount>=OFFSET_SAMPLES){offsets={RL:offsetAcc.RL/offsetCount,FR:offsetAcc.FR/offsetCount,FL:offsetAcc.FL/offsetCount,RR:offsetAcc.RR/offsetCount};setStatus('Connected — Live','connected');}return;}const fl=rawFL-offsets.FL,fr=rawFR-offsets.FR,rl=rawRL-offsets.RL,rr=rawRR-offsets.RR;flBuf[bufIdx]=fl;frBuf[bufIdx]=fr;rlBuf[bufIdx]=rl;rrBuf[bufIdx]=rr;bufIdx=(bufIdx+1)%AVG_N;const afl=bufAvg(flBuf),afr=bufAvg(frBuf),arl=bufAvg(rlBuf),arr=bufAvg(rrBuf),cop=computeCoP(afl,afr,arl,arr);copX=cop.x;copY=cop.y;forces={FL:afl,FR:afr,RL:arl,RR:arr};const now=Date.now();if(cop.v){trace.push({x:cop.x,y:cop.y,t:now});const cut=now-TRACE_SECS*1000;while(trace.length&&trace[0].t<cut)trace.shift();}else trace=[];document.getElementById('m-fl').textContent=afl.toFixed(1);document.getElementById('m-fr').textContent=afr.toFixed(1);document.getElementById('m-rl').textContent=arl.toFixed(1);document.getElementById('m-rr').textContent=arr.toFixed(1);document.getElementById('m-tot').textContent=(afl+afr+arl+arr).toFixed(1);document.getElementById('m-cop').textContent=`(${copX.toFixed(2)}, ${copY.toFixed(2)})`;if(recording&&cop.v)recBuffer.push(cop.x.toFixed(4)+','+cop.y.toFixed(4));}
 
-async function selectDir(){if(!('showDirectoryPicker' in window)){document.getElementById('fs-warn').style.display='block';return;}try{rootDir=await window.showDirectoryPicker({mode:'readwrite',id:'equilibsense'});document.getElementById('dir-display').textContent='📂 '+rootDir.name;await refreshPersonList();}catch(e){if(e.name!=='AbortError')alert('Folder error: '+e.message);}}
+async function selectDir(){if(!('showDirectoryPicker' in window)){document.getElementById('fs-warn').style.display='block';return;}try{rootDir=await window.showDirectoryPicker({mode:'readwrite',id:'sthir'});document.getElementById('dir-display').textContent='📂 '+rootDir.name;await refreshPersonList();}catch(e){if(e.name!=='AbortError')alert('Folder error: '+e.message);}}
 async function getSessionHandle(name,create=false){if(!rootDir)throw new Error('Choose a save folder first.');return await rootDir.getDirectoryHandle(name,{create});}
 async function refreshPersonList(){if(!rootDir)return;const names=[];for await(const[name,h] of rootDir.entries()){if(h.kind==='directory')names.push(name);}names.sort();sessionDirs={};names.forEach(n=>sessionDirs[n]=true);const existing=document.getElementById('existing-sel'),person=document.getElementById('person-sel'),preserve=existing.value;existing.innerHTML='<option value=""></option>';person.innerHTML='<option value=""></option>';names.forEach(n=>{existing.innerHTML+=`<option value="${n}">${n}</option>`;person.innerHTML+=`<option value="${n}">${n}</option>`;});existing.value=preserve;}
 function onExistingSelect(v){if(!v)return;document.getElementById('session-inp').value=v;loadSessionOverlay(v);}
 function onPersonSelect(v){if(!v)return;document.getElementById('session-inp').value=v;loadSessionOverlay(v);}
-
 async function loadSessionOverlay(sessionName){if(!rootDir)return;if(!(sessionName in overlayMap)){const bank=SESSION_COLOR_BANKS[sessionColorIdx%SESSION_COLOR_BANKS.length];sessionColorIdx++;overlayMap[sessionName]=[];overlayMap[sessionName]._bank=bank;}const bank=overlayMap[sessionName]._bank||SESSION_COLOR_BANKS[0];const entries=[];let colorIdx=0;let sdir;try{sdir=await getSessionHandle(sessionName,false);}catch(e){return;}for(const[key,fname] of Object.entries(EXPERIMENTS)){try{const fh=await sdir.getFileHandle(fname),file=await fh.getFile(),text=await file.text();const rows=text.split('\n').slice(1).filter(r=>r.trim());let xs=[],ys=[];rows.forEach(r=>{const[a,b]=r.split(',').map(Number);if(!isNaN(a)&&!isNaN(b)){xs.push(a);ys.push(b);}});const cl=removeOutliers(xs,ys);xs=cl.x;ys=cl.y;const color=bank[colorIdx++%bank.length],ell=ellipseParams(xs,ys);entries.push({name:`${sessionName} — ${key.replace(/_/g,' ')}`,x:xs,y:ys,color,ell});}catch(e){}}overlayMap[sessionName]=entries;overlayMap[sessionName]._bank=bank;renderOverlayPanel();}
 function renderOverlayPanel(){const body=document.getElementById('overlay-body'),lines=[],items=[];Object.entries(overlayMap).forEach(([sess,entries])=>{if(!Array.isArray(entries))return;entries.forEach(ov=>{items.push({name:ov.name,color:ov.color,area:ov.ell?ov.ell.area:0});lines.push(`${ov.name}: area = ${(ov.ell?ov.ell.area:0).toFixed(2)} cm^2`);});});if(!items.length){body.innerHTML='<div style="font-size:12px;color:#666;">Overlay: not computed</div>';document.getElementById('overlay-summary').textContent='Overlay: not computed';return;}body.innerHTML=items.map(it=>`<div class="overlay-item"><div class="ov-dot" style="background:${it.color}"></div><span style="flex:1;font-size:11px;">${it.name}</span><span class="ov-area">${it.area.toFixed(2)} cm²</span></div>`).join('');document.getElementById('overlay-summary').textContent=lines.join('\n');}
 
