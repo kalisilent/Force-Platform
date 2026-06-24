@@ -425,7 +425,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);co
           <div id="qr-canvas"></div>
           <div class="qr-label">Scan to open survey</div>
         </div>
-        <a class="survey-btn" href="https://forms.gle/your-survey-link-here" target="_blank" rel="noopener">Open Survey ↗</a>
+        <a class="survey-btn" href="https://forms.office.com/Pages/ResponsePage.aspx?id=M4x5RUMbAUy_PtjWVdM4nINwyiotTBlLqKAH0V8_kCdUNVhMMUhMT1U2QjE1UlJZMTM4SVNCTlo2NS4u" target="_blank" rel="noopener">Open Survey ↗</a>
       </div>
       <div class="divider-v"></div>
       <!-- Steps -->
@@ -699,7 +699,7 @@ document.getElementById('page-home').style.display = 'block';
 /* ═══════════════════════════════════════════════
    QR CODE
 ═══════════════════════════════════════════════ */
-const SURVEY_URL = 'https://forms.gle/your-survey-link-here'; // ← replace with real URL
+const SURVEY_URL = 'https://forms.office.com/Pages/ResponsePage.aspx?id=M4x5RUMbAUy_PtjWVdM4nINwyiotTBlLqKAH0V8_kCdUNVhMMUhMT1U2QjE1UlJZMTM4SVNCTlo2NS4u';
 window.addEventListener('load', () => {
   new QRCode(document.getElementById('qr-canvas'), {
     text: SURVEY_URL, width: 180, height: 180,
@@ -724,7 +724,7 @@ window.addEventListener('load', () => {
    3. Formspree will forward submissions to your
       configured inbox. No email address in code.
 ═══════════════════════════════════════════════ */
-const CONTACT_ENDPOINT = '/api/contact'; // ← replace with Formspree URL or your own API route
+const CONTACT_ENDPOINT = 'https://formspree.io/f/xpqgqdpk';
 
 async function submitContact(e) {
   e.preventDefault();
