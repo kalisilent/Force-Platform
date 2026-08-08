@@ -7,6 +7,7 @@
 <meta name="description" content="Sthir: Indian balance database for stability &amp; healthy aging — Plaksha University Research Study"/>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 /* ═══════════════════════════════
    CSS VARIABLES & RESET
@@ -196,6 +197,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);co
   transition:border-color 0.2s;
 }
 .cf-input:focus,.cf-textarea:focus{border-color:var(--teal-light);}
+select.cf-input option{background:#132a45;color:#fff;}
 .cf-textarea{resize:vertical;min-height:100px;}
 .cf-submit{
   background:var(--teal);color:#fff;border:none;border-radius:5px;
@@ -209,17 +211,18 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);co
 .cf-status.err{color:#f87171;}
 
 /* ═══════════════════════════════
-   LOGIN MODAL (Experiment gate)
+   LOGIN / ENROLL / LOADING OVERLAYS
 ═══════════════════════════════ */
-#login-overlay{
+#login-overlay,#enroll-overlay,#loading-overlay,#pid-overlay{
   position:fixed;inset:0;background:rgba(5,12,25,0.97);
   z-index:2000;display:none;align-items:center;justify-content:center;
   flex-direction:column;
 }
-#login-overlay.visible{display:flex;}
+#login-overlay.visible,#enroll-overlay.visible,#loading-overlay.visible,#pid-overlay.visible{display:flex;}
+#loading-overlay{z-index:3000;background:rgba(5,12,25,0.85);}
 .login-box{
   background:#0c1a2e;border:1px solid rgba(26,158,143,0.35);
-  border-radius:10px;padding:40px 40px 36px;width:360px;max-width:90vw;
+  border-radius:10px;padding:40px 40px 36px;width:380px;max-width:90vw;
   box-shadow:0 20px 60px rgba(0,0,0,0.6);
 }
 .login-logo{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--teal-light);text-align:center;margin-bottom:6px;}
@@ -231,9 +234,11 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);co
   padding:10px 12px;background:rgba(255,255,255,0.06);
   border:1px solid rgba(26,158,143,0.25);border-radius:5px;
   color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;
-  transition:border-color 0.2s;
+  transition:border-color 0.2s;width:100%;
 }
 .login-input:focus{border-color:var(--teal-light);}
+select.login-input{cursor:pointer;}
+select.login-input option{background:#0c1a2e;color:#fff;}
 .login-btn{
   width:100%;margin-top:6px;padding:12px;background:var(--teal);color:#fff;
   border:none;border-radius:5px;font-size:14px;font-weight:500;cursor:pointer;
@@ -242,9 +247,56 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);co
 .login-btn:hover{background:var(--teal-light);}
 .login-err{font-size:12px;color:#f87171;min-height:16px;margin-top:8px;text-align:center;}
 .login-attempts{font-size:11px;color:rgba(255,255,255,0.3);text-align:center;margin-top:10px;}
+.ms-status{font-size:12px;color:rgba(255,255,255,0.5);text-align:center;margin-top:12px;min-height:16px;}
+.enroll-line{font-size:13px;color:rgba(255,255,255,0.7);text-align:center;margin-bottom:22px;}
+.pid-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px;}
+#pid-display{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--teal-light);letter-spacing:0.02em;}
+#pid-copy-btn{
+  background:rgba(26,158,143,0.15);border:1px solid rgba(26,158,143,0.4);border-radius:5px;
+  padding:6px 12px;cursor:pointer;color:#fff;font-size:12px;font-family:'DM Sans',sans-serif;
+  transition:background 0.2s;white-space:nowrap;
+}
+#pid-copy-btn:hover{background:rgba(26,158,143,0.3);}
+.pid-copy-status{font-size:11px;color:var(--teal-light);min-height:16px;text-align:center;margin-bottom:16px;}
+.enroll-line strong{color:var(--teal-light);}
+.loading-spinner{width:36px;height:36px;border:3px solid rgba(26,158,143,0.25);border-top-color:var(--teal-light);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
 
 /* ═══════════════════════════════
-   PAGE 3 — EXPERIMENT (EquiliSense interface)
+   PAGE — PARTICIPANT FORMS
+═══════════════════════════════ */
+.form-page-wrap{
+  background:linear-gradient(145deg,#0d1f35 0%,#0a2218 50%,#0d1f35 100%);
+  min-height:100%;padding:40px 24px 60px;display:flex;justify-content:center;
+}
+.form-page-inner{max-width:640px;width:100%;}
+.form-page-chips{display:flex;gap:10px;justify-content:center;margin-bottom:18px;flex-wrap:wrap;}
+.form-chip{background:rgba(26,158,143,0.15);border:1px solid rgba(26,158,143,0.35);border-radius:20px;padding:5px 14px;font-size:11px;color:var(--teal-light);letter-spacing:0.05em;}
+.form-page-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:#fff;text-align:center;margin-bottom:6px;}
+.form-page-sub{font-size:13px;color:rgba(255,255,255,0.5);text-align:center;margin-bottom:28px;font-weight:300;}
+.form-fields-box{background:rgba(255,255,255,0.04);border:1px solid rgba(26,158,143,0.2);border-radius:10px;padding:28px 28px 20px;}
+.consent-text-box{
+  background:rgba(255,255,255,0.03);border:1px solid rgba(26,158,143,0.2);
+  border-radius:10px;padding:22px 26px;max-height:380px;overflow-y:auto;
+  font-size:12.5px;line-height:1.7;color:rgba(255,255,255,0.7);font-weight:300;
+}
+.consent-text-box h4{font-family:'Playfair Display',serif;font-size:14px;color:var(--teal-light);margin:16px 0 6px;font-weight:700;}
+.consent-text-box h4:first-child{margin-top:0;}
+.consent-text-box p{margin-bottom:4px;}
+.consent-text-box::-webkit-scrollbar{width:6px;}
+.consent-text-box::-webkit-scrollbar-thumb{background:rgba(26,158,143,0.4);border-radius:3px;}
+.form-section-heading{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--teal-light);margin:22px 0 10px;padding-top:14px;border-top:1px solid rgba(26,158,143,0.2);}
+.form-section-heading:first-child{margin-top:0;padding-top:0;border-top:none;}
+.cf-checkbox-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.cf-checkbox-row input{width:16px;height:16px;flex-shrink:0;}
+.cf-checkbox-row label{font-size:13px;color:rgba(255,255,255,0.75);}
+.cf-checkboxes-group{display:flex;flex-direction:column;gap:2px;padding:4px 0 2px;}
+.form-nav-row{display:flex;justify-content:space-between;margin-top:22px;gap:12px;}
+.form-btn-secondary{background:transparent;border:1px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.8);padding:11px 24px;border-radius:5px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.form-btn-secondary:hover{border-color:var(--teal-light);color:#fff;}
+
+/* ═══════════════════════════════
+   PAGE — MEASURE (EquiliSense interface)
 ═══════════════════════════════ */
 #page-experiment{background:#1e1e1e;overflow:hidden;}
 #exp-app{display:flex;height:100%;width:100%;}
@@ -259,12 +311,23 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);co
   border-bottom:1px solid #3a3a3a;display:flex;align-items:center;gap:10px;flex-shrink:0;
 }
 #title-bar .title-text{flex:1;}
+.title-chip{font-size:11px;padding:3px 9px;border-radius:3px;background:rgba(26,158,143,0.18);color:#7fd9cc;border:1px solid rgba(26,158,143,0.35);white-space:nowrap;}
 #conn-status{font-size:11px;padding:2px 8px;border-radius:2px;background:#3a3a3a;color:#888;}
 #conn-status.connected{background:#1a3a1a;color:#4caf50;}
 #conn-status.calibrating{background:#3a2a00;color:#ffc107;}
 #conn-status.recording{background:#3a1a1a;color:#f44336;}
 #canvas-wrap{flex:1 1 auto;min-height:0;min-width:0;position:relative;overflow:hidden;}
 #cop-canvas{display:block;background:#000;position:absolute;top:0;left:0;width:100%;height:100%;}
+
+#zoom-controls{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:4px;z-index:10;}
+.zoom-btn{
+  width:28px;height:28px;border-radius:4px;border:1px solid rgba(120,160,120,0.5);
+  background:rgba(20,30,20,0.85);color:#c8e6c9;font-size:16px;font-weight:600;
+  cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;
+  user-select:none;transition:background 0.15s;
+}
+.zoom-btn:hover{background:rgba(40,70,40,0.9);}
+.zoom-btn:active{background:rgba(60,100,60,0.95);}
 
 /* ── RIGHT: Controls pane ── */
 #ctrl-pane{
@@ -307,32 +370,72 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);co
 .spacer{flex:1;}
 
 #serial-warn{background:#fff3cd;border:1px solid #ffc107;border-radius:3px;margin:6px 8px;padding:6px 8px;font-size:11px;color:#856404;display:none;}
-#fs-warn{background:#d1ecf1;border:1px solid #bee5eb;border-radius:3px;margin:4px 8px;padding:5px 8px;font-size:11px;color:#0c5460;display:none;}
 #rec-timer{display:inline-block;margin-left:8px;font-size:11px;color:#f44336;font-weight:700;min-width:30px;}
-#dir-display{font-size:11px;color:#0078d4;word-break:break-all;margin:2px 10px 4px;min-height:14px;}
-
-/* logged-in chip in title bar */
-#logged-user-chip{font-size:11px;color:rgba(255,255,255,0.4);margin-right:4px;}
 </style>
 </head>
 <body>
 
-<!-- ══════ LOGIN MODAL (Experiment gate) ══════ -->
+<!-- ══════ LOADING OVERLAY ══════ -->
+<div id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div id="loading-msg" style="color:#fff;margin-top:14px;font-size:13px;"></div>
+</div>
+
+<!-- ══════ LOGIN MODAL (Measure gate) ══════ -->
 <div id="login-overlay">
   <div class="login-box">
     <div class="login-logo">S<span>thir</span></div>
-    <div class="login-subtitle">Researcher Access — Experiment Module</div>
-    <div class="login-field">
-      <div class="login-label">Username</div>
-      <input class="login-input" type="text" id="login-user" placeholder="Enter username" autocomplete="username"/>
+    <div class="login-subtitle">Researcher Access — Measure Module</div>
+
+    <!-- Step 1: pick the master folder on the drive (only shown once per tab session) -->
+    <div id="login-step-folder">
+      <div class="enroll-line">Select the study's master folder (<strong id="master-folder-name-hint"></strong>) on the portable drive to begin.</div>
+      <button class="login-btn" onclick="pickFolderAndContinue()">📁 Select Study Folder</button>
+      <div class="login-err" id="folder-pick-err"></div>
+      <div id="fs-warn-login" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:4px;margin-top:12px;padding:8px 10px;font-size:11px;color:#856404;">⚠ Folder access requires Chrome or Edge on a desktop computer.</div>
     </div>
-    <div class="login-field">
-      <div class="login-label">Password</div>
-      <input class="login-input" type="password" id="login-pass" placeholder="Enter password" autocomplete="current-password"/>
+
+    <!-- Step 2: institute (read live from the folders inside the drive) + password -->
+    <div id="login-step-institute" style="display:none;">
+      <div class="login-field">
+        <div class="login-label">Institute</div>
+        <select class="login-input" id="institute-sel">
+          <option value="">— Select Institute —</option>
+        </select>
+      </div>
+      <div class="login-field">
+        <div class="login-label">Password</div>
+        <input class="login-input" type="password" id="login-pass" placeholder="Enter institute password" autocomplete="current-password"/>
+      </div>
+      <button class="login-btn" onclick="attemptInstituteLogin()">Sign In →</button>
+      <div class="login-err" id="login-err"></div>
+      <div class="ms-status">Folders shown are read live from the drive — <a href="#" onclick="pickFolderAndContinue();return false;" style="color:var(--teal-light);">change folder</a></div>
     </div>
-    <button class="login-btn" onclick="attemptLogin()">Sign In →</button>
-    <div class="login-err" id="login-err"></div>
-    <div class="login-attempts" id="login-attempts"></div>
+  </div>
+</div>
+
+<!-- ══════ ENROLL MODAL ══════ -->
+<div id="enroll-overlay">
+  <div class="login-box">
+    <div class="login-logo">S<span>thir</span></div>
+    <div class="login-subtitle">Institute: <span id="enroll-institute-label" style="color:var(--teal-light);"></span></div>
+    <div class="enroll-line">Ready to begin a new participant assessment?</div>
+    <button class="login-btn" onclick="enrollNewParticipant()">➕ Enroll New Participant</button>
+  </div>
+</div>
+
+<!-- ══════ PARTICIPANT ID MODAL ══════ -->
+<div id="pid-overlay">
+  <div class="login-box">
+    <div class="login-logo">S<span>thir</span></div>
+    <div class="login-subtitle">Participant Enrolled</div>
+    <div class="enroll-line">You have been enrolled as a participant in the study.</div>
+    <div class="pid-row">
+      <div id="pid-display"></div>
+      <button id="pid-copy-btn" onclick="copyParticipantId()" title="Copy Participant ID">📋 Copy</button>
+    </div>
+    <div class="pid-copy-status" id="pid-copy-status"></div>
+    <button class="login-btn" onclick="continueToForm1()">Continue →</button>
   </div>
 </div>
 
@@ -342,7 +445,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);co
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('home',this)">🏠 About</button>
     <button class="nav-tab" onclick="showPage('participate',this)">📋 Participate</button>
-    <button class="nav-tab" onclick="requireLogin(this)">⚗️ Experiment</button>
+    <button class="nav-tab" onclick="requireLogin(this)">⚗️ Measure</button>
   </div>
 </nav>
 
@@ -495,7 +598,118 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);co
 </div>
 
 <!-- ══════════════════════════════════════════
-     PAGE 3 — EXPERIMENT (login-gated, EquiliSense interface)
+     PAGE — PARTICIPANT FORM 1
+══════════════════════════════════════════ -->
+<div class="page" id="page-form1">
+  <div class="form-page-wrap">
+    <div class="form-page-inner">
+      <div class="form-page-chips">
+        <div class="form-chip">🏥 <span id="f1-institute-chip">—</span></div>
+        <div class="form-chip">🆔 <span id="f1-pid-chip">—</span></div>
+      </div>
+      <div class="form-page-title">Form 1 — Participant Information &amp; Consent</div>
+      <div class="form-page-sub">Force platform for balance measurements in low-resource settings</div>
+
+      <div class="consent-text-box">
+        <h4>Study Title</h4>
+        <p>Force platform for balance measurements in low-resource settings.</p>
+
+        <h4>Principal Investigators</h4>
+        <p>Dr. Arshdeep Sidhu, PhD — Biological Systems Engineering Program, Plaksha University, Mohali (arshdeep.sidhu@plaksha.edu.in)<br/>
+        Dr. Deepan Muthirayan, PhD — Computer Science &amp; Artificial Intelligence Program, Plaksha University, Mohali (deepan.muthirayan@plaksha.edu.in)<br/>
+        Prof. Andy Ruina, PhD — Robotics &amp; Autonomous Systems, Plaksha University, Mohali (andy.ruina@plaksha.edu.in)</p>
+        <p><strong>Co-Investigators:</strong> Prof. TV Ramanathan, Plaksha University, Mohali (t.ramanathan@plaksha.edu.in); Dr. Saumya Jetley, PhD, Director, Translational Research Resilience Care, Paris, France.</p>
+
+        <h4>Invitation</h4>
+        <p>We invite you to participate in our research study as a volunteer, however before you decide to participate, it is critical that you understand our research and your role as a volunteer. Please read the following sections carefully and discuss with us about any doubt or additional information that you may require to make an independent informed decision.</p>
+
+        <h4>Background to the Study</h4>
+        <p>As people age, their balance gradually weakens making them more likely to fall — that can cause bone fractures and muscle-joint injuries. These injuries severely affect mobility and overall well-being of elderly as the recovery is slow and inefficient. We all know of some relative, friend or acquaintance who suffered such a fall. New research indicates that poor balance in elderly may correlate with higher chances of neurodegenerative diseases such as Parkinson's disease and Alzheimer's disease. Early detection of balance issues and active intervention can significantly improve the quality of life in elderly and in those with neurodegeneration.</p>
+
+        <h4>Motivation of the Study</h4>
+        <p>If we can understand factors that affect balance, we can likely prevent a large number of falls in elderly people. Injuries caused by these falls are a major reason for disability, dependence and poor quality of life in old age. We have developed a balance measuring platform, which can — just like a weighing scale — measure balance in healthy individuals and in patients with balance problems. The purpose of this study is to measure balance in a large number of people of different age, gender and lifestyles — to understand factors that affect balance in Indian population.</p>
+
+        <h4>Can I participate and help?</h4>
+        <p>Yes, we are looking for volunteers to participate in our academic study and help us create a database for balance in Indian population. Anyone who is interested in understanding their own balance and would like to contribute to science and society can participate in the study.</p>
+        <p>The datasets will include: <strong>Healthy individuals</strong> — volunteers with no history of fall; <strong>At risk</strong> — volunteers with a history of unintentional fall but no clinically diagnosed balance disorder; <strong>Patients</strong> — volunteers with clinically diagnosed balance disorder — each further split into Urban and Rural.</p>
+
+        <h4>Do I have to participate?</h4>
+        <p>Participation in this study is entirely voluntary. You are free to decline to participate without giving any reasons. Even if you consent now, you can withdraw from the study at any time, without any consequences. Though we would like to know the reasons for your withdrawal.</p>
+
+        <h4>What will happen if I agree to participate?</h4>
+        <p>On receiving your informed consent, we will schedule an appointment for your visit to our research laboratory on a mutually suitable date and time. In the research laboratory, we will ask for some details about your health and lifestyle, relevant to the project, to label your data effectively (10–15 mins) (questionnaire 2). Then we will explain and ask you to stand on our force platform, as one stands on a weighing scale. We will measure your balance in different stances, likely 5–6 stances (1 min each), ensuring your comfort and safety. In total in the research laboratory, it will take about 30 mins to explain, collect details and measure balance.</p>
+
+        <h4>What if I do not want to answer some of the questions?</h4>
+        <p>It is your choice not to answer some of the questions and we will respect your choice. It is important for us that whichever question you choose to answer, you answer it truest to your knowledge. It will be detrimental to the study if you provide misleading answer(s).</p>
+
+        <h4>Will I have to visit many times?</h4>
+        <p>The baseline measurement for balance will be measured only once. At the end of the measurement, we will ask you if you want to participate in a follow-up or intervention study. According to your response, we will indicate if you need to come again, with details.</p>
+
+        <h4>Will any invasive procedure be performed on me? / Are there any risks?</h4>
+        <p>No, your participation involves only answering a few questions and standing on a platform for a few minutes. This is a completely non-invasive study and does not involve any risk beyond day-to-day standing on both legs or one leg.</p>
+
+        <h4>What are the benefits of participating?</h4>
+        <p>Your balance data is critical for us to understand factors that impact balance in Indian populations. You may not derive any direct or immediate material benefit from the study, but your data will help us build technologies and interventions to improve balance in the coming years. Volunteer participation is fundamental to advance human health research — every medication and medical device we use today to lead healthy and comfortable lives was once tested on volunteers.</p>
+
+        <h4>Will my information and data be confidential?</h4>
+        <p>Yes, your information and data will be strictly confidential. Your data will be coded with a linking key and stored in the university databases. Only researchers working on the project, at any given time, will have access to the data. Your data will be stored with no time limit, as long-term data is highly valuable for research purposes.</p>
+
+        <h4>Can I ask for a copy of my data, or ask you to delete it?</h4>
+        <p>Yes, only you can ask for a copy of your recorded data by raising a request through Form 3, or ask us to delete your data at any time by raising a request through Form 4 — contact the research team and they will assist with subsequent steps. Note: once you request deletion of your data, you will not be able to re-enrol in the study at a later date.</p>
+
+        <h4>What will happen to the results of the study?</h4>
+        <p>The results will be communicated to the broader research and clinical community through peer-reviewed publications, talks, seminars or reports. No volunteer will be identified in any communication. If you would like to understand your data better, you can contact us for an in-depth analysis as the research advances.</p>
+
+        <h4>Compensation</h4>
+        <p>You will not receive any monetary compensation for participating in this study.</p>
+
+        <h4>Who has reviewed this study?</h4>
+        <p>This study has been reviewed and approved by the Institutional Ethics Committee of Plaksha University.</p>
+
+        <h4>Contact Information</h4>
+        <p>Dr. Arshdeep Sidhu, Principal Investigator — arshdeep.sidhu@plaksha.edu.in — Phone: 0172 412 6394.<br/>
+        For questions about your rights as a volunteer, contact the Institutional Ethics Committee, Plaksha University.</p>
+
+        <h4>Consent Statement</h4>
+        <p>I have read and understood the information provided above. I have been given the opportunity to ask questions and my questions have been answered to my satisfaction. I voluntarily agree to participate in this research study.</p>
+      </div>
+
+      <div class="form-fields-box" style="margin-top:18px;">
+        <div id="form1-fields"></div>
+        <div class="form-nav-row">
+          <span></span>
+          <button class="cf-submit" onclick="goForm1Next()">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE — PARTICIPANT FORM 2
+══════════════════════════════════════════ -->
+<div class="page" id="page-form2">
+  <div class="form-page-wrap">
+    <div class="form-page-inner">
+      <div class="form-page-chips">
+        <div class="form-chip">🏥 <span id="f2-institute-chip">—</span></div>
+        <div class="form-chip">🆔 <span id="f2-pid-chip">—</span></div>
+      </div>
+      <div class="form-page-title">Form 2 — Researcher-Reported Questionnaire</div>
+      <div class="form-page-sub">Health, lifestyle &amp; environmental exposure details</div>
+      <div class="form-fields-box">
+        <div id="form2-fields"></div>
+        <div class="form-nav-row">
+          <button class="form-btn-secondary" onclick="goForm2Back()">← Back</button>
+          <button class="cf-submit" onclick="submitForm2()">Submit &amp; Continue →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE — MEASURE (login-gated, EquiliSense interface)
 ══════════════════════════════════════════ -->
 <div class="page" id="page-experiment">
   <div id="exp-app">
@@ -503,34 +717,30 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);co
     <!-- LEFT: canvas -->
     <div id="plot-pane">
       <div id="title-bar">
-        <span class="title-text">Sthir — Experiment Interface</span>
-        <span id="logged-user-chip"></span>
+        <span class="title-text">Sthir — Measure</span>
+        <span class="title-chip" id="measure-login-chip">LOGIN: —</span>
+        <span class="title-chip" id="measure-pid-chip">Participant ID: —</span>
         <span id="conn-status">● Disconnected</span>
       </div>
       <div id="canvas-wrap">
         <canvas id="cop-canvas"></canvas>
+        <div id="zoom-controls">
+          <button class="zoom-btn" onclick="zoomIn()" title="Zoom in">+</button>
+          <button class="zoom-btn" onclick="zoomOut()" title="Zoom out">−</button>
+        </div>
         <div style="position:absolute;bottom:8px;right:10px;font-size:10px;color:rgba(120,160,120,0.6);pointer-events:none;font-family:Consolas,monospace;">
-          scroll=zoom &nbsp;|&nbsp; drag=pan &nbsp;|&nbsp; dbl-click=reset
+          drag=pan &nbsp;|&nbsp; dbl-click=reset &nbsp;|&nbsp; +/− buttons=zoom
         </div>
       </div>
     </div>
 
-    <!-- RIGHT: controls (EquiliSense redesign) -->
+    <!-- RIGHT: controls -->
     <div id="ctrl-pane">
 
-      <!-- Global clear trace — top of panel -->
-      <button class="ctrl-btn" onclick="clearTrace()"
-        style="margin:10px 8px 6px;background:#fff8f0;border-color:#c97c3a;color:#7a3e0a;font-weight:600;letter-spacing:0.02em;">
-        🧹 Clear Trace
-      </button>
-
       <!-- Device Connection -->
-      <div class="group-box">
+      <div class="group-box" style="margin-top:10px;">
         <div class="group-title">Device Connection</div>
         <div class="group-body">
-          <select id="baud-sel" style="display:none;" aria-hidden="true">
-            <option value="2000000" selected>2000000</option>
-          </select>
           <button class="ctrl-btn" id="connect-btn" onclick="connectSerial()" style="width:100%;margin:0;">⚡ Connect Device</button>
           <button class="ctrl-btn" id="disconnect-btn" onclick="disconnectSerial()"
             style="width:100%;margin:4px 0 0;display:none;background:#ffe0e0;border-color:#f44336;color:#b00;">✕ Disconnect</button>
@@ -538,25 +748,10 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);co
       </div>
       <div id="serial-warn">⚠ Web Serial requires Chrome or Edge (desktop only).</div>
 
-      <!-- Save Location -->
+      <!-- Measure -->
       <div class="group-box">
-        <div class="group-title">Save Location (Local Folder)</div>
-        <div class="group-body" style="padding-bottom:6px;">
-          <button class="ctrl-btn" onclick="selectDir()" style="margin:0 0 4px;">📁 Choose Save Folder</button>
-          <div id="dir-display">No folder selected</div>
-        </div>
-      </div>
-      <div id="fs-warn">ℹ File System Access requires Chrome or Edge.</div>
-
-      <!-- Record Session -->
-      <div class="group-box">
-        <div class="group-title">Record Session</div>
+        <div class="group-title">Measure</div>
         <div class="group-body">
-          <div class="cf-field" style="margin-bottom:10px;">
-            <div style="font-size:11px;color:#555;margin-bottom:4px;letter-spacing:0.04em;">SESSION NAME</div>
-            <input type="text" id="session-inp" placeholder="e.g. Participant_Name_Age_Gender"
-              style="width:100%;padding:5px 8px;border:1px solid #aaa;border-radius:3px;font-size:12px;color:#111;background:#fff;outline:none;"/>
-          </div>
           <div class="cf-field" style="margin-bottom:10px;">
             <div style="font-size:11px;color:#555;margin-bottom:4px;letter-spacing:0.04em;">EXPERIMENT</div>
             <select id="exp-sel" style="width:100%;padding:5px 8px;border:1px solid #aaa;border-radius:3px;font-size:12px;color:#111;background:#fff;outline:none;">
@@ -568,48 +763,26 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);co
             </select>
           </div>
           <div class="cf-field" style="margin-bottom:14px;">
-            <div style="font-size:11px;color:#555;margin-bottom:4px;letter-spacing:0.04em;">DURATION (seconds)</div>
-            <select id="dur-sel" style="width:100%;padding:5px 8px;border:1px solid #aaa;border-radius:3px;font-size:12px;color:#111;background:#fff;outline:none;">
-              <option value="5">5</option>
-              <option value="10" selected>10</option>
-              <option value="20">20</option>
-              <option value="30">30</option>
-              <option value="60">60</option>
-              <option value="120">120</option>
-            </select>
+            <div style="font-size:11px;color:#555;margin-bottom:4px;letter-spacing:0.04em;">DURATION</div>
+            <div style="font-size:13px;color:#111;font-weight:600;padding:6px 8px;background:#eee;border:1px solid #ccc;border-radius:3px;">60 seconds (fixed)</div>
           </div>
           <button id="rec-btn" onclick="toggleRecording()"
             style="display:block;width:100%;margin:0;padding:10px 12px;background:#1a6b3a;border:1px solid #145530;border-radius:4px;font-size:13px;font-weight:600;color:#fff;cursor:pointer;text-align:center;letter-spacing:0.03em;transition:background 0.15s;">
             ⏺ Start Recording<span id="rec-timer"></span>
           </button>
+          <button class="ctrl-btn" onclick="clearTrace()"
+            style="margin:8px 0 0;background:#fff8f0;border-color:#c97c3a;color:#7a3e0a;font-weight:600;letter-spacing:0.02em;width:100%;">
+            🧹 Clear Trace
+          </button>
         </div>
       </div>
 
-      <!-- Select Session (dropdown + Add / Remove) -->
+      <!-- Comments -->
       <div class="group-box">
-        <div class="group-title">Select Session</div>
-        <div class="group-body" style="padding:8px 10px 10px;">
-          <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;">
-            <select id="add-picker"
-              style="flex:1;padding:4px 6px;border:1px solid #aaa;border-radius:3px;font-size:12px;background:#fff;color:#111;outline:none;">
-              <option value="">— Select Person —</option>
-            </select>
-            <button onclick="confirmAdd()"
-              style="padding:5px 12px;background:#e8f4ea;border:1px solid #6aad7a;border-radius:3px;font-size:12px;font-weight:600;color:#1a5a2a;cursor:pointer;white-space:nowrap;flex-shrink:0;">
-              + Add
-            </button>
-          </div>
-          <div style="display:flex;gap:6px;align-items:stretch;">
-            <select id="session-list" size="4"
-              style="flex:1;border:1px solid #bbb;border-radius:3px;font-size:12px;background:#fff;color:#111;padding:4px 6px;min-height:70px;">
-            </select>
-            <button onclick="removeSession()"
-              style="padding:7px 10px;background:#fdecea;border:1px solid #e07070;border-radius:3px;font-size:12px;font-weight:600;color:#8b1a1a;cursor:pointer;white-space:nowrap;align-self:flex-start;">
-              − Remove
-            </button>
-          </div>
-          <!-- Hidden for internal compatibility -->
-          <select id="existing-sel" style="display:none;" aria-hidden="true"><option value=""></option></select>
+        <div class="group-title">Comments</div>
+        <div class="group-body">
+          <textarea id="comments-box" placeholder="Clinician notes for this session…"
+            style="width:100%;min-height:70px;padding:6px 8px;border:1px solid #aaa;border-radius:3px;font-size:12px;color:#111;background:#fff;outline:none;resize:vertical;font-family:'DM Sans',sans-serif;"></textarea>
         </div>
       </div>
 
@@ -626,9 +799,15 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);co
         </div>
       </div>
 
-      <!-- Overlay areas -->
+      <!-- End Session -->
+      <button class="ctrl-btn" onclick="endSession()"
+        style="margin:10px 8px;padding:10px 12px;background:#2b2b2b;border-color:#111;color:#fff;font-weight:600;width:calc(100% - 16px);">
+        🏁 End Session
+      </button>
+
+      <!-- Overlay areas (this session) -->
       <div class="group-box">
-        <div class="group-title">Overlay Areas (per CSV)</div>
+        <div class="group-title">Overlay Areas (this session)</div>
         <div class="group-body" id="overlay-body" style="max-height:160px;overflow-y:auto;">
           <div style="font-size:12px;color:#666;">Overlay: not computed</div>
         </div>
@@ -645,97 +824,643 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--navy);co
 <script>
 'use strict';
 
+/* ═══════════════════════════════════════════════════════════════════
+   CONFIGURATION — EDIT THESE BEFORE DEPLOYING
+   ───────────────────────────────────────────────────────────────────
+   Storage is a portable USB/external hard drive, accessed directly
+   from the browser via the File System Access API — there is no cloud
+   account, no login popup, and no internet connection required.
+
+   1. On the portable drive, create a folder named exactly
+      MASTER_FOLDER_NAME below (or edit the constant to match whatever
+      you name it), and inside it create one subfolder per institute
+      (e.g. AIMS, PLAKSHA, ONSITE). The Institute dropdown on the login
+      screen is read LIVE from whatever folders exist inside the master
+      folder — add a new folder on the drive and it shows up in the
+      dropdown next time the login screen opens, no code change needed.
+   2. Requires Chrome or Edge on desktop (the File System Access API
+      is not supported in Firefox/Safari or on mobile browsers).
+   3. Set a password for each institute folder in INSTITUTE_PASSWORDS
+      below — the key must exactly match the folder name on the drive,
+      or sign-in will show "No password configured for this institute."
+      NOTE: this is a client-side check only (visible in page source),
+      fine for an internal demo — not a substitute for real auth in
+      production.
+   4. The first time a clinician clicks "Select Study Folder," the
+      browser shows a native folder picker — have them select the
+      MASTER_FOLDER_NAME folder on the drive. The browser remembers
+      this only for the current tab session (it must be re-picked
+      after a full page reload).
+═══════════════════════════════════════════════════════════════════ */
+const MASTER_FOLDER_NAME = "Sthir_Study";
+const INSTITUTE_PASSWORDS = {
+  AIMS:    "AIMS@2026",
+  PLAKSHA: "PLAKSHA@2026",
+  ONSITE:  "ONSITE@2026"
+};
+const FIXED_DURATION_SECS = 60;
+
 /* ═══════════════════════════════════════════════
-   AUTH / LOGIN
+   PORTABLE DRIVE STORAGE (File System Access API)
 ═══════════════════════════════════════════════ */
-const VALID_USER   = 'researcher';
-const CRED_HASH    = 'dbbf4eb534521816a837c8d85de3d8643fcc6eb58215274f49a3593c7a097ac1'; // SHA-256("Sthir@2024")
-const MAX_ATTEMPTS = 5;
-const LOCKOUT_MS   = 5 * 60 * 1000;
+let rootDirHandle = null; // handle to the master folder on the portable drive, picked once per tab session
 
-let loginAttempts = parseInt(sessionStorage.getItem('sthir_attempts') || '0');
-let pendingTab    = null;
-
-async function sha256hex(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+async function selectMasterFolder(){
+  if(!('showDirectoryPicker' in window)){
+    throw new Error('This browser does not support folder access. Please use Chrome or Edge on a desktop computer.');
+  }
+  const handle = await window.showDirectoryPicker({ mode:'readwrite', id:'sthir-master' });
+  if(handle.name !== MASTER_FOLDER_NAME){
+    const proceed = confirm(`The folder you selected is named "${handle.name}", but "${MASTER_FOLDER_NAME}" was expected.\n\nContinue using "${handle.name}" as the master folder anyway?`);
+    if(!proceed) throw new Error('Folder selection cancelled.');
+  }
+  rootDirHandle = handle;
+  return rootDirHandle;
+}
+async function getOrCreateChildDir(parentHandle, name){
+  return await parentHandle.getDirectoryHandle(name, { create:true });
+}
+async function listChildDirNames(parentHandle){
+  const names = [];
+  for await (const [name, handle] of parentHandle.entries()){
+    if(handle.kind === 'directory') names.push(name);
+  }
+  return names;
+}
+async function writeFile(dirHandle, filename, dataOrBlob){
+  const fh = await dirHandle.getFileHandle(filename, { create:true });
+  const w = await fh.createWritable();
+  await w.write(dataOrBlob);
+  await w.close();
 }
 
-function requireLogin(tabEl) {
-  if (sessionStorage.getItem('sthir_auth') === 'ok') {
-    showPage('experiment', tabEl);
-    return;
-  }
-  const lockUntil = parseInt(sessionStorage.getItem('sthir_lock') || '0');
-  if (Date.now() < lockUntil) {
-    const rem = Math.ceil((lockUntil - Date.now()) / 60000);
-    document.getElementById('login-err').textContent = `Too many attempts. Try again in ${rem} min.`;
-    document.getElementById('login-overlay').classList.add('visible');
-    return;
-  }
+/* ═══════════════════════════════════════════════
+   APP / SESSION STATE
+═══════════════════════════════════════════════ */
+let currentInstituteName = null;
+let currentInstituteDirHandle = null;
+let currentParticipantId = null;         // display form "2026/08/0001"
+let currentParticipantFolderName = null; // drive-safe "2026-08-0001"
+let currentParticipantDirHandle = null;
+let currentMeasurementsDirHandle = null;
+let pendingTab = null;
+let formData1 = {};
+let formData2 = {};
+
+function showLoadingState(msg){
+  document.getElementById('loading-msg').textContent = msg || 'Working…';
+  document.getElementById('loading-overlay').classList.add('visible');
+}
+function hideLoadingState(){
+  document.getElementById('loading-overlay').classList.remove('visible');
+}
+
+/* ═══════════════════════════════════════════════
+   LOGIN FLOW
+═══════════════════════════════════════════════ */
+function requireLogin(tabEl){
   pendingTab = tabEl;
+  if(currentParticipantId && currentInstituteDirHandle){
+    goToMeasurePage();
+    return;
+  }
+  openLoginOverlay();
+}
+
+function openLoginOverlay(){
   document.getElementById('login-err').textContent = '';
-  document.getElementById('login-user').value = '';
+  document.getElementById('folder-pick-err').textContent = '';
   document.getElementById('login-pass').value = '';
-  updateAttemptsDisplay();
+  document.getElementById('master-folder-name-hint').textContent = MASTER_FOLDER_NAME;
+  if(rootDirHandle){
+    showInstituteStep();
+  }else{
+    document.getElementById('login-step-folder').style.display = 'block';
+    document.getElementById('login-step-institute').style.display = 'none';
+  }
   document.getElementById('login-overlay').classList.add('visible');
-  setTimeout(() => document.getElementById('login-user').focus(), 60);
 }
 
-function updateAttemptsDisplay() {
-  const rem = MAX_ATTEMPTS - loginAttempts;
-  const el  = document.getElementById('login-attempts');
-  el.textContent = loginAttempts > 0 ? `${rem} attempt${rem===1?'':'s'} remaining` : '';
+(function initLoginUI(){
+  const passEl = document.getElementById('login-pass');
+  if(passEl) passEl.addEventListener('keydown', e=>{ if(e.key==='Enter') attemptInstituteLogin(); });
+  if(!('showDirectoryPicker' in window)) document.getElementById('fs-warn-login').style.display = 'block';
+})();
+
+// Step 1: native folder picker — points the browser at the master folder
+// on the portable drive. Institutes are then read live from whatever
+// subfolders actually exist inside it, so adding a new folder on the
+// drive makes it show up here automatically.
+async function pickFolderAndContinue(){
+  const errEl = document.getElementById('folder-pick-err');
+  errEl.textContent = '';
+  try{
+    await selectMasterFolder();
+    showInstituteStep();
+  }catch(e){
+    errEl.textContent = e.message;
+  }
 }
 
-async function attemptLogin() {
-  const lockUntil = parseInt(sessionStorage.getItem('sthir_lock') || '0');
-  if (Date.now() < lockUntil) return;
-  const user = document.getElementById('login-user').value.trim();
+async function showInstituteStep(){
+  document.getElementById('login-step-folder').style.display = 'none';
+  document.getElementById('login-step-institute').style.display = 'block';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-err').textContent = '';
+  await populateInstituteDropdown();
+}
+
+// Reads the actual subfolders inside the master folder on the drive —
+// called every time the login screen opens, so newly added institute
+// folders show up without needing to reselect the drive.
+async function populateInstituteDropdown(){
+  const sel = document.getElementById('institute-sel');
+  sel.innerHTML = '<option value="">— Select Institute —</option>';
+  try{
+    const names = await listChildDirNames(rootDirHandle);
+    names.sort();
+    if(!names.length){
+      sel.innerHTML += '<option value="" disabled>No folders found inside ' + MASTER_FOLDER_NAME + '</option>';
+      return;
+    }
+    names.forEach(n=>{ sel.innerHTML += `<option value="${n}">${n}</option>`; });
+  }catch(e){
+    document.getElementById('login-err').textContent = 'Could not read folders from the drive: ' + e.message;
+  }
+}
+
+// Step 2: institute + password. Institute list came from the drive itself
+// (step 1) — password is still checked against the configured list below.
+async function attemptInstituteLogin(){
+  const instName = document.getElementById('institute-sel').value;
   const pass = document.getElementById('login-pass').value;
-  const hash = await sha256hex(pass);
-  if (user === VALID_USER && hash === CRED_HASH) {
-    sessionStorage.setItem('sthir_auth', 'ok');
-    sessionStorage.setItem('sthir_user', user);
-    sessionStorage.setItem('sthir_attempts', '0');
-    loginAttempts = 0;
+  const errEl = document.getElementById('login-err');
+  if(!instName){ errEl.textContent = 'Please select an institute.'; return; }
+  const expected = INSTITUTE_PASSWORDS[instName];
+  if(expected===undefined){ errEl.textContent = `No password configured for "${instName}". Add one to INSTITUTE_PASSWORDS in the code.`; return; }
+  if(pass !== expected){ errEl.textContent = 'Incorrect password.'; return; }
+  errEl.textContent = '';
+  try{
+    showLoadingState('Preparing institute folder…');
+    const instDirHandle = await getOrCreateChildDir(rootDirHandle, instName);
+    currentInstituteName = instName;
+    currentInstituteDirHandle = instDirHandle;
+    hideLoadingState();
     document.getElementById('login-overlay').classList.remove('visible');
-    const loginEvent = { user, timestamp: new Date().toISOString(), ua: navigator.userAgent.slice(0,80) };
-    console.log('[STHIR-LOGIN]', loginEvent);
-    const log = JSON.parse(sessionStorage.getItem('sthir_login_log') || '[]');
-    log.push(loginEvent);
-    sessionStorage.setItem('sthir_login_log', JSON.stringify(log));
-    if (pendingTab) { showPage('experiment', pendingTab); pendingTab = null; }
-    document.getElementById('logged-user-chip').textContent = `👤 ${user}`;
-  } else {
-    loginAttempts++;
-    sessionStorage.setItem('sthir_attempts', String(loginAttempts));
-    console.warn('[STHIR-LOGIN-FAIL]', { user, timestamp: new Date().toISOString(), attempt: loginAttempts });
-    if (loginAttempts >= MAX_ATTEMPTS) {
-      sessionStorage.setItem('sthir_lock', String(Date.now() + LOCKOUT_MS));
-      document.getElementById('login-err').textContent = 'Account locked for 5 minutes.';
-    } else {
-      document.getElementById('login-err').textContent = 'Incorrect username or password.';
-      updateAttemptsDisplay();
+    openEnrollOverlay();
+  }catch(e){
+    hideLoadingState();
+    errEl.textContent = 'Could not access the institute folder: ' + e.message;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   ENROLLMENT
+═══════════════════════════════════════════════ */
+function openEnrollOverlay(){
+  document.getElementById('enroll-institute-label').textContent = currentInstituteName;
+  document.getElementById('enroll-overlay').classList.add('visible');
+}
+
+async function generateParticipantId(){
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth()+1).padStart(2,'0');
+  const prefix = `${yyyy}-${mm}-`;
+  const names = await listChildDirNames(currentInstituteDirHandle);
+  const existingNums = names
+    .filter(n=>n.startsWith(prefix))
+    .map(n=>parseInt(n.slice(prefix.length),10))
+    .filter(n=>!isNaN(n));
+  const next = existingNums.length ? Math.max(...existingNums)+1 : 1;
+  const seq = String(next).padStart(4,'0');
+  return { folderName: `${prefix}${seq}`, displayId: `${yyyy}/${mm}/${seq}` };
+}
+
+async function enrollNewParticipant(){
+  try{
+    showLoadingState('Creating participant folder…');
+    const { folderName, displayId } = await generateParticipantId();
+    const partDirHandle = await getOrCreateChildDir(currentInstituteDirHandle, folderName);
+    const measDirHandle = await getOrCreateChildDir(partDirHandle, 'measurements');
+    currentParticipantFolderName = folderName;
+    currentParticipantId = displayId;
+    currentParticipantDirHandle = partDirHandle;
+    currentMeasurementsDirHandle = measDirHandle;
+    formData1 = {}; formData2 = {}; formFilesStore = {};
+    hideLoadingState();
+    document.getElementById('enroll-overlay').classList.remove('visible');
+    showParticipantIdOverlay(displayId);
+  }catch(e){
+    hideLoadingState();
+    alert('Could not create participant folder:\n' + e.message);
+  }
+}
+
+function showParticipantIdOverlay(displayId){
+  document.getElementById('pid-display').textContent = displayId;
+  document.getElementById('pid-copy-status').textContent = '';
+  document.getElementById('pid-overlay').classList.add('visible');
+}
+
+async function copyParticipantId(){
+  const statusEl = document.getElementById('pid-copy-status');
+  try{
+    await navigator.clipboard.writeText(currentParticipantId);
+    statusEl.textContent = '✓ Copied to clipboard';
+  }catch(e){
+    // Fallback for browsers/contexts where the Clipboard API is unavailable
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = currentParticipantId;
+      ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      statusEl.textContent = '✓ Copied to clipboard';
+    }catch(e2){
+      statusEl.textContent = 'Could not copy — please select and copy manually.';
     }
   }
 }
 
-document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') attemptLogin(); });
-document.getElementById('login-user').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('login-pass').focus(); });
+function continueToForm1(){
+  document.getElementById('pid-overlay').classList.remove('visible');
+  goToForm1();
+}
 
 /* ═══════════════════════════════════════════════
-   PAGE NAVIGATION
+   FORM FIELD DEFINITIONS
+   Form 1 = Participant Information & Consent Form (A1A_Consent_form_AIMS.docx)
+   Form 2 = Researcher-Reported Questionnaire (Form_2.docx)
+   field.type: 'section' (heading only, not collected) | 'text' | 'number' |
+               'textarea' | 'select' (single choice) | 'checkbox' (single
+               boolean) | 'checkboxes' (multi-select list) | 'file'
+               (attach a photo/image, e.g. a scanned digital signature —
+               embedded directly into the generated PDF)
+═══════════════════════════════════════════════ */
+const FORM1_FIELDS = [
+  { id:'consent_agree',      label:"I have read and understood the information above, have had the opportunity to ask questions, and voluntarily agree to participate in this research study.", type:'checkbox', required:true },
+  { id:'consent_copy_given', label:'I have been given a copy of this consent form.', type:'checkbox' },
+  { id:'aims_reference_id',  label:'AIMS Reference ID',            type:'text' },
+  { id:'researcher_name',    label:'Researcher Name',              type:'text', required:true },
+  { id:'researcher_signature', label:'Researcher Signature (type full name to sign)', type:'text' },
+  { id:'researcher_signature_file', label:'Or attach a photo/image of your signature', type:'file' },
+  { id:'consent_date',       label:'Date',                          type:'text' }
+];
+
+const FORM2_FIELDS = [
+  { id:'sec_basic', label:'Basic Details', type:'section' },
+  { id:'age',          label:'Age',        type:'number', required:true },
+  { id:'gender',       label:'Gender',      type:'select', options:['Male','Female','Other'], required:true },
+  { id:'bmi',          label:'BMI',        type:'text' },
+  { id:'location',     label:'Location',    type:'select', options:['Urban','Rural'], required:true },
+  { id:'area_residence', label:'Area of residence for past 5 years', type:'text' },
+
+  { id:'sec_part1', label:'Part 1 — Health History', type:'section' },
+  { id:'balance_disorder',        label:'Have you ever been diagnosed with a balance disorder?', type:'select', options:['Yes','No'] },
+  { id:'balance_disorder_detail', label:'If yes, name of the condition',                          type:'text' },
+  { id:'mood_disorder',           label:'Have you ever been diagnosed with a mood disorder?',      type:'select', options:['Yes','No'] },
+  { id:'learning_disorder',       label:'Have you ever been diagnosed with dyslexia, dyscalculia or dysgraphia?', type:'select', options:['Yes','No'] },
+  { id:'medications', label:'Do you take medications for any of these conditions? (select all that apply)', type:'checkboxes', options:['Blood pressure','Sleep medications','Pain medications','Antidepressants','Antianxiety','Diabetes'] },
+  { id:'recreational_drugs_6mo', label:'Have you taken recreational drugs in the past 6 months?', type:'select', options:['Yes','No'] },
+  { id:'major_injury_1yr',       label:'Did you experience any major fracture, injury or surgery in the last 1 year?', type:'select', options:['Yes','No'] },
+  { id:'recent_consumption', label:'Did you consume any of the following? (select all that apply)', type:'checkboxes', options:['Alcohol in last 12h','Caffeine/energy drink in last 5h','Nicotine in last 2h'] },
+
+  { id:'sec_part2', label:'Part 2 — Lifestyle', type:'section' },
+  { id:'lifestyle_category', label:'How would you categorize your lifestyle?', type:'select', options:['Very active','Active','Somewhat active','Sedentary','Unsure'] },
+  { id:'fitness_minutes_week', label:'How many minutes in a week do you dedicate to physical fitness?', type:'select', options:['<60 mins (1 hour)','60–120 mins (1–2 hours)','120–180 mins (2–3 hours)','180–240 mins (3–4 hours)','>240 mins (>4 hours)','Unsure'] },
+  { id:'fitness_days', label:'What days of the week are you most likely to engage in dedicated physical fitness?', type:'select', options:['All days of the week','Mostly weekdays','Mostly weekends','Unsure'] },
+  { id:'fitness_intensity', label:'Which describes your physical fitness sessions most accurately?', type:'select', options:['I like to push myself, so I am sweaty and out of breath most of the time','I do not like to be sweaty/out of breath but sometimes I push myself','I like to exercise at my own pace'] },
+  { id:'exercise_deterrent', label:'Which of the following could deter you from exercising?', type:'select', options:['Work','Mood','Uncomfortable weather','Extreme weather','Other engagements (friends/family)','I almost never miss my sessions'] },
+  { id:'preferred_exercise', label:'Preferred form of exercise', type:'select', options:['Sports','Walks','Running','Yoga','Gym'] },
+  { id:'alt_exercise', label:'If you had to change your exercise form, which would you try?', type:'select', options:['Sports','Walks','Running','Yoga','Gym'] },
+  { id:'meditate', label:'Do you meditate?', type:'select', options:['Yes','No','I try to but it is difficult to focus','I am not interested'] },
+  { id:'meditate_focus_duration', label:'If yes, how long can you focus?', type:'select', options:['Less than 1 min','About 10 mins','About 30 mins','About an hour or more','It varies'] },
+  { id:'sleep_habits', label:'How would you assess your sleeping habits?', type:'select', options:['Good (regular sleep/wake time)','Erratic (no fixed time)','Poor (feel sleep deprived most of the time)'] },
+  { id:'sleep_duration', label:'On average how long do you sleep in 24h?', type:'select', options:['Less than 7 hours','About 7 hours','More than 7 hours','Varies more/less than 7 hours'] },
+  { id:'sleep_phases', label:'How best can you describe your sleep phases?', type:'select', options:['I sleep only at night','I sleep in the afternoon and night','I would want to nap but do not have time','I can sleep anytime of the day','I am not able to sleep during the day even when sleep deprived'] },
+  { id:'sleep_hygiene', label:'How is your sleep hygiene?', type:'select', options:['I fall asleep easily and sleep throughout','I struggle to fall asleep but then sleep throughout','I fall asleep easily but wake and cannot go back to sleep','I fall asleep easily, wake, and go back to sleep easily'] },
+  { id:'late_night_feeling', label:'How do you feel about being up late in the night?', type:'select', options:['I do not like it','No, I do not mind'] },
+  { id:'avoid_late_reason', label:'Main reason to avoid being up late', type:'select', options:['I cannot fall asleep beyond my regular bedtime','I wake up late next day and it disrupts my routine'] },
+  { id:'food_habits', label:'How would you best describe your food habits?', type:'select', options:['Very healthy','Healthy','Moderately healthy','Unhealthy','Very unhealthy'] },
+  { id:'packaging_waste_time', label:'Time to generate 5 packets of packaging waste in day-to-day life', type:'select', options:['In a day','In a few days','In a week','In a month','Over a month'] },
+  { id:'portion_mindfulness', label:'Are you mindful about recommended portions of carbs/protein/fats?', type:'select', options:['Yes','No','Somewhat','I do not believe in it, I eat what I like','I do not believe in it, but I am mindful about healthy food'] },
+  { id:'food_intake_type', label:'Which best describes your daily food intake?', type:'select', options:['A mix of freshly made and packaged food','Mostly freshly made food','Mostly pre-cooked/pre-packed food','A conscious effort to eat seasonal food'] },
+  { id:'go_to_snacks', label:'Go-to snacks', type:'select', options:['Packaged items (cookies, chips, ice-cream, etc.)','Seasonal fruits & vegetables','Dry fruits (almond, peanuts, walnuts, etc.)','Packaged sandwiches'] },
+  { id:'snack_frequency', label:'How many times do you snack in a day?', type:'select', options:['1–2','2–4','I do not keep count'] },
+
+  { id:'sec_urban', label:'Urban Population', type:'section' },
+  { id:'has_garden', label:'Do you have a lawn, kitchen garden, terrace garden or potted plants?', type:'select', options:['Yes','No'] },
+  { id:'uses_pesticide_garden', label:'Do you use any pesticide or insecticide in your garden yourself?', type:'select', options:['Yes','No'] },
+  { id:'pesticide_which', label:'If yes, which one?', type:'text' },
+  { id:'handles_pesticides_home', label:'Do you handle insecticides/pesticides at home (ants, rodents, cockroaches, lizards, bugs, mosquitoes)?', type:'select', options:['Yes','No'] },
+  { id:'uses_ppe_pesticides', label:'If yes, do you use PPE (gloves, masks, eye goggles) while using them?', type:'select', options:['Yes','No'] },
+
+  { id:'sec_rural', label:'Rural Population', type:'section' },
+  { id:'farming_engaged', label:'Do you or anyone in your home engage in farming (occupationally or for home use)?', type:'select', options:['Yes','No'] },
+  { id:'pesticide_frequency_farm', label:'If yes, how often do you use pesticides on your farm/kitchen garden?', type:'select', options:['Once a month','Once in a growing season','Rarely'] },
+  { id:'pesticide_handler', label:'Who buys and handles the pesticides?', type:'select', options:['I do','Sometimes I do it, sometimes other family members do','My servant'] },
+  { id:'pesticide_use_duration', label:'How long have you been using pesticides of some kind?', type:'select', options:['<2 years','About 5 years','5–10 years','10–20 years','>20 years'] },
+  { id:'ppe_pesticide_use', label:'Do you use dedicated PPE when using pesticides?', type:'select', options:['Always','Sometimes','Rarely','If available'] },
+  { id:'pesticide_choice_method', label:'How do you decide which pesticide to use on the farm?', type:'select', options:['Myself by self-study','By consulting company representatives','By consulting shopkeepers',"Through farmers' group"] },
+  { id:'pesticide_change_frequency', label:'How often do you change the type of pesticide you use?', type:'select', options:['Seasonally, depending on crop','When the previous one stops being effective','I have used the same pesticide throughout'] },
+  { id:'crops_grown', label:'Which crops do you grow on your farm?', type:'textarea' },
+  { id:'pesticides_used', label:'What are some of the pesticides you remember using on your farm?', type:'textarea' },
+  { id:'pesticide_cleanup', label:'How do you clean up after using pesticides?', type:'textarea' },
+
+  { id:'sec_engagement', label:'Further Engagement', type:'section' },
+  { id:'connect_science_health', label:'Would you like to connect with us to understand the science and health aspect of this study?', type:'select', options:['Yes, if explained in simple terms','Yes, even in technical terms','Maybe — depends on time/availability','No, not interested'] },
+  { id:'follow_up_willingness', label:'Would you be willing to come back for follow-up studies in future years?', type:'select', options:['Yes','Maybe','No'] },
+  { id:'contact_mobile', label:'Mobile number', type:'text' },
+  { id:'contact_email', label:'Email', type:'text' },
+  { id:'no_contact_preferred', label:'I do not prefer to be contacted', type:'checkbox' }
+];
+
+let formFilesStore = {}; // fieldId -> {dataUrl, name, type} for 'file'-type fields (e.g. signature image)
+
+function fileToDataUrl(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=>resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderFormFields(containerId, fields, existingValues){
+  existingValues = existingValues || {};
+  const c = document.getElementById(containerId);
+  c.innerHTML = '';
+  fields.forEach(f=>{
+    if(f.type==='section'){
+      const h = document.createElement('div'); h.className = 'form-section-heading';
+      h.textContent = f.label;
+      c.appendChild(h);
+      return;
+    }
+    const wrap = document.createElement('div'); wrap.className = 'cf-field';
+
+    if(f.type==='checkbox'){
+      const row = document.createElement('div'); row.className = 'cf-checkbox-row';
+      const input = document.createElement('input'); input.type = 'checkbox'; input.id = 'field_' + f.id;
+      if(existingValues[f.id]) input.checked = true;
+      const lbl = document.createElement('label'); lbl.htmlFor = input.id;
+      lbl.textContent = f.label + (f.required ? ' *' : '');
+      row.appendChild(input); row.appendChild(lbl);
+      wrap.appendChild(row);
+      c.appendChild(wrap);
+      return;
+    }
+
+    const lbl = document.createElement('div'); lbl.className = 'cf-label';
+    lbl.textContent = f.label + (f.required ? ' *' : '');
+    wrap.appendChild(lbl);
+
+    if(f.type==='file'){
+      const input = document.createElement('input');
+      input.type = 'file'; input.accept = 'image/*'; input.className = 'cf-input';
+      input.id = 'field_' + f.id;
+      input.style.padding = '8px 10px';
+      const preview = document.createElement('div');
+      preview.id = 'preview_' + f.id;
+      preview.style.cssText = 'font-size:11px;color:var(--teal-light);margin-top:5px;';
+      if(formFilesStore[f.id]) preview.textContent = '✓ ' + formFilesStore[f.id].name + ' attached';
+      input.addEventListener('change', async e=>{
+        const file = e.target.files[0];
+        if(!file) return;
+        preview.textContent = 'Reading file…';
+        try{
+          const dataUrl = await fileToDataUrl(file);
+          formFilesStore[f.id] = { dataUrl, name:file.name, type:file.type };
+          preview.textContent = '✓ ' + file.name + ' attached';
+        }catch(err){
+          preview.textContent = 'Could not read file: ' + err.message;
+        }
+      });
+      wrap.appendChild(input);
+      wrap.appendChild(preview);
+      c.appendChild(wrap);
+      return;
+    }
+
+    if(f.type==='checkboxes'){
+      const group = document.createElement('div'); group.className = 'cf-checkboxes-group';
+      const existingArr = (existingValues[f.id] || '').split(';').map(s=>s.trim()).filter(Boolean);
+      f.options.forEach((opt,i)=>{
+        const row = document.createElement('div'); row.className = 'cf-checkbox-row';
+        const input = document.createElement('input'); input.type = 'checkbox';
+        input.id = `field_${f.id}__${i}`; input.dataset.optLabel = opt;
+        if(existingArr.includes(opt)) input.checked = true;
+        const l = document.createElement('label'); l.htmlFor = input.id; l.textContent = opt;
+        row.appendChild(input); row.appendChild(l);
+        group.appendChild(row);
+      });
+      group.dataset.fieldId = f.id;
+      group.dataset.optionCount = f.options.length;
+      wrap.appendChild(group);
+      c.appendChild(wrap);
+      return;
+    }
+
+    let input;
+    if(f.type==='select'){
+      input = document.createElement('select'); input.className = 'cf-input';
+      input.innerHTML = '<option value="">— Select —</option>' + f.options.map(o=>`<option value="${o}">${o}</option>`).join('');
+    } else if(f.type==='textarea'){
+      input = document.createElement('textarea'); input.className = 'cf-textarea';
+    } else {
+      input = document.createElement('input'); input.className = 'cf-input'; input.type = f.type || 'text';
+    }
+    input.id = 'field_' + f.id;
+    if(existingValues[f.id] !== undefined) input.value = existingValues[f.id];
+    wrap.appendChild(input);
+    c.appendChild(wrap);
+  });
+}
+function collectFormValues(fields){
+  const values = {};
+  fields.forEach(f=>{
+    if(f.type==='section' || f.type==='file') return; // file data lives in formFilesStore
+    if(f.type==='checkbox'){ values[f.id] = document.getElementById('field_'+f.id).checked; return; }
+    if(f.type==='checkboxes'){
+      const checked = [];
+      f.options.forEach((opt,i)=>{
+        const el = document.getElementById(`field_${f.id}__${i}`);
+        if(el && el.checked) checked.push(opt);
+      });
+      values[f.id] = checked.join('; ');
+      return;
+    }
+    values[f.id] = document.getElementById('field_'+f.id).value.trim();
+  });
+  return values;
+}
+function validateRequired(fields, values){
+  return fields.filter(f=>{
+    if(!f.required) return false;
+    if(f.type==='file') return !formFilesStore[f.id]; // required file fields checked against the store
+    return !values[f.id];
+  });
+}
+
+function goToForm1(){
+  renderFormFields('form1-fields', FORM1_FIELDS, formData1);
+  document.getElementById('f1-institute-chip').textContent = currentInstituteName;
+  document.getElementById('f1-pid-chip').textContent = currentParticipantId;
+  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+  document.getElementById('page-form1').style.display = 'block';
+}
+
+function goForm1Next(){
+  const values = collectFormValues(FORM1_FIELDS);
+  const missing = validateRequired(FORM1_FIELDS, values);
+  if(missing.length){ alert('Please fill required fields: ' + missing.map(f=>f.label).join(', ')); return; }
+  // Signature: either a typed name or an attached signature image is required
+  const hasTypedSig = !!values['researcher_signature'];
+  const hasFileSig = !!formFilesStore['researcher_signature_file'];
+  if(!hasTypedSig && !hasFileSig){
+    alert('Please either type your name to sign, or attach a photo/image of your signature.');
+    return;
+  }
+  formData1 = values;
+  renderFormFields('form2-fields', FORM2_FIELDS, formData2);
+  document.getElementById('f2-institute-chip').textContent = currentInstituteName;
+  document.getElementById('f2-pid-chip').textContent = currentParticipantId;
+  document.getElementById('page-form1').style.display = 'none';
+  document.getElementById('page-form2').style.display = 'block';
+}
+function goForm2Back(){
+  document.getElementById('page-form2').style.display = 'none';
+  document.getElementById('page-form1').style.display = 'block';
+}
+
+/* Builds a PDF for a field list. Uses a STACKED layout (label on its own
+   line, value indented on the line(s) below) rather than a two-column
+   layout — long labels (e.g. full consent sentences) would otherwise run
+   past the value column and overlap it. Every label/value is wrapped to
+   the page width via splitTextToSize, so nothing is ever clipped or
+   overlapping regardless of length. */
+function buildPdfBlob(title, fields, values){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const pageWidth  = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const marginL = 14, marginR = 14;
+  const contentWidth = pageWidth - marginL - marginR;
+  const bottomLimit = pageHeight - 16;
+
+  doc.setFontSize(16); doc.setFont(undefined,'bold'); doc.text(title, marginL, 18);
+  doc.setFont(undefined,'normal'); doc.setFontSize(10);
+  doc.text(`Participant ID: ${currentParticipantId}`, marginL, 26);
+  doc.text(`Institute: ${currentInstituteName}`, marginL, 32);
+  doc.text(`Date: ${new Date().toLocaleString()}`, marginL, 38);
+  let y = 50;
+
+  function ensureSpace(neededHeight){
+    if(y + neededHeight > bottomLimit){ doc.addPage(); y = 20; }
+  }
+
+  fields.forEach(f=>{
+    if(f.type==='section'){
+      ensureSpace(14);
+      y += 4;
+      doc.setFontSize(13); doc.setFont(undefined,'bold');
+      doc.text(f.label, marginL, y);
+      doc.setFontSize(10); doc.setFont(undefined,'normal');
+      y += 8;
+      return;
+    }
+
+    doc.setFontSize(10); doc.setFont(undefined,'bold');
+    const labelLines = doc.splitTextToSize(f.label, contentWidth);
+    ensureSpace(labelLines.length*5 + 4);
+    doc.text(labelLines, marginL, y);
+    y += labelLines.length*5 + 2;
+    doc.setFont(undefined,'normal');
+
+    if(f.type==='file'){
+      const stored = formFilesStore[f.id];
+      if(stored && stored.dataUrl){
+        let fmt = 'JPEG';
+        if(stored.dataUrl.startsWith('data:image/png')) fmt = 'PNG';
+        else if(stored.dataUrl.startsWith('data:image/webp')) fmt = 'WEBP';
+        const imgW = 55, imgH = 28;
+        ensureSpace(imgH + 8);
+        try{
+          doc.addImage(stored.dataUrl, fmt, marginL+4, y, imgW, imgH);
+          y += imgH + 8;
+        }catch(err){
+          doc.text('(could not embed attached file: ' + stored.name + ')', marginL+4, y);
+          y += 8;
+        }
+      }else{
+        doc.setTextColor(120,120,120);
+        doc.text('(no file attached)', marginL+4, y);
+        doc.setTextColor(0,0,0);
+        y += 8;
+      }
+      return;
+    }
+
+    const val = f.type==='checkbox' ? (values[f.id] ? 'Yes' : 'No') : (values[f.id] ? String(values[f.id]) : '—');
+    const valueLines = doc.splitTextToSize(val, contentWidth - 6);
+    ensureSpace(valueLines.length*5 + 6);
+    doc.text(valueLines, marginL+6, y);
+    y += valueLines.length*5 + 8;
+  });
+  return doc.output('blob');
+}
+
+async function submitForm2(){
+  const values = collectFormValues(FORM2_FIELDS);
+  const missing = validateRequired(FORM2_FIELDS, values);
+  if(missing.length){ alert('Please fill required fields: ' + missing.map(f=>f.label).join(', ')); return; }
+  formData2 = values;
+  try{
+    showLoadingState('Saving forms as PDF…');
+    const blob1 = buildPdfBlob('Form 1 — Participant Information & Consent', FORM1_FIELDS, formData1);
+    const blob2 = buildPdfBlob('Form 2 — Researcher-Reported Questionnaire', FORM2_FIELDS, formData2);
+    await writeFile(currentParticipantDirHandle, 'Form1_Consent.pdf', blob1);
+    await writeFile(currentParticipantDirHandle, 'Form2_Questionnaire.pdf', blob2);
+    hideLoadingState();
+    goToMeasurePage();
+  }catch(e){
+    hideLoadingState();
+    alert('Could not save forms:\n' + e.message);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   PAGE NAVIGATION (About / Participate)
 ═══════════════════════════════════════════════ */
 function showPage(id, tabEl) {
   document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-' + id).style.display = 'block';
   tabEl.classList.add('active');
-  if (id === 'experiment') setTimeout(resizeCanvas, 60);
 }
 document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
 document.getElementById('page-home').style.display = 'block';
+
+function goToMeasurePage(){
+  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+  document.getElementById('page-experiment').style.display = 'block';
+  document.getElementById('measure-login-chip').textContent = 'LOGIN: ' + currentInstituteName;
+  document.getElementById('measure-pid-chip').textContent = 'Participant ID: ' + currentParticipantId;
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-tab')[2].classList.add('active');
+  setTimeout(resizeCanvas, 60);
+}
+
+function returnToLogin(){
+  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+  document.getElementById('page-home').style.display = 'block';
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-tab')[0].classList.add('active');
+  openLoginOverlay();
+}
 
 /* ═══════════════════════════════════════════════
    QR CODE
@@ -748,7 +1473,6 @@ window.addEventListener('load', () => {
     correctLevel: QRCode.CorrectLevel.M
   });
   if (!('serial' in navigator)) document.getElementById('serial-warn').style.display = 'block';
-  if (!('showDirectoryPicker' in window)) document.getElementById('fs-warn').style.display = 'block';
 });
 
 /* ═══════════════════════════════════════════════
@@ -796,7 +1520,7 @@ async function submitContact(e) {
 }
 
 /* ═══════════════════════════════════════════════
-   EXPERIMENT CONSTANTS
+   MEASURE CONSTANTS
 ═══════════════════════════════════════════════ */
 const PLATFORM_SIZE_CM = 47;
 const PLOT_RANGE_CM    = 60;
@@ -806,33 +1530,17 @@ const TRACE_SECS       = 15;
 const AVG_N            = 10;
 const FIXED_BAUD       = 2000000;
 
-const EXPERIMENTS = {
-  eyes_open:     'eyes_open.csv',
-  eyes_closed:   'eyes_closed.csv',
-  one_leg_right: 'one_leg_right.csv',
-  one_leg_left:  'one_leg_left.csv',
-  cognitive:     'cognitive.csv',
-};
-
-const SESSION_COLOR_BANKS = [
-  ['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4'],
-  ['#46f0f0','#f032e6','#bcf60c','#ff7f50','#00ced1'],
-  ['#da70d6','#ffa500','#7fff00','#ff69b4','#1e90ff'],
-  ['#ffec00','#a52a2a','#00fa9a','#dc143c','#4169e1'],
-];
-
 /* ── Runtime state ── */
 let port=null, reader=null, readActive=false;
-let rootDir=null, sessionDirs={};
 let offsets=null, offsetAcc={FL:0,FR:0,RL:0,RR:0}, offsetCount=0;
 let flBuf=new Float32Array(AVG_N), frBuf=new Float32Array(AVG_N);
 let rlBuf=new Float32Array(AVG_N), rrBuf=new Float32Array(AVG_N);
 let bufIdx=0;
 let copX=0, copY=0, trace=[], forces={FL:0,FR:0,RL:0,RR:0};
 let recording=false, recInterval=null, recBuffer=[];
-let recSessionDir=null, recFileName='', recDurationSecs=0, recElapsed=0;
-let overlayMap={}, sessionColorIdx=0;
-let sessionListItems=[];
+let recExpKey='', recDurationSecs=0, recElapsed=0;
+let sessionCsvBuffers = {};   // { eyes_open: ["x,y", ...], ... } — in-memory until End Session
+let overlayPlotData = {};     // { eyes_open: {x:[],y:[],color} } — for canvas drawing
 
 /* ── Canvas + zoom/pan ── */
 const canvas = document.getElementById('cop-canvas');
@@ -841,6 +1549,8 @@ let zoomScale=1, panX=0, panY=0, isPanning=false;
 let panStartX=0, panStartY=0, panStartCmX=0, panStartCmY=0;
 
 function resetView(){ zoomScale=1; panX=0; panY=0; }
+function zoomIn(){ zoomScale = Math.max(0.01, Math.min(1000, zoomScale/1.2)); }
+function zoomOut(){ zoomScale = Math.max(0.01, Math.min(1000, zoomScale*1.2)); }
 
 function resizeCanvas(){
   const wrap = document.getElementById('canvas-wrap');
@@ -866,19 +1576,7 @@ function cmPx(cm){ return cm * getScale() / zoomScale; }
 function viewHalfX(){ return (canvas.width /2) / (getScale()/zoomScale); }
 function viewHalfY(){ return (canvas.height/2) / (getScale()/zoomScale); }
 
-/* Scroll-to-zoom — keeps cursor point fixed */
-canvas.addEventListener('wheel', e => {
-  e.preventDefault();
-  const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-  const [cmx,cmy] = p2c(mx, my);
-  const f = e.deltaY < 0 ? 1.12 : 1/1.12;
-  zoomScale = Math.max(0.01, Math.min(1000, zoomScale*f));
-  const sc = getScale()/zoomScale;
-  panX = cmx - (mx - canvas.width/2)  / sc;
-  panY = cmy + (my - canvas.height/2) / sc;
-}, {passive:false});
-
+/* Drag-to-pan (mouse) — wheel-zoom intentionally removed; use +/- buttons instead */
 canvas.addEventListener('mousedown', e => {
   isPanning=true; panStartX=e.clientX; panStartY=e.clientY;
   panStartCmX=panX; panStartCmY=panY; canvas.style.cursor='grabbing';
@@ -892,7 +1590,7 @@ window.addEventListener('mousemove', e => {
 window.addEventListener('mouseup', () => { isPanning=false; canvas.style.cursor='crosshair'; });
 canvas.addEventListener('dblclick', resetView);
 
-/* Touch pinch-zoom */
+/* Touch pinch-zoom (kept — restriction was about mouse movement, not touch) */
 let ltd=0, ltmx=0, ltmy=0, ltpx=0, ltpy=0;
 canvas.addEventListener('touchstart', e => {
   if(e.touches.length===2){
@@ -944,22 +1642,20 @@ function drawAll(){
 
   if(zoomScale!==1){
     ctx.fillStyle='rgba(100,160,100,0.55)'; ctx.font='10px Consolas,monospace';
-    ctx.textAlign='left'; ctx.fillText(`×${zoomScale.toFixed(1)}`,6,14);
+    ctx.textAlign='left'; ctx.fillText(`×${(1/zoomScale).toFixed(1)}`,6,14);
   }
 
   const[rx0,ry0]=c2p(-PLATFORM_SIZE_CM/2, PLATFORM_SIZE_CM/2);
   const[rx1,ry1]=c2p( PLATFORM_SIZE_CM/2,-PLATFORM_SIZE_CM/2);
   ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.strokeRect(rx0,ry0,rx1-rx0,ry1-ry0);
 
-  Object.values(overlayMap).forEach(ovList=>{
-    ovList.forEach(ov=>{
-      if(!ov.x.length) return;
-      ctx.save(); ctx.strokeStyle=ov.color; ctx.lineWidth=1.5; ctx.globalAlpha=0.75;
-      ctx.beginPath();
-      const[sx,sy]=c2p(ov.x[0],ov.y[0]); ctx.moveTo(sx,sy);
-      for(let i=1;i<ov.x.length;i++){ const[ex,ey]=c2p(ov.x[i],ov.y[i]); ctx.lineTo(ex,ey); }
-      ctx.stroke(); ctx.restore();
-    });
+  Object.values(overlayPlotData).forEach(ov=>{
+    if(!ov.x.length) return;
+    ctx.save(); ctx.strokeStyle=ov.color; ctx.lineWidth=1.5; ctx.globalAlpha=0.75;
+    ctx.beginPath();
+    const[sx,sy]=c2p(ov.x[0],ov.y[0]); ctx.moveTo(sx,sy);
+    for(let i=1;i<ov.x.length;i++){ const[ex,ey]=c2p(ov.x[i],ov.y[i]); ctx.lineTo(ex,ey); }
+    ctx.stroke(); ctx.restore();
   });
 
   if(trace.length>1){
@@ -979,7 +1675,16 @@ function drawAll(){
     ctx.beginPath(); ctx.arc(W-14,12,5,0,2*Math.PI); ctx.fill(); ctx.restore();
   }
 }
-(function loop(){ drawAll(); requestAnimationFrame(loop); })();
+
+function updateMetricsDisplay(){
+  document.getElementById('m-fl').textContent=forces.FL.toFixed(1);
+  document.getElementById('m-fr').textContent=forces.FR.toFixed(1);
+  document.getElementById('m-rl').textContent=forces.RL.toFixed(1);
+  document.getElementById('m-rr').textContent=forces.RR.toFixed(1);
+  document.getElementById('m-tot').textContent=(forces.FL+forces.FR+forces.RL+forces.RR).toFixed(1);
+  document.getElementById('m-cop').textContent=`(${copX.toFixed(2)}, ${copY.toFixed(2)})`;
+}
+(function loop(){ drawAll(); updateMetricsDisplay(); requestAnimationFrame(loop); })();
 
 /* ── CoP + math ── */
 function computeCoP(fl,fr,rl,rr){
@@ -1069,168 +1774,35 @@ function parseLine(line){
   const now=Date.now();
   if(cop.v){ trace.push({x:cop.x,y:cop.y,t:now}); const cut=now-TRACE_SECS*1000; while(trace.length&&trace[0].t<cut)trace.shift(); }
   else trace=[];
-  document.getElementById('m-fl').textContent=afl.toFixed(1);
-  document.getElementById('m-fr').textContent=afr.toFixed(1);
-  document.getElementById('m-rl').textContent=arl.toFixed(1);
-  document.getElementById('m-rr').textContent=arr.toFixed(1);
-  document.getElementById('m-tot').textContent=(afl+afr+arl+arr).toFixed(1);
-  document.getElementById('m-cop').textContent=`(${copX.toFixed(2)}, ${copY.toFixed(2)})`;
+  // NOTE: metric DOM text is updated inside the requestAnimationFrame render
+  // loop (see updateMetricsDisplay), not here — writing to the DOM on every
+  // single incoming serial line (which can be hundreds of times per second)
+  // floods the main thread and makes the whole page, including typing in
+  // the Comments box, feel frozen.
   if(recording&&cop.v) recBuffer.push(cop.x.toFixed(4)+','+cop.y.toFixed(4));
 }
 
-/* ── File system ── */
-async function selectDir(){
-  if(!('showDirectoryPicker' in window)){ document.getElementById('fs-warn').style.display='block'; return; }
-  try{
-    rootDir=await window.showDirectoryPicker({mode:'readwrite',id:'sthir'});
-    document.getElementById('dir-display').textContent='📂 '+rootDir.name;
-    await refreshPersonList();
-  }catch(e){ if(e.name!=='AbortError') alert('Folder error: '+e.message); }
-}
-async function getSessionHandle(name,create=false){
-  if(!rootDir) throw new Error('Choose a save folder first.');
-  return await rootDir.getDirectoryHandle(name,{create});
-}
-async function refreshPersonList(){
-  if(!rootDir) return;
-  const names=[];
-  for await(const[name,h] of rootDir.entries()){ if(h.kind==='directory') names.push(name); }
-  names.sort();
-  sessionDirs={};
-  names.forEach(n=>sessionDirs[n]=true);
-
-  const existing=document.getElementById('existing-sel');
-  if(existing){
-    const preserve=existing.value;
-    existing.innerHTML='<option value=""></option>';
-    names.forEach(n=>{ existing.innerHTML+=`<option value="${n}">${n}</option>`; });
-    existing.value=preserve;
-  }
-
-  const picker=document.getElementById('add-picker');
-  if(picker){
-    const prev=picker.value;
-    picker.innerHTML='<option value="">— Select Person —</option>';
-    names.forEach(n=>{ picker.innerHTML+=`<option value="${n}">${n}</option>`; });
-    if(prev&&names.includes(prev)) picker.value=prev;
-  }
-}
-
-/* ── Session list UI ── */
-function renderSessionList(){
-  const list=document.getElementById('session-list');
-  const prev=list.value;
-  list.innerHTML='';
-  sessionListItems.forEach(n=>{
-    const opt=document.createElement('option');
-    opt.value=n; opt.textContent=n;
-    list.appendChild(opt);
-  });
-  if(sessionListItems.includes(prev)) list.value=prev;
-}
-
-async function confirmAdd(){
-  const picker=document.getElementById('add-picker');
-  const val=picker.value;
-  if(!val){ alert('Select a session from the dropdown first.'); return; }
-  if(!sessionListItems.includes(val)){
-    sessionListItems.push(val);
-    renderSessionList();
-    document.getElementById('session-inp').value=val;
-    await loadSessionOverlay(val);
-  }
-  picker.value='';
-}
-
-function removeSession(){
-  const list=document.getElementById('session-list');
-  const val=list.value;
-  if(!val){ alert('Select a session from the list to remove.'); return; }
-  sessionListItems=sessionListItems.filter(n=>n!==val);
-  delete overlayMap[val];
-  renderSessionList();
-  renderOverlayPanel();
-}
-
-function onExistingSelect(v){ if(!v) return; document.getElementById('session-inp').value=v; }
-function onPersonSelect(v){ if(!v) return; document.getElementById('session-inp').value=v; }
-
-/* ── Overlay logic ── */
-async function loadSessionOverlay(sessionName){
-  if(!rootDir) return;
-  if(!(sessionName in overlayMap)){
-    const bank=SESSION_COLOR_BANKS[sessionColorIdx%SESSION_COLOR_BANKS.length];
-    sessionColorIdx++;
-    overlayMap[sessionName]=[];
-    overlayMap[sessionName]._bank=bank;
-  }
-  const bank=overlayMap[sessionName]._bank||SESSION_COLOR_BANKS[0];
-  const entries=[]; let colorIdx=0;
-  let sdir;
-  try{ sdir=await getSessionHandle(sessionName,false); }catch(e){ return; }
-  for(const[key,fname] of Object.entries(EXPERIMENTS)){
-    try{
-      const fh=await sdir.getFileHandle(fname), file=await fh.getFile(), text=await file.text();
-      const rows=text.split('\n').slice(1).filter(r=>r.trim());
-      let xs=[],ys=[];
-      rows.forEach(r=>{ const[a,b]=r.split(',').map(Number); if(!isNaN(a)&&!isNaN(b)){xs.push(a);ys.push(b);} });
-      const cl=removeOutliers(xs,ys); xs=cl.x; ys=cl.y;
-      const color=bank[colorIdx++%bank.length], ell=ellipseParams(xs,ys);
-      entries.push({name:`${sessionName} — ${key.replace(/_/g,' ')}`,x:xs,y:ys,color,ell});
-    }catch(e){}
-  }
-  overlayMap[sessionName]=entries;
-  overlayMap[sessionName]._bank=bank;
-  renderOverlayPanel();
-}
-
-function renderOverlayPanel(){
-  const body=document.getElementById('overlay-body');
-  const items=[];
-  Object.entries(overlayMap).forEach(([sess,entries])=>{
-    if(!Array.isArray(entries)) return;
-    entries.forEach(ov=>{ items.push({name:ov.name,color:ov.color,area:ov.ell?ov.ell.area:0}); });
-  });
-  if(!items.length){
-    body.innerHTML='<div style="font-size:12px;color:#666;">Overlay: not computed</div>';
-    return;
-  }
-  body.innerHTML=items.map(it=>`
-    <div class="overlay-item">
-      <div class="ov-dot" style="background:${it.color}"></div>
-      <span style="flex:1;font-size:11px;">${it.name}</span>
-      <span class="ov-area">${it.area.toFixed(2)} cm²</span>
-    </div>`).join('');
-}
-
-/* ── Recording ── */
+/* ── Recording (buffered in memory; written to the portable drive on End Session) ── */
 async function toggleRecording(){
-  if(recording){ await stopRecording(false); return; }
-  const sess=document.getElementById('session-inp').value.trim();
-  if(!sess){ alert('Enter a session name first.'); return; }
-  if(!rootDir){ alert('Choose a save folder first.'); return; }
+  if(recording){ stopRecording(false); return; }
+  if(!currentMeasurementsDirHandle){ alert('No active participant session. Please log in and enroll a participant first.'); return; }
   const exp=document.getElementById('exp-sel').value;
-  const secs=parseInt(document.getElementById('dur-sel').value,10);
-  try{
-    recSessionDir=await getSessionHandle(sess,true);
-    recFileName=exp+'.csv'; recDurationSecs=secs; recElapsed=0; recBuffer=[];
-    recording=true;
-    const btn=document.getElementById('rec-btn');
-    btn.innerHTML='⏹ Stop Recording<span id="rec-timer"> — '+secs+'s</span>';
-    btn.style.background='#8b1a1a'; btn.style.borderColor='#6a1010';
-    setStatus('Recording…','recording');
-    recInterval=setInterval(async()=>{
-      recElapsed++;
-      const rem=Math.max(0,recDurationSecs-recElapsed);
-      const timerEl=document.getElementById('rec-timer');
-      if(timerEl) timerEl.textContent=' — '+rem+'s';
-      if(recElapsed>=recDurationSecs){ clearInterval(recInterval); recInterval=null; await stopRecording(true); }
-    },1000);
-    await refreshPersonList();
-  }catch(e){ recording=false; recBuffer=[]; alert('Recording error:\n'+e.message); }
+  recExpKey=exp; recDurationSecs=FIXED_DURATION_SECS; recElapsed=0; recBuffer=[];
+  recording=true;
+  const btn=document.getElementById('rec-btn');
+  btn.innerHTML='⏹ Stop Recording<span id="rec-timer"> — '+recDurationSecs+'s</span>';
+  btn.style.background='#8b1a1a'; btn.style.borderColor='#6a1010';
+  setStatus('Recording…','recording');
+  recInterval=setInterval(()=>{
+    recElapsed++;
+    const rem=Math.max(0,recDurationSecs-recElapsed);
+    const timerEl=document.getElementById('rec-timer');
+    if(timerEl) timerEl.textContent=' — '+rem+'s';
+    if(recElapsed>=recDurationSecs){ clearInterval(recInterval); recInterval=null; stopRecording(true); }
+  },1000);
 }
 
-async function stopRecording(auto=false){
+function stopRecording(auto){
   if(!recording) return;
   recording=false;
   if(recInterval){ clearInterval(recInterval); recInterval=null; }
@@ -1238,36 +1810,99 @@ async function stopRecording(auto=false){
   btn.innerHTML='⏺ Start Recording<span id="rec-timer"></span>';
   btn.style.background='#1a6b3a'; btn.style.borderColor='#145530';
   if(offsets) setStatus('Connected — Live','connected');
-  try{
-    if(recSessionDir&&recFileName&&recBuffer.length>0){
-      const fh=await recSessionDir.getFileHandle(recFileName,{create:true});
-      const existing=await fh.getFile(), existingText=await existing.text();
-      let content='';
-      if(!existingText.trim()){ content='x,y\n'; }
-      else { content=existingText.endsWith('\n')?existingText:existingText+'\n'; }
-      content+=recBuffer.join('\n')+'\n';
-      const w=await fh.createWritable();
-      await w.write(content); await w.close();
-    }
-  }catch(e){ console.error('Save error:',e); alert('⚠ Could not save file:\n'+e.message); }
-  recBuffer=[]; recSessionDir=null; recFileName='';
-  if(auto) alert('Recording complete\n\nRecording finished (timer expired).');
+
+  const exp=recExpKey;
+  if(recBuffer.length>0 && exp){
+    if(!sessionCsvBuffers[exp]) sessionCsvBuffers[exp]=[];
+    sessionCsvBuffers[exp]=sessionCsvBuffers[exp].concat(recBuffer);
+    rebuildOverlayForExp(exp);
+    computeAndRenderOverlay();
+  }
+  recBuffer=[];
+  if(auto && exp) alert(`Measurement complete for "${exp.replace(/_/g,' ')}".`);
+  recExpKey='';
+}
+
+function rebuildOverlayForExp(exp){
+  const xs=[],ys=[];
+  (sessionCsvBuffers[exp]||[]).forEach(r=>{
+    const[a,b]=r.split(',').map(Number);
+    if(!isNaN(a)&&!isNaN(b)){xs.push(a);ys.push(b);}
+  });
+  // Only the just-recorded experiment is shown — switching experiments
+  // (or recording a new one) replaces the display entirely so the
+  // previous experiment's trace/overlay doesn't linger on screen.
+  // (All experiments' data is still kept in sessionCsvBuffers underneath
+  // and gets written out in full when End Session is clicked.)
+  overlayPlotData = { [exp]: { x:xs, y:ys, color:'#00cc44' } };
+}
+
+function computeAndRenderOverlay(){
+  const body=document.getElementById('overlay-body');
+  const keys=Object.keys(overlayPlotData);
+  if(!keys.length){ body.innerHTML='<div style="font-size:12px;color:#666;">Overlay: not computed</div>'; return; }
+  let html='';
+  keys.forEach(exp=>{
+    const rows=sessionCsvBuffers[exp]||[];
+    const xs=[],ys=[];
+    rows.forEach(r=>{ const[a,b]=r.split(',').map(Number); if(!isNaN(a)&&!isNaN(b)){xs.push(a);ys.push(b);} });
+    const cl=removeOutliers(xs,ys);
+    const ell=ellipseParams(cl.x,cl.y);
+    const area=ell?ell.area:0;
+    const color=(overlayPlotData[exp]&&overlayPlotData[exp].color)||'#999';
+    html+=`<div class="overlay-item"><div class="ov-dot" style="background:${color}"></div><span style="flex:1;font-size:11px;">${exp.replace(/_/g,' ')}</span><span class="ov-area">${area.toFixed(2)} cm²</span></div>`;
+  });
+  body.innerHTML=html;
 }
 
 function clearTrace(){ trace=[]; }
 
-function clearOverlays(){
-  overlayMap={}; sessionColorIdx=0; sessionListItems=[];
-  renderSessionList();
-  document.getElementById('overlay-body').innerHTML='<div style="font-size:12px;color:#666;">Overlay: not computed</div>';
+// Clears the on-screen trace and overlay whenever the clinician switches
+// which experiment is selected, so the previous experiment's visuals
+// don't carry over into the new one. Underlying recorded data for every
+// experiment stays intact in sessionCsvBuffers regardless.
+document.getElementById('exp-sel').addEventListener('change', ()=>{
+  trace=[];
+  overlayPlotData={};
+  computeAndRenderOverlay();
+});
+
+/* ── End Session: write buffered CSVs + comments to the drive, then log out ── */
+async function endSession(){
+  if(recording){ alert('Please wait for the current recording to finish (or it will stop automatically at 60s) before ending the session.'); return; }
+  if(!currentMeasurementsDirHandle){ alert('No active participant session.'); return; }
+  const comments=document.getElementById('comments-box').value.trim();
+  const hasData=Object.keys(sessionCsvBuffers).length>0;
+  if(!hasData && !comments){
+    if(!confirm('No measurements or comments were recorded. End session anyway?')) return;
+  }
+  try{
+    showLoadingState('Saving measurements to the drive…');
+    for(const [exp, rows] of Object.entries(sessionCsvBuffers)){
+      const csvContent='x,y\n'+rows.join('\n')+'\n';
+      await writeFile(currentMeasurementsDirHandle, exp+'.csv', csvContent);
+    }
+    if(comments){
+      await writeFile(currentMeasurementsDirHandle, 'comments.txt', comments);
+    }
+    hideLoadingState();
+    alert('Session ended. All measurements and comments have been saved.');
+    resetSessionState();
+    returnToLogin();
+  }catch(e){
+    hideLoadingState();
+    alert('Error saving session data:\n'+e.message);
+  }
 }
 
-async function showOverlay(){
-  if(!rootDir){ alert('Choose a save folder first.'); return; }
-  const sess=document.getElementById('session-inp').value.trim();
-  if(!sess){ alert('Enter a session name to overlay.'); return; }
-  await loadSessionOverlay(sess);
-  if(!overlayMap[sess]||!overlayMap[sess].length) alert('No CSV files found for session "'+sess+'".');
+function resetSessionState(){
+  currentInstituteName=null; currentInstituteDirHandle=null;
+  currentParticipantId=null; currentParticipantFolderName=null;
+  currentParticipantDirHandle=null; currentMeasurementsDirHandle=null;
+  sessionCsvBuffers={}; overlayPlotData={}; trace=[];
+  formData1={}; formData2={}; formFilesStore={};
+  document.getElementById('comments-box').value='';
+  computeAndRenderOverlay();
 }
 </script>
 </body>
