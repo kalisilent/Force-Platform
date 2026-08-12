@@ -213,12 +213,12 @@ select.cf-input option{background:#132a45;color:#fff;}
 /* ═══════════════════════════════
    LOGIN / ENROLL / LOADING OVERLAYS
 ═══════════════════════════════ */
-#login-overlay,#enroll-overlay,#loading-overlay,#pid-overlay{
+#login-overlay,#loading-overlay,#pid-overlay,#change-password-overlay,#threeway-overlay,#existing-picker-overlay{
   position:fixed;inset:0;background:rgba(5,12,25,0.97);
   z-index:2000;display:none;align-items:center;justify-content:center;
   flex-direction:column;
 }
-#login-overlay.visible,#enroll-overlay.visible,#loading-overlay.visible,#pid-overlay.visible{display:flex;}
+#login-overlay.visible,#loading-overlay.visible,#pid-overlay.visible,#change-password-overlay.visible,#threeway-overlay.visible,#existing-picker-overlay.visible{display:flex;}
 #loading-overlay{z-index:3000;background:rgba(5,12,25,0.85);}
 .login-box{
   background:#0c1a2e;border:1px solid rgba(26,158,143,0.35);
@@ -248,6 +248,56 @@ select.login-input option{background:#0c1a2e;color:#fff;}
 .login-err{font-size:12px;color:#f87171;min-height:16px;margin-top:8px;text-align:center;}
 .login-attempts{font-size:11px;color:rgba(255,255,255,0.3);text-align:center;margin-top:10px;}
 .ms-status{font-size:12px;color:rgba(255,255,255,0.5);text-align:center;margin-top:12px;min-height:16px;}
+
+/* ═══════════════════════════════
+   TOAST NOTIFICATIONS (replaces native alert())
+═══════════════════════════════ */
+#toast-container{
+  position:fixed;top:70px;left:50%;transform:translateX(-50%);
+  z-index:5000;display:flex;flex-direction:column;gap:10px;
+  align-items:center;pointer-events:none;
+}
+.toast{
+  pointer-events:auto;min-width:260px;max-width:440px;
+  background:#0c1a2e;border:1px solid rgba(26,158,143,0.4);
+  border-left:4px solid var(--teal);border-radius:6px;
+  padding:12px 16px;box-shadow:0 10px 30px rgba(0,0,0,0.5);
+  font-size:13px;color:#fff;display:flex;align-items:flex-start;gap:10px;
+  animation:toastIn 0.25s ease both;
+}
+.toast.leaving{animation:toastOut 0.2s ease both;}
+@keyframes toastIn{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes toastOut{from{opacity:1;transform:translateY(0);}to{opacity:0;transform:translateY(-10px);}}
+.toast-icon{font-size:15px;line-height:1.4;flex-shrink:0;}
+.toast-msg{flex:1;line-height:1.5;font-weight:300;}
+.toast-close{background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:14px;line-height:1;flex-shrink:0;padding:0;}
+.toast-close:hover{color:#fff;}
+.toast.success{border-left-color:var(--teal-light);}
+.toast.error{border-left-color:var(--red);}
+.toast.warning{border-left-color:var(--amber);}
+.toast.info{border-left-color:var(--teal);}
+
+/* Custom confirm modal (replaces native confirm()) */
+#confirm-overlay{
+  position:fixed;inset:0;background:rgba(5,12,25,0.97);
+  z-index:5500;display:none;align-items:center;justify-content:center;
+}
+#confirm-overlay.visible{display:flex;}
+.confirm-box{
+  background:#0c1a2e;border:1px solid rgba(26,158,143,0.35);
+  border-radius:10px;padding:28px 28px 22px;width:380px;max-width:90vw;
+  box-shadow:0 20px 60px rgba(0,0,0,0.6);
+}
+.confirm-msg{font-size:14px;color:rgba(255,255,255,0.85);line-height:1.6;margin-bottom:22px;white-space:pre-wrap;font-weight:300;}
+.confirm-btns{display:flex;gap:10px;}
+.confirm-btn{
+  flex:1;padding:11px;border-radius:5px;font-size:13px;font-weight:500;
+  cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.2s;border:none;
+}
+.confirm-btn.ok{background:var(--teal);color:#fff;}
+.confirm-btn.ok:hover{background:var(--teal-light);}
+.confirm-btn.cancel{background:transparent;border:1px solid rgba(255,255,255,0.25);color:#fff;}
+.confirm-btn.cancel:hover{background:rgba(255,255,255,0.08);}
 .enroll-line{font-size:13px;color:rgba(255,255,255,0.7);text-align:center;margin-bottom:22px;}
 .pid-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px;}
 #pid-display{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--teal-light);letter-spacing:0.02em;}
@@ -387,7 +437,7 @@ select.login-input option{background:#0c1a2e;color:#fff;}
     <div class="login-logo">S<span>thir</span></div>
     <div class="login-subtitle">Researcher Access — Measure Module</div>
 
-    <!-- Step 1: pick the master folder on the drive (only shown once per tab session) -->
+    <!-- Step 1: pick the master folder on the drive (one-time per computer/browser — remembered afterwards) -->
     <div id="login-step-folder">
       <div class="enroll-line">Select the study's master folder (<strong id="master-folder-name-hint"></strong>) on the portable drive to begin.</div>
       <button class="login-btn" onclick="pickFolderAndContinue()">📁 Select Study Folder</button>
@@ -409,18 +459,78 @@ select.login-input option{background:#0c1a2e;color:#fff;}
       </div>
       <button class="login-btn" onclick="attemptInstituteLogin()">Sign In →</button>
       <div class="login-err" id="login-err"></div>
-      <div class="ms-status">Folders shown are read live from the drive — <a href="#" onclick="pickFolderAndContinue();return false;" style="color:var(--teal-light);">change folder</a></div>
+      <div class="ms-status">
+        <a href="#" onclick="openChangePasswordModal();return false;" style="color:var(--teal-light);">Change Password</a>
+        &nbsp;·&nbsp;
+        <a href="#" onclick="pickFolderAndContinue();return false;" style="color:var(--teal-light);">change folder</a>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- ══════ ENROLL MODAL ══════ -->
-<div id="enroll-overlay">
+<!-- ══════ CHANGE PASSWORD MODAL ══════ -->
+<div id="change-password-overlay">
   <div class="login-box">
     <div class="login-logo">S<span>thir</span></div>
-    <div class="login-subtitle">Institute: <span id="enroll-institute-label" style="color:var(--teal-light);"></span></div>
-    <div class="enroll-line">Ready to begin a new participant assessment?</div>
-    <button class="login-btn" onclick="enrollNewParticipant()">➕ Enroll New Participant</button>
+    <div class="login-subtitle">Change Password — <span id="cp-institute-label" style="color:var(--teal-light);"></span></div>
+    <div class="login-field">
+      <div class="login-label">Current Password</div>
+      <input class="login-input" type="password" id="cp-old" autocomplete="off"/>
+    </div>
+    <div class="login-field">
+      <div class="login-label">New Password</div>
+      <input class="login-input" type="password" id="cp-new" autocomplete="off"/>
+    </div>
+    <div class="login-field">
+      <div class="login-label">Confirm New Password</div>
+      <input class="login-input" type="password" id="cp-new2" autocomplete="off"/>
+    </div>
+    <button class="login-btn" onclick="submitChangePassword()">Save New Password</button>
+    <button class="login-btn" style="background:transparent;border:1px solid rgba(255,255,255,0.25);margin-top:8px;" onclick="closeChangePasswordModal()">Cancel</button>
+    <div class="login-err" id="cp-err"></div>
+  </div>
+</div>
+
+<!-- ══════ THREE-WAY ENTRY SCREEN ══════ -->
+<div id="threeway-overlay">
+  <div class="login-box" style="width:440px;">
+    <div class="login-logo">S<span>thir</span></div>
+    <div class="login-subtitle">Institute: <span id="tw-institute-label" style="color:var(--teal-light);"></span></div>
+    <div class="enroll-line">What would you like to do?</div>
+    <button class="login-btn" onclick="startAddNewParticipant()">➕ Add New Participant</button>
+    <button class="login-btn" style="margin-top:8px;" onclick="openExistingPicker('select')">🔍 Select Existing Participant</button>
+    <button class="login-btn" style="margin-top:8px;" onclick="openExistingPicker('analyze')">📊 Analyze</button>
+    <div class="login-err" id="tw-err"></div>
+    <div class="ms-status"><a href="#" onclick="logOutInstitute();return false;" style="color:var(--teal-light);">Sign out</a></div>
+  </div>
+</div>
+
+<!-- ══════ TOAST NOTIFICATIONS (replaces native alert popups) ══════ -->
+<div id="toast-container"></div>
+
+<!-- ══════ CUSTOM CONFIRM MODAL (replaces native confirm popups) ══════ -->
+<div id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-msg" id="confirm-msg"></div>
+    <div class="confirm-btns">
+      <button class="confirm-btn cancel" id="confirm-cancel-btn">Cancel</button>
+      <button class="confirm-btn ok" id="confirm-ok-btn">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ EXISTING PARTICIPANT PICKER (used by Select Existing + Analyze) ══════ -->
+<div id="existing-picker-overlay">
+  <div class="login-box">
+    <div class="login-logo">S<span>thir</span></div>
+    <div class="login-subtitle" id="ep-title">Select Existing Participant</div>
+    <div class="login-field">
+      <div class="login-label">Participant ID</div>
+      <select class="login-input" id="ep-participant-sel"><option value="">— Select —</option></select>
+    </div>
+    <button class="login-btn" onclick="confirmExistingParticipant()">Continue →</button>
+    <button class="login-btn" style="background:transparent;border:1px solid rgba(255,255,255,0.25);margin-top:8px;" onclick="closeExistingPicker()">← Back</button>
+    <div class="login-err" id="ep-err"></div>
   </div>
 </div>
 
@@ -759,12 +869,11 @@ select.login-input option{background:#0c1a2e;color:#fff;}
               <option value="eyes_closed">eyes_closed</option>
               <option value="one_leg_right">one_leg_right</option>
               <option value="one_leg_left">one_leg_left</option>
-              <option value="cognitive">cognitive</option>
             </select>
           </div>
           <div class="cf-field" style="margin-bottom:14px;">
             <div style="font-size:11px;color:#555;margin-bottom:4px;letter-spacing:0.04em;">DURATION</div>
-            <div style="font-size:13px;color:#111;font-weight:600;padding:6px 8px;background:#eee;border:1px solid #ccc;border-radius:3px;">60 seconds (fixed)</div>
+            <div style="font-size:13px;color:#111;font-weight:600;padding:6px 8px;background:#eee;border:1px solid #ccc;border-radius:3px;">60 seconds</div>
           </div>
           <button id="rec-btn" onclick="toggleRecording()"
             style="display:block;width:100%;margin:0;padding:10px 12px;background:#1a6b3a;border:1px solid #145530;border-radius:4px;font-size:13px;font-weight:600;color:#fff;cursor:pointer;text-align:center;letter-spacing:0.03em;transition:background 0.15s;">
@@ -774,6 +883,38 @@ select.login-input option{background:#0c1a2e;color:#fff;}
             style="margin:8px 0 0;background:#fff8f0;border-color:#c97c3a;color:#7a3e0a;font-weight:600;letter-spacing:0.02em;width:100%;">
             🧹 Clear Trace
           </button>
+        </div>
+      </div>
+
+      <!-- Show Traces -->
+      <div class="group-box">
+        <div class="group-title">Show Traces</div>
+        <div class="group-body">
+          <div style="font-size:11px;color:#555;margin-bottom:6px;letter-spacing:0.04em;">SELECTED SESSIONS</div>
+          <div id="selected-sessions-list" style="max-height:120px;overflow-y:auto;margin-bottom:10px;">
+            <div style="font-size:12px;color:#888;" id="selected-sessions-empty">No sessions added yet.</div>
+          </div>
+
+          <div id="at-nothing-msg" style="display:none;font-size:12px;color:#888;margin-bottom:8px;">Nothing to compare yet — this is a brand-new participant with no prior sessions.</div>
+
+          <div id="at-fields">
+            <div class="cf-field" id="at-participant-field" style="display:none;margin-bottom:8px;">
+              <div style="font-size:11px;color:#555;margin-bottom:4px;letter-spacing:0.04em;">PARTICIPANT ID</div>
+              <select id="at-participant-sel" onchange="onAtParticipantChange()"
+                style="width:100%;padding:5px 8px;border:1px solid #aaa;border-radius:3px;font-size:12px;color:#111;background:#fff;outline:none;">
+                <option value="">— Select —</option>
+              </select>
+            </div>
+            <div class="cf-field" style="margin-bottom:8px;">
+              <div style="font-size:11px;color:#555;margin-bottom:4px;letter-spacing:0.04em;">SESSION DATE</div>
+              <select id="at-date-sel"
+                style="width:100%;padding:5px 8px;border:1px solid #aaa;border-radius:3px;font-size:12px;color:#111;background:#fff;outline:none;">
+                <option value="">— Select —</option>
+              </select>
+            </div>
+            <div id="at-err" style="font-size:11px;color:#c0392b;min-height:14px;margin-bottom:2px;"></div>
+            <button class="ctrl-btn" id="add-trace-btn" onclick="confirmAddTrace()" style="width:100%;margin:0;">➕ Add</button>
+          </div>
         </div>
       </div>
 
@@ -799,8 +940,8 @@ select.login-input option{background:#0c1a2e;color:#fff;}
         </div>
       </div>
 
-      <!-- End Session -->
-      <button class="ctrl-btn" onclick="endSession()"
+      <!-- End Session / Done Analyzing -->
+      <button class="ctrl-btn" id="end-session-btn" onclick="endSession()"
         style="margin:10px 8px;padding:10px 12px;background:#2b2b2b;border-color:#111;color:#fff;font-weight:600;width:calc(100% - 16px);">
         🏁 End Session
       </button>
@@ -853,32 +994,167 @@ select.login-input option{background:#0c1a2e;color:#fff;}
       after a full page reload).
 ═══════════════════════════════════════════════════════════════════ */
 const MASTER_FOLDER_NAME = "Sthir_Study";
+// Fallback / bootstrap passwords — only used the very first time, before a
+// config.json has ever been written to the drive. Once a password is
+// changed via "Change Password", the new value lives in config.json on
+// the drive itself (see readDriveConfig / writeDriveConfig below) and
+// this constant is ignored for that institute from then on.
 const INSTITUTE_PASSWORDS = {
   AIMS:    "AIMS@2026",
   PLAKSHA: "PLAKSHA@2026",
   ONSITE:  "ONSITE@2026"
 };
 const FIXED_DURATION_SECS = 60;
+const CONFIG_FILE_NAME = "sthir_config.json";
+const PID_PREFIX = "PU_";
+
+/* ═══════════════════════════════════════════════
+   TOAST + CUSTOM CONFIRM — replace native alert()/confirm()
+   ───────────────────────────────────────────────
+   Native alert()/confirm() show a browser-chrome dialog prefixed
+   "This page says…", which looks broken/unprofessional inside the
+   app. These render in-page instead, styled to match the rest of
+   the UI, and don't block the JS thread.
+═══════════════════════════════════════════════ */
+const TOAST_ICONS = { info:'ℹ️', success:'✅', error:'⚠️', warning:'⚠️' };
+function showToast(message, type){
+  type = type || 'info';
+  const container = document.getElementById('toast-container');
+  if(!container){ console.log('[toast]', message); return; }
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.innerHTML = `<span class="toast-icon">${TOAST_ICONS[type]||TOAST_ICONS.info}</span><span class="toast-msg"></span><button class="toast-close" aria-label="Dismiss">✕</button>`;
+  el.querySelector('.toast-msg').textContent = message; // textContent, not innerHTML — avoid injecting markup from dynamic messages
+  const remove = ()=>{
+    el.classList.add('leaving');
+    setTimeout(()=>el.remove(), 200);
+  };
+  el.querySelector('.toast-close').onclick = remove;
+  container.appendChild(el);
+  setTimeout(remove, type==='error' ? 6000 : 4500);
+}
+
+// Promise-based replacement for window.confirm(); resolves true/false.
+function customConfirm(message, opts){
+  opts = opts || {};
+  return new Promise(resolve=>{
+    const overlay = document.getElementById('confirm-overlay');
+    document.getElementById('confirm-msg').textContent = message;
+    const okBtn = document.getElementById('confirm-ok-btn');
+    const cancelBtn = document.getElementById('confirm-cancel-btn');
+    okBtn.textContent = opts.okLabel || 'OK';
+    cancelBtn.textContent = opts.cancelLabel || 'Cancel';
+    cancelBtn.style.display = opts.hideCancel ? 'none' : 'block';
+    overlay.classList.add('visible');
+    const cleanup = (result)=>{
+      overlay.classList.remove('visible');
+      okBtn.onclick = null; cancelBtn.onclick = null;
+      resolve(result);
+    };
+    okBtn.onclick = ()=>cleanup(true);
+    cancelBtn.onclick = ()=>cleanup(false);
+  });
+}
 
 /* ═══════════════════════════════════════════════
    PORTABLE DRIVE STORAGE (File System Access API)
+   ───────────────────────────────────────────────
+   The folder handle is picked once per computer/browser (native picker)
+   and then persisted into IndexedDB so it survives page reloads — on
+   every subsequent visit we silently re-open the saved handle and just
+   re-verify permission/read access (the "health check"), instead of
+   asking the user to pick the folder again.
 ═══════════════════════════════════════════════ */
-let rootDirHandle = null; // handle to the master folder on the portable drive, picked once per tab session
+let rootDirHandle = null; // handle to the master folder on the portable drive
 
+const IDB_NAME = 'sthir-fs-handles';
+const IDB_STORE = 'handles';
+function idbOpen(){
+  return new Promise((resolve,reject)=>{
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = ()=>{ req.result.createObjectStore(IDB_STORE); };
+    req.onsuccess = ()=>resolve(req.result);
+    req.onerror = ()=>reject(req.error);
+  });
+}
+async function idbSet(key, value){
+  const db = await idbOpen();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction(IDB_STORE,'readwrite');
+    tx.objectStore(IDB_STORE).put(value, key);
+    tx.oncomplete = ()=>resolve();
+    tx.onerror = ()=>reject(tx.error);
+  });
+}
+async function idbGet(key){
+  const db = await idbOpen();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction(IDB_STORE,'readonly');
+    const req = tx.objectStore(IDB_STORE).get(key);
+    req.onsuccess = ()=>resolve(req.result || null);
+    req.onerror = ()=>reject(req.error);
+  });
+}
+
+// One-time native folder picker. Saves the handle to IndexedDB so future
+// visits (even after a full reload, on the same computer/browser) skip
+// straight to the institute+password step.
 async function selectMasterFolder(){
   if(!('showDirectoryPicker' in window)){
     throw new Error('This browser does not support folder access. Please use Chrome or Edge on a desktop computer.');
   }
   const handle = await window.showDirectoryPicker({ mode:'readwrite', id:'sthir-master' });
   if(handle.name !== MASTER_FOLDER_NAME){
-    const proceed = confirm(`The folder you selected is named "${handle.name}", but "${MASTER_FOLDER_NAME}" was expected.\n\nContinue using "${handle.name}" as the master folder anyway?`);
+    const proceed = await customConfirm(`The folder you selected is named "${handle.name}", but "${MASTER_FOLDER_NAME}" was expected.\n\nContinue using "${handle.name}" as the master folder anyway?`);
     if(!proceed) throw new Error('Folder selection cancelled.');
   }
   rootDirHandle = handle;
+  try{ await idbSet('rootDirHandle', handle); }catch(e){ console.warn('Could not persist folder handle:', e); }
   return rootDirHandle;
 }
+
+// Called on every app load: tries to silently restore the previously
+// picked folder from IndexedDB and re-verify (or re-request) permission.
+// Returns true if a usable handle is ready, false if the person still
+// needs to go through the native picker (first run on this computer, or
+// the saved handle no longer has permission and re-request was denied).
+async function restoreMasterFolder(){
+  try{
+    const saved = await idbGet('rootDirHandle');
+    if(!saved) return false;
+    let perm = await saved.queryPermission({ mode:'readwrite' });
+    if(perm !== 'granted'){
+      perm = await saved.requestPermission({ mode:'readwrite' });
+    }
+    if(perm !== 'granted') return false;
+    // Health check — confirm the drive is actually still readable, not
+    // just that the browser remembers granting permission to it.
+    await driveHealthCheck(saved);
+    rootDirHandle = saved;
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+// Silent health check — throws if the folder can no longer be read
+// (e.g. the external drive is unplugged).
+async function driveHealthCheck(handle){
+  const target = handle || rootDirHandle;
+  if(!target) throw new Error('No drive folder selected.');
+  // Actually iterate (not just check truthiness) so a disconnected drive
+  // surfaces as a real error here rather than on first real use.
+  // eslint-disable-next-line no-unused-vars
+  for await (const _ of target.entries()){ break; }
+  return true;
+}
+
 async function getOrCreateChildDir(parentHandle, name){
   return await parentHandle.getDirectoryHandle(name, { create:true });
+}
+async function getChildDirIfExists(parentHandle, name){
+  try{ return await parentHandle.getDirectoryHandle(name, { create:false }); }
+  catch(e){ return null; }
 }
 async function listChildDirNames(parentHandle){
   const names = [];
@@ -893,6 +1169,60 @@ async function writeFile(dirHandle, filename, dataOrBlob){
   await w.write(dataOrBlob);
   await w.close();
 }
+async function readFileText(dirHandle, filename){
+  try{
+    const fh = await dirHandle.getFileHandle(filename, { create:false });
+    const file = await fh.getFile();
+    return await file.text();
+  }catch(e){
+    return null;
+  }
+}
+async function appendLineToFile(dirHandle, filename, line, header){
+  const existing = await readFileText(dirHandle, filename);
+  let content;
+  if(existing===null){
+    content = (header ? header+'\n' : '') + line + '\n';
+  }else{
+    content = existing.endsWith('\n') ? existing+line+'\n' : existing+'\n'+line+'\n';
+  }
+  await writeFile(dirHandle, filename, content);
+}
+
+/* ═══════════════════════════════════════════════
+   CONFIG FILE ON THE DRIVE (institute passwords)
+   ───────────────────────────────────────────────
+   Stored as sthir_config.json inside the master folder so a password
+   change persists across sessions/computers rather than being hardcoded
+   in the page source. Falls back to INSTITUTE_PASSWORDS above for any
+   institute not yet present in the config file.
+═══════════════════════════════════════════════ */
+let driveConfigCache = null;
+async function readDriveConfig(){
+  if(driveConfigCache) return driveConfigCache;
+  const text = await readFileText(rootDirHandle, CONFIG_FILE_NAME);
+  let cfg = { passwords:{} };
+  if(text){
+    try{ cfg = JSON.parse(text); if(!cfg.passwords) cfg.passwords = {}; }catch(e){ cfg = { passwords:{} }; }
+  }
+  driveConfigCache = cfg;
+  return cfg;
+}
+async function writeDriveConfig(cfg){
+  driveConfigCache = cfg;
+  await writeFile(rootDirHandle, CONFIG_FILE_NAME, JSON.stringify(cfg, null, 2));
+}
+async function getInstitutePassword(instName){
+  const cfg = await readDriveConfig();
+  if(cfg.passwords && cfg.passwords[instName]!==undefined) return cfg.passwords[instName];
+  return INSTITUTE_PASSWORDS[instName]; // may be undefined
+}
+async function setInstitutePassword(instName, newPass){
+  const cfg = await readDriveConfig();
+  cfg.passwords = cfg.passwords || {};
+  cfg.passwords[instName] = newPass;
+  await writeDriveConfig(cfg);
+}
 
 /* ═══════════════════════════════════════════════
    APP / SESSION STATE
@@ -902,7 +1232,7 @@ let currentInstituteDirHandle = null;
 let currentParticipantId = null;         // display form "2026/08/0001"
 let currentParticipantFolderName = null; // drive-safe "2026-08-0001"
 let currentParticipantDirHandle = null;
-let currentMeasurementsDirHandle = null;
+
 let pendingTab = null;
 let formData1 = {};
 let formData2 = {};
@@ -924,21 +1254,35 @@ function requireLogin(tabEl){
     goToMeasurePage();
     return;
   }
-  openLoginOverlay();
+  if(currentInstituteDirHandle){
+    goToThreeWayScreen();
+    return;
+  }
+  navigateTo('login');
 }
 
-function openLoginOverlay(){
+async function openLoginOverlay(){
   document.getElementById('login-err').textContent = '';
   document.getElementById('folder-pick-err').textContent = '';
   document.getElementById('login-pass').value = '';
   document.getElementById('master-folder-name-hint').textContent = MASTER_FOLDER_NAME;
+  document.getElementById('login-overlay').classList.add('visible');
   if(rootDirHandle){
+    showInstituteStep();
+    return;
+  }
+  // Try a silent restore from IndexedDB before falling back to the
+  // native picker — this is what makes the picker a true one-time step
+  // per computer/browser rather than something shown on every visit.
+  showLoadingState('Reconnecting to the drive…');
+  const restored = await restoreMasterFolder().catch(()=>false);
+  hideLoadingState();
+  if(restored){
     showInstituteStep();
   }else{
     document.getElementById('login-step-folder').style.display = 'block';
     document.getElementById('login-step-institute').style.display = 'none';
   }
-  document.getElementById('login-overlay').classList.add('visible');
 }
 
 (function initLoginUI(){
@@ -947,8 +1291,10 @@ function openLoginOverlay(){
   if(!('showDirectoryPicker' in window)) document.getElementById('fs-warn-login').style.display = 'block';
 })();
 
-// Step 1: native folder picker — points the browser at the master folder
-// on the portable drive. Institutes are then read live from whatever
+// Step 1 (first run on this computer/browser only): native folder picker —
+// points the browser at the master folder on the portable drive. Once
+// picked, this is remembered (see selectMasterFolder) and this step is
+// skipped on all future visits. Institutes are read live from whatever
 // subfolders actually exist inside it, so adding a new folder on the
 // drive makes it show up here automatically.
 async function pickFolderAndContinue(){
@@ -989,72 +1335,227 @@ async function populateInstituteDropdown(){
   }
 }
 
-// Step 2: institute + password. Institute list came from the drive itself
-// (step 1) — password is still checked against the configured list below.
+// Step 2: institute + password. Password check happens first (against
+// the drive's config.json, falling back to the bootstrap constant), then
+// — only once the password is correct — the drive is silently
+// re-verified with a health check before letting the person in.
 async function attemptInstituteLogin(){
   const instName = document.getElementById('institute-sel').value;
   const pass = document.getElementById('login-pass').value;
   const errEl = document.getElementById('login-err');
   if(!instName){ errEl.textContent = 'Please select an institute.'; return; }
-  const expected = INSTITUTE_PASSWORDS[instName];
-  if(expected===undefined){ errEl.textContent = `No password configured for "${instName}". Add one to INSTITUTE_PASSWORDS in the code.`; return; }
-  if(pass !== expected){ errEl.textContent = 'Incorrect password.'; return; }
   errEl.textContent = '';
   try{
-    showLoadingState('Preparing institute folder…');
+    showLoadingState('Checking password…');
+    const expected = await getInstitutePassword(instName);
+    if(expected===undefined){
+      hideLoadingState();
+      errEl.textContent = `No password configured for "${instName}". Add one to INSTITUTE_PASSWORDS in the code, or set one via Change Password.`;
+      return;
+    }
+    if(pass !== expected){
+      hideLoadingState();
+      errEl.textContent = 'Incorrect password.';
+      return;
+    }
+    // Password is correct — now silently verify the drive is actually
+    // reachable before granting access.
+    showLoadingState('Verifying drive…');
+    await driveHealthCheck();
     const instDirHandle = await getOrCreateChildDir(rootDirHandle, instName);
     currentInstituteName = instName;
     currentInstituteDirHandle = instDirHandle;
     hideLoadingState();
     document.getElementById('login-overlay').classList.remove('visible');
-    openEnrollOverlay();
+    goToThreeWayScreen();
   }catch(e){
     hideLoadingState();
-    errEl.textContent = 'Could not access the institute folder: ' + e.message;
+    errEl.textContent = 'Please check the external hard drive -Sthir- is connected.';
+  }
+}
+
+/* ── Change Password ── */
+function openChangePasswordModal(){
+  document.getElementById('cp-err').textContent = '';
+  document.getElementById('cp-old').value = '';
+  document.getElementById('cp-new').value = '';
+  document.getElementById('cp-new2').value = '';
+  const instSel = document.getElementById('institute-sel');
+  document.getElementById('cp-institute-label').textContent = instSel.value || '(select an institute above first)';
+  document.getElementById('change-password-overlay').classList.add('visible');
+}
+function closeChangePasswordModal(){
+  document.getElementById('change-password-overlay').classList.remove('visible');
+}
+async function submitChangePassword(){
+  const errEl = document.getElementById('cp-err');
+  const instName = document.getElementById('institute-sel').value;
+  if(!instName){ errEl.textContent = 'Select an institute on the login screen first.'; return; }
+  const oldPass = document.getElementById('cp-old').value;
+  const newPass = document.getElementById('cp-new').value;
+  const newPass2 = document.getElementById('cp-new2').value;
+  if(!newPass || newPass.length<4){ errEl.textContent = 'New password must be at least 4 characters.'; return; }
+  if(newPass !== newPass2){ errEl.textContent = 'New passwords do not match.'; return; }
+  try{
+    if(!rootDirHandle){ await restoreMasterFolder(); }
+    if(!rootDirHandle){ errEl.textContent = 'Drive not connected yet — select the study folder first.'; return; }
+    const expected = await getInstitutePassword(instName);
+    if(expected!==undefined && oldPass!==expected){ errEl.textContent = 'Current password is incorrect.'; return; }
+    showLoadingState('Saving new password to the drive…');
+    await setInstitutePassword(instName, newPass);
+    hideLoadingState();
+    closeChangePasswordModal();
+    showToast('Password updated for ' + instName + '.', 'success');
+  }catch(e){
+    hideLoadingState();
+    errEl.textContent = 'Could not save password: ' + e.message;
   }
 }
 
 /* ═══════════════════════════════════════════════
-   ENROLLMENT
+   THREE-WAY ENTRY SCREEN + PARTICIPANT FLOW
+   ───────────────────────────────────────────────
+   appMode drives what the Measure page allows:
+     'add'     — new participant, forms filled, Record + Analyze enabled
+     'select'  — existing participant, new date-subfolder, Record + Analyze enabled
+     'analyze' — existing participant, pure read-only review, Record disabled
 ═══════════════════════════════════════════════ */
-function openEnrollOverlay(){
-  document.getElementById('enroll-institute-label').textContent = currentInstituteName;
-  document.getElementById('enroll-overlay').classList.add('visible');
+let appMode = null;
+let currentSessionDateFolder = null;   // e.g. "2026-08-10"
+let currentSessionDirHandle = null;    // handle to today's date-subfolder — created lazily (null in analyze mode, and null in select/add mode until something is actually recorded/commented and End Session is clicked)
+let existingPickerMode = null;         // 'select' | 'analyze'
+
+function goToThreeWayScreen(){
+  document.getElementById('tw-institute-label').textContent = currentInstituteName;
+  document.getElementById('tw-err').textContent = '';
+  navigateTo('threeway');
 }
 
+function logOutInstitute(){
+  currentInstituteName = null; currentInstituteDirHandle = null;
+  hideAllOverlays();
+  navigateTo('home');
+}
+
+function pad3(n){ return String(n).padStart(3,'0'); }
+
+// PU_YYYY/MM/NNN displayed, PU_YYYY-MM-NNN on disk — auto-incremented per
+// institute, per month, by scanning existing participant folders. Never
+// reuses a number even if an earlier one were deleted, and resets to 001
+// at the start of each new month.
 async function generateParticipantId(){
   const now = new Date();
   const yyyy = now.getFullYear();
   const mm = String(now.getMonth()+1).padStart(2,'0');
-  const prefix = `${yyyy}-${mm}-`;
+  const prefix = `${PID_PREFIX}${yyyy}-${mm}-`;
   const names = await listChildDirNames(currentInstituteDirHandle);
   const existingNums = names
     .filter(n=>n.startsWith(prefix))
     .map(n=>parseInt(n.slice(prefix.length),10))
     .filter(n=>!isNaN(n));
   const next = existingNums.length ? Math.max(...existingNums)+1 : 1;
-  const seq = String(next).padStart(4,'0');
-  return { folderName: `${prefix}${seq}`, displayId: `${yyyy}/${mm}/${seq}` };
+  const seq = pad3(next);
+  return { folderName: `${prefix}${seq}`, displayId: `${PID_PREFIX}${yyyy}/${mm}/${seq}` };
 }
 
-async function enrollNewParticipant(){
+function todayDateFolderName(){
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth()+1).padStart(2,'0');
+  const dd = String(now.getDate()).padStart(2,'0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+/* ── Add New Participant → Form 1 ── */
+async function startAddNewParticipant(){
   try{
     showLoadingState('Creating participant folder…');
     const { folderName, displayId } = await generateParticipantId();
     const partDirHandle = await getOrCreateChildDir(currentInstituteDirHandle, folderName);
-    const measDirHandle = await getOrCreateChildDir(partDirHandle, 'measurements');
     currentParticipantFolderName = folderName;
     currentParticipantId = displayId;
     currentParticipantDirHandle = partDirHandle;
-    currentMeasurementsDirHandle = measDirHandle;
+    currentSessionDirHandle = null; currentSessionDateFolder = null;
     formData1 = {}; formData2 = {}; formFilesStore = {};
+    appMode = 'add';
+    selectedSessions = []; nextTraceColorIdx = 0;
     hideLoadingState();
-    document.getElementById('enroll-overlay').classList.remove('visible');
+    hideAllOverlays();
     showParticipantIdOverlay(displayId);
   }catch(e){
     hideLoadingState();
-    alert('Could not create participant folder:\n' + e.message);
+    showToast('Could not create participant folder: ' + e.message, 'error');
   }
+}
+
+/* ── Select Existing Participant / Analyze → participant ID picker ── */
+async function openExistingPicker(mode){
+  existingPickerMode = mode;
+  document.getElementById('ep-title').textContent = mode==='analyze' ? 'Analyze — Select Participant' : 'Select Existing Participant';
+  document.getElementById('ep-err').textContent = '';
+  const sel = document.getElementById('ep-participant-sel');
+  sel.innerHTML = '<option value="">— Select —</option>';
+  hideAllOverlays();
+  document.getElementById('existing-picker-overlay').classList.add('visible');
+  try{
+    const names = await listChildDirNames(currentInstituteDirHandle);
+    names.filter(n=>n.startsWith(PID_PREFIX)).sort().forEach(n=>{
+      const displayId = n.replace(PID_PREFIX+'','').split('-').join('/');
+      sel.innerHTML += `<option value="${n}">${PID_PREFIX}${displayId}</option>`;
+    });
+    if(sel.options.length===1) sel.innerHTML += '<option value="" disabled>No participants found yet</option>';
+  }catch(e){
+    document.getElementById('ep-err').textContent = 'Could not read participants: ' + e.message;
+  }
+}
+function closeExistingPicker(){
+  document.getElementById('existing-picker-overlay').classList.remove('visible');
+  goToThreeWayScreen();
+}
+
+async function confirmExistingParticipant(){
+  const folderName = document.getElementById('ep-participant-sel').value;
+  const errEl = document.getElementById('ep-err');
+  if(!folderName){ errEl.textContent = 'Please select a participant.'; return; }
+  try{
+    showLoadingState('Loading participant…');
+    const partDirHandle = await getChildDirIfExists(currentInstituteDirHandle, folderName);
+    if(!partDirHandle) throw new Error('Participant folder not found on the drive.');
+    currentParticipantFolderName = folderName;
+    currentParticipantId = PID_PREFIX + folderName.replace(PID_PREFIX,'').split('-').join('/');
+    currentParticipantDirHandle = partDirHandle;
+    formData1 = {}; formData2 = {}; formFilesStore = {};
+    sessionCsvBuffers = {}; overlayPlotData = {};
+    selectedSessions = []; nextTraceColorIdx = 0;
+
+    if(existingPickerMode==='analyze'){
+      appMode = 'analyze';
+      currentSessionDirHandle = null;
+      currentSessionDateFolder = null;
+    }else{
+      appMode = 'select';
+      currentSessionDateFolder = todayDateFolderName();
+      // The date-subfolder itself is NOT created here — only its name is
+      // recorded. It's created lazily on End Session, and only if the
+      // clinician actually recorded a measurement or typed a comment, so
+      // opening a participant to just look, then leaving without doing
+      // anything, never leaves behind an empty dated folder.
+      currentSessionDirHandle = null;
+    }
+    hideLoadingState();
+    document.getElementById('existing-picker-overlay').classList.remove('visible');
+    goToMeasurePage();
+  }catch(e){
+    hideLoadingState();
+    errEl.textContent = 'Could not open participant: ' + e.message;
+  }
+}
+
+function hideAllOverlays(){
+  ['login-overlay','threeway-overlay','existing-picker-overlay','pid-overlay','change-password-overlay'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.classList.remove('visible');
+  });
 }
 
 function showParticipantIdOverlay(displayId){
@@ -1087,7 +1588,7 @@ async function copyParticipantId(){
 
 function continueToForm1(){
   document.getElementById('pid-overlay').classList.remove('visible');
-  goToForm1();
+  navigateTo('form1');
 }
 
 /* ═══════════════════════════════════════════════
@@ -1107,14 +1608,18 @@ const FORM1_FIELDS = [
   { id:'researcher_name',    label:'Researcher Name',              type:'text', required:true },
   { id:'researcher_signature', label:'Researcher Signature (type full name to sign)', type:'text' },
   { id:'researcher_signature_file', label:'Or attach a photo/image of your signature', type:'file' },
-  { id:'consent_date',       label:'Date',                          type:'text' }
+  { id:'consent_date',       label:'Date',                          type:'readonly' }
 ];
 
 const FORM2_FIELDS = [
   { id:'sec_basic', label:'Basic Details', type:'section' },
+  { id:'form2_date',   label:'Date',       type:'readonly' },
+  { id:'aims_reference_id', label:'AIMS Reference ID', type:'text', required:true },
   { id:'age',          label:'Age',        type:'number', required:true },
   { id:'gender',       label:'Gender',      type:'select', options:['Male','Female','Other'], required:true },
-  { id:'bmi',          label:'BMI',        type:'text' },
+  { id:'weight_kg',    label:'Weight (kg)', type:'number' },
+  { id:'height_m',     label:'Height (m)',  type:'number' },
+  { id:'bmi',          label:'BMI (auto-calculated from weight & height)', type:'readonly' },
   { id:'location',     label:'Location',    type:'select', options:['Urban','Rural'], required:true },
   { id:'area_residence', label:'Area of residence for past 5 years', type:'text' },
 
@@ -1270,6 +1775,9 @@ function renderFormFields(containerId, fields, existingValues){
       input.innerHTML = '<option value="">— Select —</option>' + f.options.map(o=>`<option value="${o}">${o}</option>`).join('');
     } else if(f.type==='textarea'){
       input = document.createElement('textarea'); input.className = 'cf-textarea';
+    } else if(f.type==='readonly'){
+      input = document.createElement('input'); input.className = 'cf-input'; input.type = 'text';
+      input.readOnly = true; input.style.opacity = '0.75'; input.style.cursor = 'default';
     } else {
       input = document.createElement('input'); input.className = 'cf-input'; input.type = f.type || 'text';
     }
@@ -1278,6 +1786,29 @@ function renderFormFields(containerId, fields, existingValues){
     wrap.appendChild(input);
     c.appendChild(wrap);
   });
+
+  // Form 2 helpers: auto-fill today's date into the read-only date field,
+  // and live-compute BMI = weight(kg) / height(m)^2 whenever either input
+  // changes, writing the result into the read-only BMI field.
+  const dateEl = document.getElementById('field_form2_date');
+  if(dateEl && !dateEl.value) dateEl.value = new Date().toLocaleDateString('en-GB');
+  // Form 1 helper: auto-fill today's date into the read-only consent date field,
+  // same as Form 2's date field above.
+  const consentDateEl = document.getElementById('field_consent_date');
+  if(consentDateEl && !consentDateEl.value) consentDateEl.value = new Date().toLocaleDateString('en-GB');
+  const weightEl = document.getElementById('field_weight_kg');
+  const heightEl = document.getElementById('field_height_m');
+  const bmiEl = document.getElementById('field_bmi');
+  if(weightEl && heightEl && bmiEl){
+    const recomputeBmi = ()=>{
+      const w = parseFloat(weightEl.value), h = parseFloat(heightEl.value);
+      if(w>0 && h>0) bmiEl.value = (w/(h*h)).toFixed(1);
+      else bmiEl.value = '';
+    };
+    weightEl.addEventListener('input', recomputeBmi);
+    heightEl.addEventListener('input', recomputeBmi);
+    recomputeBmi();
+  }
 }
 function collectFormValues(fields){
   const values = {};
@@ -1305,35 +1836,24 @@ function validateRequired(fields, values){
   });
 }
 
-function goToForm1(){
-  renderFormFields('form1-fields', FORM1_FIELDS, formData1);
-  document.getElementById('f1-institute-chip').textContent = currentInstituteName;
-  document.getElementById('f1-pid-chip').textContent = currentParticipantId;
-  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
-  document.getElementById('page-form1').style.display = 'block';
-}
+function goToForm1(){ navigateTo('form1'); }
 
 function goForm1Next(){
   const values = collectFormValues(FORM1_FIELDS);
   const missing = validateRequired(FORM1_FIELDS, values);
-  if(missing.length){ alert('Please fill required fields: ' + missing.map(f=>f.label).join(', ')); return; }
+  if(missing.length){ showToast('Please fill required fields: ' + missing.map(f=>f.label).join(', '), 'warning'); return; }
   // Signature: either a typed name or an attached signature image is required
   const hasTypedSig = !!values['researcher_signature'];
   const hasFileSig = !!formFilesStore['researcher_signature_file'];
   if(!hasTypedSig && !hasFileSig){
-    alert('Please either type your name to sign, or attach a photo/image of your signature.');
+    showToast('Please either type your name to sign, or attach a photo/image of your signature.', 'warning');
     return;
   }
   formData1 = values;
-  renderFormFields('form2-fields', FORM2_FIELDS, formData2);
-  document.getElementById('f2-institute-chip').textContent = currentInstituteName;
-  document.getElementById('f2-pid-chip').textContent = currentParticipantId;
-  document.getElementById('page-form1').style.display = 'none';
-  document.getElementById('page-form2').style.display = 'block';
+  navigateTo('form2');
 }
 function goForm2Back(){
-  document.getElementById('page-form2').style.display = 'none';
-  document.getElementById('page-form1').style.display = 'block';
+  inAppBack();
 }
 
 /* Builds a PDF for a field list. Uses a STACKED layout (label on its own
@@ -1416,7 +1936,7 @@ function buildPdfBlob(title, fields, values){
 async function submitForm2(){
   const values = collectFormValues(FORM2_FIELDS);
   const missing = validateRequired(FORM2_FIELDS, values);
-  if(missing.length){ alert('Please fill required fields: ' + missing.map(f=>f.label).join(', ')); return; }
+  if(missing.length){ showToast('Please fill required fields: ' + missing.map(f=>f.label).join(', '), 'warning'); return; }
   formData2 = values;
   try{
     showLoadingState('Saving forms as PDF…');
@@ -1424,42 +1944,106 @@ async function submitForm2(){
     const blob2 = buildPdfBlob('Form 2 — Researcher-Reported Questionnaire', FORM2_FIELDS, formData2);
     await writeFile(currentParticipantDirHandle, 'Form1_Consent.pdf', blob1);
     await writeFile(currentParticipantDirHandle, 'Form2_Questionnaire.pdf', blob2);
+    // Today's date-subfolder NAME is recorded now, but the folder itself
+    // is only created lazily on End Session — and only if this first
+    // session actually has a recorded measurement or a comment — so
+    // enrolling a participant and leaving without recording anything
+    // never leaves an empty dated folder behind.
+    currentSessionDateFolder = todayDateFolderName();
+    currentSessionDirHandle = null;
     hideLoadingState();
     goToMeasurePage();
   }catch(e){
     hideLoadingState();
-    alert('Could not save forms:\n' + e.message);
+    showToast('Could not save forms: ' + e.message, 'error');
   }
 }
 
 /* ═══════════════════════════════════════════════
-   PAGE NAVIGATION (About / Participate)
+   NAVIGATION (History-API driven)
+   ───────────────────────────────────────────────
+   Every app screen — Login → 3-way choice → Form 1 → Form 2 → Measure,
+   plus the public About/Participate pages — is pushed onto the browser's
+   History API. The in-app "Back" links call history.back(), and the
+   popstate handler below re-renders whichever screen the browser lands
+   on, so the browser's own Back/Forward buttons move between app
+   screens instead of leaving the site entirely.
 ═══════════════════════════════════════════════ */
-function showPage(id, tabEl) {
+function navigateTo(screen){
+  renderScreen(screen);
+  const cur = history.state && history.state.screen;
+  if(cur !== screen) history.pushState({screen}, '', '#'+screen);
+}
+
+function inAppBack(){
+  history.back();
+}
+
+window.addEventListener('popstate', (e)=>{
+  const screen = (e.state && e.state.screen) || 'home';
+  renderScreen(screen);
+});
+
+function renderScreen(screen){
   document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('page-' + id).style.display = 'block';
-  tabEl.classList.add('active');
+  hideAllOverlays();
+
+  switch(screen){
+    case 'participate':
+      document.getElementById('page-participate').style.display = 'block';
+      document.querySelectorAll('.nav-tab')[1].classList.add('active');
+      break;
+    case 'login':
+      document.getElementById('page-home').style.display = 'block';
+      openLoginOverlay();
+      break;
+    case 'threeway':
+      document.getElementById('page-home').style.display = 'block';
+      document.querySelectorAll('.nav-tab')[2].classList.add('active');
+      document.getElementById('tw-institute-label').textContent = currentInstituteName || '—';
+      document.getElementById('threeway-overlay').classList.add('visible');
+      break;
+    case 'form1':
+      renderFormFields('form1-fields', FORM1_FIELDS, formData1);
+      document.getElementById('f1-institute-chip').textContent = currentInstituteName;
+      document.getElementById('f1-pid-chip').textContent = currentParticipantId;
+      document.getElementById('page-form1').style.display = 'block';
+      break;
+    case 'form2':
+      renderFormFields('form2-fields', FORM2_FIELDS, formData2);
+      document.getElementById('f2-institute-chip').textContent = currentInstituteName;
+      document.getElementById('f2-pid-chip').textContent = currentParticipantId;
+      document.getElementById('page-form2').style.display = 'block';
+      break;
+    case 'measure':
+      document.getElementById('page-experiment').style.display = 'block';
+      document.getElementById('measure-login-chip').textContent = 'LOGIN: ' + currentInstituteName;
+      document.getElementById('measure-pid-chip').textContent = 'Participant ID: ' + currentParticipantId;
+      document.querySelectorAll('.nav-tab')[2].classList.add('active');
+      applyModeToMeasureUI();
+      setTimeout(resizeCanvas, 60);
+      break;
+    case 'home':
+    default:
+      document.getElementById('page-home').style.display = 'block';
+      document.querySelectorAll('.nav-tab')[0].classList.add('active');
+      break;
+  }
 }
-document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-document.getElementById('page-home').style.display = 'block';
+
+function showPage(id, tabEl) {
+  navigateTo(id);
+}
+renderScreen('home');
+history.replaceState({screen:'home'}, '', '#home');
 
 function goToMeasurePage(){
-  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
-  document.getElementById('page-experiment').style.display = 'block';
-  document.getElementById('measure-login-chip').textContent = 'LOGIN: ' + currentInstituteName;
-  document.getElementById('measure-pid-chip').textContent = 'Participant ID: ' + currentParticipantId;
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.nav-tab')[2].classList.add('active');
-  setTimeout(resizeCanvas, 60);
+  navigateTo('measure');
 }
 
 function returnToLogin(){
-  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
-  document.getElementById('page-home').style.display = 'block';
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.nav-tab')[0].classList.add('active');
-  openLoginOverlay();
+  navigateTo('login');
 }
 
 /* ═══════════════════════════════════════════════
@@ -1540,7 +2124,36 @@ let copX=0, copY=0, trace=[], forces={FL:0,FR:0,RL:0,RR:0};
 let recording=false, recInterval=null, recBuffer=[];
 let recExpKey='', recDurationSecs=0, recElapsed=0;
 let sessionCsvBuffers = {};   // { eyes_open: ["x,y", ...], ... } — in-memory until End Session
-let overlayPlotData = {};     // { eyes_open: {x:[],y:[],color} } — for canvas drawing
+let overlayPlotData = {};     // { eyes_open: {x:[],y:[],color} } for the live session;
+                               // { 'sess::<partFolder>::<date>::<exp>': {x,y,color} } for Show Traces
+let selectedSessions = [];    // [{id, label, color}] — the "Selected Sessions" list in Show Traces
+let addTraceParticipantFolder = null; // which participant Show Traces' date picker is currently reading
+// Shared, high-contrast palette used to tell overlay traces apart.
+// A fresh color is handed out every time a NEW experiment trace is added
+// to the overlay (whether from the live session or from "Show Traces"),
+// so two participants' sessions (4 experiments each) get 8 distinct
+// colors rather than one color per session.
+const TRACE_COLOR_PALETTE = [
+  '#3388ff', '#ff9900', '#00cc44', '#cc33ff',
+  '#ff3366', '#00cccc', '#ffcc00', '#8844ff',
+  '#ff6699', '#33cc99', '#ff5500', '#6699ff',
+  '#7f8c8d', '#e74c3c', '#16a085', '#f39c12',
+  '#8e44ad', '#2ecc71', '#3498db', '#d35400',
+  '#c0392b', '#1abc9c', '#f1c40f', '#9b59b6',
+  '#27ae60', '#2980b9', '#e67e22', '#95a5a6'
+];
+let nextTraceColorIdx = 0;
+function nextTraceColor(){ const c = TRACE_COLOR_PALETTE[nextTraceColorIdx % TRACE_COLOR_PALETTE.length]; nextTraceColorIdx++; return c; }
+
+// Fixed colors for the LIVE (currently-being-recorded) session so that the
+// same experiment always shows up as the same color while you're working
+// with a single participant.
+const LIVE_EXP_COLORS = {
+  eyes_open:      TRACE_COLOR_PALETTE[0],
+  eyes_closed:    TRACE_COLOR_PALETTE[1],
+  one_leg_right:  TRACE_COLOR_PALETTE[2],
+  one_leg_left:   TRACE_COLOR_PALETTE[3]
+};
 
 /* ── Canvas + zoom/pan ── */
 const canvas = document.getElementById('cop-canvas');
@@ -1733,7 +2346,7 @@ async function connectSerial(){
     document.getElementById('connect-btn').style.display='none';
     document.getElementById('disconnect-btn').style.display='block';
     readActive=true; readLoop();
-  }catch(e){ if(e.name!=='NotFoundError') alert('Connection failed:\n'+e.message); }
+  }catch(e){ if(e.name!=='NotFoundError') showToast('Connection failed: '+e.message, 'error'); }
 }
 async function disconnectSerial(){
   readActive=false;
@@ -1785,7 +2398,8 @@ function parseLine(line){
 /* ── Recording (buffered in memory; written to the portable drive on End Session) ── */
 async function toggleRecording(){
   if(recording){ stopRecording(false); return; }
-  if(!currentMeasurementsDirHandle){ alert('No active participant session. Please log in and enroll a participant first.'); return; }
+  if(appMode==='analyze'){ showToast('Recording is disabled while analyzing — this is a read-only review session.', 'warning'); return; }
+  if(!currentParticipantDirHandle){ showToast('No active participant session. Please log in and select a participant first.', 'warning'); return; }
   const exp=document.getElementById('exp-sel').value;
   recExpKey=exp; recDurationSecs=FIXED_DURATION_SECS; recElapsed=0; recBuffer=[];
   recording=true;
@@ -1815,26 +2429,19 @@ function stopRecording(auto){
   if(recBuffer.length>0 && exp){
     if(!sessionCsvBuffers[exp]) sessionCsvBuffers[exp]=[];
     sessionCsvBuffers[exp]=sessionCsvBuffers[exp].concat(recBuffer);
-    rebuildOverlayForExp(exp);
-    computeAndRenderOverlay();
   }
   recBuffer=[];
-  if(auto && exp) alert(`Measurement complete for "${exp.replace(/_/g,' ')}".`);
+  // As soon as a recording finishes, the view resets straight back to
+  // plain live real-time tracking — the just-recorded shape is NOT left
+  // drawn on the canvas. The data itself is safe (saved into
+  // sessionCsvBuffers above, written to disk on End Session); only the
+  // on-screen trace/overlay for that experiment is cleared. Any Show
+  // Traces comparisons ('sess::' entries) are untouched.
+  trace=[];
+  Object.keys(overlayPlotData).forEach(k=>{ if(!k.startsWith('sess::')) delete overlayPlotData[k]; });
+  computeAndRenderOverlay();
+  if(auto && exp) showToast(`Measurement complete for "${exp.replace(/_/g,' ')}".`, 'success');
   recExpKey='';
-}
-
-function rebuildOverlayForExp(exp){
-  const xs=[],ys=[];
-  (sessionCsvBuffers[exp]||[]).forEach(r=>{
-    const[a,b]=r.split(',').map(Number);
-    if(!isNaN(a)&&!isNaN(b)){xs.push(a);ys.push(b);}
-  });
-  // Only the just-recorded experiment is shown — switching experiments
-  // (or recording a new one) replaces the display entirely so the
-  // previous experiment's trace/overlay doesn't linger on screen.
-  // (All experiments' data is still kept in sessionCsvBuffers underneath
-  // and gets written out in full when End Session is clicked.)
-  overlayPlotData = { [exp]: { x:xs, y:ys, color:'#00cc44' } };
 }
 
 function computeAndRenderOverlay(){
@@ -1842,67 +2449,287 @@ function computeAndRenderOverlay(){
   const keys=Object.keys(overlayPlotData);
   if(!keys.length){ body.innerHTML='<div style="font-size:12px;color:#666;">Overlay: not computed</div>'; return; }
   let html='';
-  keys.forEach(exp=>{
-    const rows=sessionCsvBuffers[exp]||[];
-    const xs=[],ys=[];
-    rows.forEach(r=>{ const[a,b]=r.split(',').map(Number); if(!isNaN(a)&&!isNaN(b)){xs.push(a);ys.push(b);} });
-    const cl=removeOutliers(xs,ys);
+  keys.forEach(key=>{
+    const entry = overlayPlotData[key] || {x:[],y:[]};
+    const cl=removeOutliers(entry.x, entry.y);
     const ell=ellipseParams(cl.x,cl.y);
     const area=ell?ell.area:0;
-    const color=(overlayPlotData[exp]&&overlayPlotData[exp].color)||'#999';
-    html+=`<div class="overlay-item"><div class="ov-dot" style="background:${color}"></div><span style="flex:1;font-size:11px;">${exp.replace(/_/g,' ')}</span><span class="ov-area">${area.toFixed(2)} cm²</span></div>`;
+    const color=entry.color||'#999';
+    let label;
+    if(key.startsWith('sess::')){
+      const parts = key.split('::'); // ['sess', participantFolder, dateFolder, expName]
+      label = (parts[3]||'').replace(/_/g,' ') + ' (' + parts[2] + ')';
+    }else{
+      label = key.replace(/_/g,' ');
+    }
+    html+=`<div class="overlay-item"><div class="ov-dot" style="background:${color}"></div><span style="flex:1;font-size:11px;">${label}</span><span class="ov-area">${area.toFixed(2)} cm²</span></div>`;
   });
   body.innerHTML=html;
 }
 
-function clearTrace(){ trace=[]; }
+// Clears only the LIVE real-time trail (the green line + red dot's recent
+// path while someone is standing on the plate, before/between recordings).
+// Completed-experiment overlays (the colored shapes shown once a
+// recording finishes) are intentionally left alone here — clinicians
+// want those to stay on screen for comparison, not disappear on a
+// "Clear Trace" click. To remove a specific finished experiment's shape
+// on purpose, remove it via the Selected Sessions list (Show Traces) or
+// End Session / start a new participant to reset everything.
+// Manually resets the on-screen live trail (green line + red dot's recent
+// path) — handy while standing on the plate between recordings. Completed
+// experiments already reset themselves automatically the moment their
+// recording finishes (see stopRecording), so this mostly matters before
+// a recording starts.
+function clearTrace(){
+  trace=[];
+  computeAndRenderOverlay();
+}
 
-// Clears the on-screen trace and overlay whenever the clinician switches
-// which experiment is selected, so the previous experiment's visuals
-// don't carry over into the new one. Underlying recorded data for every
-// experiment stays intact in sessionCsvBuffers regardless.
+// Also resets the live trail when the clinician changes which experiment
+// is selected in the dropdown, so a stale trail from a moment ago doesn't
+// carry over into the next recording.
 document.getElementById('exp-sel').addEventListener('change', ()=>{
   trace=[];
-  overlayPlotData={};
   computeAndRenderOverlay();
 });
 
-/* ── End Session: write buffered CSVs + comments to the drive, then log out ── */
-async function endSession(){
-  if(recording){ alert('Please wait for the current recording to finish (or it will stop automatically at 60s) before ending the session.'); return; }
-  if(!currentMeasurementsDirHandle){ alert('No active participant session.'); return; }
-  const comments=document.getElementById('comments-box').value.trim();
-  const hasData=Object.keys(sessionCsvBuffers).length>0;
-  if(!hasData && !comments){
-    if(!confirm('No measurements or comments were recorded. End session anyway?')) return;
+/* ═══════════════════════════════════════════════
+   SHOW TRACES — "Selected Sessions" (compare against past dates)
+   ───────────────────────────────────────────────
+   Lives inline in the Show Traces panel (no popup) — the Participant ID
+   / Session Date dropdowns sit directly above the Add button and are
+   (re)populated whenever the Measure page is shown / the mode changes.
+   Add New Participant  → nothing to compare against yet (fields hidden).
+   Select Existing      → pick one of THIS participant's own past dates.
+   Analyze               → pick any Participant ID in the institute, then
+                            one of THAT participant's dates (cross-participant).
+   Whichever date is picked, every experiment CSV recorded on that date is
+   loaded as its own overlay trace, all sharing one color per session.
+═══════════════════════════════════════════════ */
+async function initShowTracesFields(){
+  const errEl = document.getElementById('at-err');
+  if(errEl) errEl.textContent = '';
+  const nothingMsg = document.getElementById('at-nothing-msg');
+  const fieldsWrap = document.getElementById('at-fields');
+  document.getElementById('at-date-sel').innerHTML = '<option value="">— Select —</option>';
+  if(appMode==='add'){
+    nothingMsg.style.display = 'block';
+    fieldsWrap.style.display = 'none';
+    return;
   }
-  try{
-    showLoadingState('Saving measurements to the drive…');
-    for(const [exp, rows] of Object.entries(sessionCsvBuffers)){
-      const csvContent='x,y\n'+rows.join('\n')+'\n';
-      await writeFile(currentMeasurementsDirHandle, exp+'.csv', csvContent);
+  nothingMsg.style.display = 'none';
+  fieldsWrap.style.display = 'block';
+  const partField = document.getElementById('at-participant-field');
+  const partSel = document.getElementById('at-participant-sel');
+  if(appMode==='analyze'){
+    partField.style.display = 'block';
+    partSel.innerHTML = '<option value="">— Select —</option>';
+    try{
+      const names = await listChildDirNames(currentInstituteDirHandle);
+      names.filter(n=>n.startsWith(PID_PREFIX)).sort().forEach(n=>{
+        const displayId = PID_PREFIX + n.replace(PID_PREFIX,'').split('-').join('/');
+        partSel.innerHTML += `<option value="${n}">${displayId}</option>`;
+      });
+    }catch(e){
+      if(errEl) errEl.textContent = 'Could not read participants: ' + e.message;
     }
-    if(comments){
-      await writeFile(currentMeasurementsDirHandle, 'comments.txt', comments);
-    }
-    hideLoadingState();
-    alert('Session ended. All measurements and comments have been saved.');
-    resetSessionState();
-    returnToLogin();
-  }catch(e){
-    hideLoadingState();
-    alert('Error saving session data:\n'+e.message);
+    addTraceParticipantFolder = null;
+  }else{
+    partField.style.display = 'none';
+    await populateAddTraceDates(currentParticipantFolderName);
   }
 }
 
-function resetSessionState(){
-  currentInstituteName=null; currentInstituteDirHandle=null;
+function onAtParticipantChange(){
+  populateAddTraceDates(document.getElementById('at-participant-sel').value);
+}
+
+async function populateAddTraceDates(participantFolderName){
+  addTraceParticipantFolder = participantFolderName;
+  const dateSel = document.getElementById('at-date-sel');
+  dateSel.innerHTML = '<option value="">— Select —</option>';
+  if(!participantFolderName) return;
+  try{
+    const partDir = await getChildDirIfExists(currentInstituteDirHandle, participantFolderName);
+    if(!partDir) return;
+    const names = await listChildDirNames(partDir);
+    names.filter(n=>/^\d{4}-\d{2}-\d{2}$/.test(n)).sort().forEach(n=>{
+      dateSel.innerHTML += `<option value="${n}">${n}</option>`;
+    });
+  }catch(e){
+    document.getElementById('at-err').textContent = 'Could not read sessions: ' + e.message;
+  }
+}
+
+async function confirmAddTrace(){
+  const errEl = document.getElementById('at-err');
+  const dateFolder = document.getElementById('at-date-sel').value;
+  const participantFolderName = addTraceParticipantFolder;
+  if(!participantFolderName){ errEl.textContent = 'Please select a participant.'; return; }
+  if(!dateFolder){ errEl.textContent = 'Please select a session date.'; return; }
+  const sessionId = participantFolderName + '::' + dateFolder;
+  if(selectedSessions.some(s=>s.id===sessionId)){ errEl.textContent = 'That session is already added.'; return; }
+  try{
+    showLoadingState('Loading session traces…');
+    const partDir = await getChildDirIfExists(currentInstituteDirHandle, participantFolderName);
+    const dateDir = partDir ? await getChildDirIfExists(partDir, dateFolder) : null;
+    if(!dateDir) throw new Error('Session folder not found on the drive.');
+    const displayId = PID_PREFIX + participantFolderName.replace(PID_PREFIX,'').split('-').join('/');
+    let loadedAny = false;
+    let firstColor = null; // used only for this session's row-dot in the "Selected Sessions" list
+    for await (const [name, handle] of dateDir.entries()){
+      if(handle.kind!=='file' || !name.toLowerCase().endsWith('.csv')) continue;
+      const expName = name.replace(/\.csv$/i,'');
+      const file = await handle.getFile();
+      const text = await file.text();
+      const rows = text.split('\n').slice(1).filter(Boolean); // skip "x,y" header
+      const xs=[],ys=[];
+      rows.forEach(r=>{ const [a,b]=r.split(',').map(Number); if(!isNaN(a)&&!isNaN(b)){xs.push(a);ys.push(b);} });
+      if(xs.length){
+        // Every experiment trace gets its own fresh color from the shared
+        // palette, so comparing multiple participants/sessions shows each
+        // experiment as a distinctly colored trace instead of one color
+        // per session (e.g. 2 sessions × 4 experiments = 8 distinct colors).
+        const expColor = nextTraceColor();
+        if(firstColor===null) firstColor = expColor;
+        overlayPlotData['sess::'+sessionId+'::'+expName] = { x:xs, y:ys, color:expColor };
+        loadedAny = true;
+      }
+    }
+    hideLoadingState();
+    if(!loadedAny){ errEl.textContent = 'No measurement CSVs found for that date.'; return; }
+    selectedSessions.push({ id: sessionId, label: displayId + ' — ' + dateFolder, color: firstColor || '#999' });
+    // Reset the date dropdown (and participant dropdown in Analyze mode)
+    // back to "— Select —" so it's obviously ready for the next pick,
+    // instead of a modal closing.
+    document.getElementById('at-date-sel').innerHTML = '<option value="">— Select —</option>';
+    if(appMode==='analyze'){ document.getElementById('at-participant-sel').value=''; addTraceParticipantFolder=null; }
+    errEl.textContent = '';
+    showToast('Session added: ' + displayId + ' — ' + dateFolder, 'success');
+    renderSelectedSessionsList();
+    computeAndRenderOverlay();
+  }catch(e){
+    hideLoadingState();
+    errEl.textContent = 'Could not load session: ' + e.message;
+  }
+}
+
+function removeSelectedSession(sessionId){
+  selectedSessions = selectedSessions.filter(s=>s.id!==sessionId);
+  Object.keys(overlayPlotData).forEach(k=>{
+    if(k.startsWith('sess::'+sessionId+'::')) delete overlayPlotData[k];
+  });
+  renderSelectedSessionsList();
+  computeAndRenderOverlay();
+}
+
+function renderSelectedSessionsList(){
+  const listEl = document.getElementById('selected-sessions-list');
+  if(!listEl) return;
+  if(!selectedSessions.length){
+    listEl.innerHTML = '<div style="font-size:12px;color:#888;" id="selected-sessions-empty">No sessions added yet.</div>';
+    return;
+  }
+  listEl.innerHTML = selectedSessions.map(s=>`
+    <div class="overlay-item" style="justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+        <div class="ov-dot" style="background:${s.color}"></div>
+        <span style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.label}</span>
+      </div>
+      <button onclick="removeSelectedSession('${s.id}')" style="border:none;background:none;color:#b00;cursor:pointer;font-size:12px;flex-shrink:0;" title="Remove">✕ Remove</button>
+    </div>
+  `).join('');
+}
+
+// Applies the current appMode ('add' | 'select' | 'analyze') to the
+// Measure page controls: Analyze mode is a pure read-only review, so
+// recording is disabled and End Session becomes "Done Analyzing"; Add
+// mode has no prior sessions yet, so the Show Traces fields are hidden
+// in favor of the "nothing to compare yet" message (initShowTracesFields
+// handles that). Also (re)populates the inline Show Traces dropdowns.
+function applyModeToMeasureUI(){
+  const recBtn = document.getElementById('rec-btn');
+  const endBtn = document.getElementById('end-session-btn');
+  const isAnalyze = appMode==='analyze';
+  if(recBtn){
+    recBtn.disabled = isAnalyze;
+    recBtn.style.opacity = isAnalyze ? '0.5' : '1';
+    recBtn.style.cursor = isAnalyze ? 'default' : 'pointer';
+  }
+  if(endBtn){
+    endBtn.innerHTML = isAnalyze ? '✅ Done Analyzing' : '🏁 End Session';
+  }
+  initShowTracesFields();
+  renderSelectedSessionsList();
+  computeAndRenderOverlay();
+}
+
+
+/* ── End Session (or "Done Analyzing" in Analyze mode) ──
+   Add/Select modes: writes buffered CSVs + comments.txt into today's
+   date-subfolder, appends a row to master_log.csv, then returns to the
+   three-way choice screen — the institute stays signed in.
+   Analyze mode: pure read-only review, nothing is ever written; just
+   returns to the three-way choice screen. */
+async function endSession(){
+  if(appMode==='analyze'){
+    resetParticipantState();
+    goToThreeWayScreen();
+    return;
+  }
+  if(recording){ showToast('Please wait for the current recording to finish (or it will stop automatically at 60s) before ending the session.', 'warning'); return; }
+  if(!currentParticipantDirHandle){ showToast('No active participant session.', 'warning'); return; }
+  const comments=document.getElementById('comments-box').value.trim();
+  const hasData=Object.keys(sessionCsvBuffers).length>0;
+  if(!hasData && !comments){
+    if(!(await customConfirm('No measurements or comments were recorded. End session anyway?'))) return;
+    // Nothing to write — skip creating today's date folder entirely, so
+    // a participant that's opened and then closed without recording
+    // anything never leaves an empty dated folder on the drive.
+    showToast('Session ended. Nothing was recorded, so no folder was created.', 'info');
+    resetParticipantState();
+    goToThreeWayScreen();
+    return;
+  }
+  try{
+    showLoadingState('Saving measurements to the drive…');
+    // The date-subfolder is created here, lazily, only now that we know
+    // there's actually something (a measurement or a comment) to save —
+    // not the moment the participant was opened.
+    if(!currentSessionDirHandle){
+      currentSessionDirHandle = await getOrCreateChildDir(currentParticipantDirHandle, currentSessionDateFolder);
+    }
+    for(const [exp, rows] of Object.entries(sessionCsvBuffers)){
+      const csvContent='x,y\n'+rows.join('\n')+'\n';
+      await writeFile(currentSessionDirHandle, exp+'.csv', csvContent);
+    }
+    if(comments){
+      await writeFile(currentSessionDirHandle, 'comments.txt', comments);
+      const csvSafeComment = '"' + comments.replace(/"/g,'""') + '"';
+      await appendLineToFile(currentParticipantDirHandle, 'master_log.csv', `${currentSessionDateFolder},${csvSafeComment}`, 'date,comment');
+    }
+    hideLoadingState();
+    showToast('Session ended. All measurements and comments have been saved.', 'success');
+    resetParticipantState();
+    goToThreeWayScreen();
+  }catch(e){
+    hideLoadingState();
+    showToast('Error saving session data: '+e.message, 'error');
+  }
+}
+
+// Clears participant/session-level state only — the institute stays
+// signed in, so this returns to the three-way choice screen, not login.
+function resetParticipantState(){
   currentParticipantId=null; currentParticipantFolderName=null;
-  currentParticipantDirHandle=null; currentMeasurementsDirHandle=null;
+  currentParticipantDirHandle=null; currentSessionDirHandle=null; currentSessionDateFolder=null;
+  appMode=null;
   sessionCsvBuffers={}; overlayPlotData={}; trace=[];
   formData1={}; formData2={}; formFilesStore={};
+  selectedSessions=[];
   document.getElementById('comments-box').value='';
   computeAndRenderOverlay();
+  renderSelectedSessionsList();
 }
 </script>
 </body>
