@@ -497,9 +497,9 @@ select.login-input option{background:#0c1a2e;color:#fff;}
     <div class="login-logo">S<span>thir</span></div>
     <div class="login-subtitle">Institute: <span id="tw-institute-label" style="color:var(--teal-light);"></span></div>
     <div class="enroll-line">What would you like to do?</div>
-    <button class="login-btn" onclick="startAddNewParticipant()">➕ Add New Participant</button>
-    <button class="login-btn" style="margin-top:8px;" onclick="openExistingPicker('select')">🔍 Select Existing Participant</button>
-    <button class="login-btn" style="margin-top:8px;" onclick="openExistingPicker('analyze')">📊 Analyze</button>
+    <button class="login-btn" onclick="startAddNewParticipant()">Add New Participant</button>
+    <button class="login-btn" style="margin-top:8px;" onclick="openExistingPicker('select')">Select Existing Participant</button>
+    <button class="login-btn" style="margin-top:8px;" onclick="openExistingPicker('analyze')">Analyze</button>
     <div class="login-err" id="tw-err"></div>
     <div class="ms-status"><a href="#" onclick="logOutInstitute();return false;" style="color:var(--teal-light);">Sign out</a></div>
   </div>
@@ -869,6 +869,8 @@ select.login-input option{background:#0c1a2e;color:#fff;}
               <option value="eyes_closed">eyes_closed</option>
               <option value="one_leg_right">one_leg_right</option>
               <option value="one_leg_left">one_leg_left</option>
+              <option value="tandem_stance">tandem_stance</option>
+              <option value="unstable_surface">unstable_surface</option>
             </select>
           </div>
           <div class="cf-field" style="margin-bottom:14px;">
@@ -940,7 +942,7 @@ select.login-input option{background:#0c1a2e;color:#fff;}
         </div>
       </div>
 
-      <!-- End Session / Done Analyzing -->
+      <!-- End Session (always reads "End Session", in every mode) -->
       <button class="ctrl-btn" id="end-session-btn" onclick="endSession()"
         style="margin:10px 8px;padding:10px 12px;background:#2b2b2b;border-color:#111;color:#fff;font-weight:600;width:calc(100% - 16px);">
         🏁 End Session
@@ -1604,7 +1606,7 @@ function continueToForm1(){
 const FORM1_FIELDS = [
   { id:'consent_agree',      label:"I have read and understood the information above, have had the opportunity to ask questions, and voluntarily agree to participate in this research study.", type:'checkbox', required:true },
   { id:'consent_copy_given', label:'I have been given a copy of this consent form.', type:'checkbox' },
-  { id:'aims_reference_id',  label:'AIMS Reference ID',            type:'text' },
+  { id:'aims_reference_id',  label:'AIMS Reference ID',            type:'text', required:true },
   { id:'researcher_name',    label:'Researcher Name',              type:'text', required:true },
   { id:'researcher_signature', label:'Researcher Signature (type full name to sign)', type:'text' },
   { id:'researcher_signature_file', label:'Or attach a photo/image of your signature', type:'file' },
@@ -1617,8 +1619,8 @@ const FORM2_FIELDS = [
   { id:'aims_reference_id', label:'AIMS Reference ID', type:'text', required:true },
   { id:'age',          label:'Age',        type:'number', required:true },
   { id:'gender',       label:'Gender',      type:'select', options:['Male','Female','Other'], required:true },
-  { id:'weight_kg',    label:'Weight (kg)', type:'number' },
-  { id:'height_m',     label:'Height (m)',  type:'number' },
+  { id:'weight_kg',    label:'Weight (kg)', type:'number', required:true },
+  { id:'height_m',     label:'Height (m)',  type:'number', required:true },
   { id:'bmi',          label:'BMI (auto-calculated from weight & height)', type:'readonly' },
   { id:'location',     label:'Location',    type:'select', options:['Urban','Rural'], required:true },
   { id:'area_residence', label:'Area of residence for past 5 years', type:'text' },
@@ -2149,10 +2151,12 @@ function nextTraceColor(){ const c = TRACE_COLOR_PALETTE[nextTraceColorIdx % TRA
 // same experiment always shows up as the same color while you're working
 // with a single participant.
 const LIVE_EXP_COLORS = {
-  eyes_open:      TRACE_COLOR_PALETTE[0],
-  eyes_closed:    TRACE_COLOR_PALETTE[1],
-  one_leg_right:  TRACE_COLOR_PALETTE[2],
-  one_leg_left:   TRACE_COLOR_PALETTE[3]
+  eyes_open:        TRACE_COLOR_PALETTE[0],
+  eyes_closed:      TRACE_COLOR_PALETTE[1],
+  one_leg_right:    TRACE_COLOR_PALETTE[2],
+  one_leg_left:     TRACE_COLOR_PALETTE[3],
+  tandem_stance:    TRACE_COLOR_PALETTE[4],
+  unstable_surface: TRACE_COLOR_PALETTE[5]
 };
 
 /* ── Canvas + zoom/pan ── */
@@ -2643,10 +2647,12 @@ function renderSelectedSessionsList(){
 
 // Applies the current appMode ('add' | 'select' | 'analyze') to the
 // Measure page controls: Analyze mode is a pure read-only review, so
-// recording is disabled and End Session becomes "Done Analyzing"; Add
-// mode has no prior sessions yet, so the Show Traces fields are hidden
-// in favor of the "nothing to compare yet" message (initShowTracesFields
-// handles that). Also (re)populates the inline Show Traces dropdowns.
+// recording is disabled. The bottom button always reads "End Session" in
+// every mode now (including Analyze, which used to say "Done Analyzing").
+// Add mode has no prior sessions yet, so the Show Traces fields are
+// hidden in favor of the "nothing to compare yet" message
+// (initShowTracesFields handles that). Also (re)populates the inline
+// Show Traces dropdowns.
 function applyModeToMeasureUI(){
   const recBtn = document.getElementById('rec-btn');
   const endBtn = document.getElementById('end-session-btn');
@@ -2657,7 +2663,7 @@ function applyModeToMeasureUI(){
     recBtn.style.cursor = isAnalyze ? 'default' : 'pointer';
   }
   if(endBtn){
-    endBtn.innerHTML = isAnalyze ? '✅ Done Analyzing' : '🏁 End Session';
+    endBtn.innerHTML = '🏁 End Session';
   }
   initShowTracesFields();
   renderSelectedSessionsList();
@@ -2665,7 +2671,7 @@ function applyModeToMeasureUI(){
 }
 
 
-/* ── End Session (or "Done Analyzing" in Analyze mode) ──
+/* ── End Session (button always reads "End Session", every mode) ──
    Add/Select modes: writes buffered CSVs + comments.txt into today's
    date-subfolder, appends a row to master_log.csv, then returns to the
    three-way choice screen — the institute stays signed in.
