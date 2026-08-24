@@ -345,6 +345,13 @@ select.login-input option{background:#0c1a2e;color:#fff;}
 .form-btn-secondary{background:transparent;border:1px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.8);padding:11px 24px;border-radius:5px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .form-btn-secondary:hover{border-color:var(--teal-light);color:#fff;}
 
+/* Signature pad */
+.sig-pad-wrap{border:1px solid rgba(26,158,143,0.4);border-radius:6px;background:#fff;position:relative;margin-top:4px;}
+.sig-pad-canvas{display:block;width:100%;height:130px;border-radius:6px;cursor:crosshair;touch-action:none;}
+.sig-pad-hint{position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:11px;color:rgba(0,0,0,0.25);pointer-events:none;letter-spacing:0.04em;}
+.sig-clear-btn{margin-top:6px;background:transparent;border:1px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.7);padding:5px 14px;border-radius:4px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.sig-clear-btn:hover{border-color:var(--teal-light);color:#fff;}
+
 /* ═══════════════════════════════
    PAGE — MEASURE (EquiliSense interface)
 ═══════════════════════════════ */
@@ -500,6 +507,7 @@ select.login-input option{background:#0c1a2e;color:#fff;}
     <button class="login-btn" onclick="startAddNewParticipant()">Add New Participant</button>
     <button class="login-btn" style="margin-top:8px;" onclick="openExistingPicker('select')">Select Existing Participant</button>
     <button class="login-btn" style="margin-top:8px;" onclick="openExistingPicker('analyze')">Analyze</button>
+    <button class="login-btn" id="tw-disconnect-btn" style="margin-top:16px;background:transparent;border:1px solid rgba(244,67,54,0.5);color:#f47c7c;display:none;" onclick="disconnectSerial();updateTwDisconnectBtn();">Disconnect Device</button>
     <div class="login-err" id="tw-err"></div>
     <div class="ms-status"><a href="#" onclick="logOutInstitute();return false;" style="color:var(--teal-light);">Sign out</a></div>
   </div>
@@ -718,17 +726,14 @@ select.login-input option{background:#0c1a2e;color:#fff;}
         <div class="form-chip">🆔 <span id="f1-pid-chip">—</span></div>
       </div>
       <div class="form-page-title">Form 1 — Participant Information &amp; Consent</div>
-      <div class="form-page-sub">Force platform for balance measurements in low-resource settings</div>
 
       <div class="consent-text-box">
-        <h4>Study Title</h4>
-        <p>Force platform for balance measurements in low-resource settings.</p>
-
         <h4>Principal Investigators</h4>
         <p>Dr. Arshdeep Sidhu, PhD — Biological Systems Engineering Program, Plaksha University, Mohali (arshdeep.sidhu@plaksha.edu.in)<br/>
         Dr. Deepan Muthirayan, PhD — Computer Science &amp; Artificial Intelligence Program, Plaksha University, Mohali (deepan.muthirayan@plaksha.edu.in)<br/>
-        Prof. Andy Ruina, PhD — Robotics &amp; Autonomous Systems, Plaksha University, Mohali (andy.ruina@plaksha.edu.in)</p>
-        <p><strong>Co-Investigators:</strong> Prof. TV Ramanathan, Plaksha University, Mohali (t.ramanathan@plaksha.edu.in); Dr. Saumya Jetley, PhD, Director, Translational Research Resilience Care, Paris, France.</p>
+        Prof. Andy Ruina, PhD — Robotics &amp; Autonomous Systems, Plaksha University, Mohali (andy.ruina@plaksha.edu.in)<br/>
+        Dr. Navjot Kaur, MBBS, ENT Surgeon — Dr. B. R. Ambedkar State Institute of Medical Sciences, Mohali</p>
+        <p><strong>Co-Investigators:</strong> Prof. TV Ramanathan, Plaksha University, Mohali (t.ramanathan@plaksha.edu.in)</p>
 
         <h4>Invitation</h4>
         <p>We invite you to participate in our research study as a volunteer, however before you decide to participate, it is critical that you understand our research and your role as a volunteer. Please read the following sections carefully and discuss with us about any doubt or additional information that you may require to make an independent informed decision.</p>
@@ -1427,9 +1432,15 @@ let currentSessionDateFolder = null;   // e.g. "2026-08-10"
 let currentSessionDirHandle = null;    // handle to today's date-subfolder — created lazily (null in analyze mode, and null in select/add mode until something is actually recorded/commented and End Session is clicked)
 let existingPickerMode = null;         // 'select' | 'analyze'
 
+function updateTwDisconnectBtn(){
+  const btn = document.getElementById('tw-disconnect-btn');
+  if(btn) btn.style.display = port ? 'block' : 'none';
+}
+
 function goToThreeWayScreen(){
   document.getElementById('tw-institute-label').textContent = currentInstituteName;
   document.getElementById('tw-err').textContent = '';
+  updateTwDisconnectBtn();
   navigateTo('threeway');
 }
 
@@ -1608,15 +1619,13 @@ const FORM1_FIELDS = [
   { id:'consent_copy_given', label:'I have been given a copy of this consent form.', type:'checkbox' },
   { id:'aims_reference_id',  label:'AIMS Reference ID',            type:'text', required:true },
   { id:'researcher_name',    label:'Researcher Name',              type:'text', required:true },
-  { id:'researcher_signature', label:'Researcher Signature (type full name to sign)', type:'text' },
-  { id:'researcher_signature_file', label:'Or attach a photo/image of your signature', type:'file' },
+  { id:'volunteer_signature', label:'Volunteer Signature', type:'signature' },
   { id:'consent_date',       label:'Date',                          type:'readonly' }
 ];
 
 const FORM2_FIELDS = [
   { id:'sec_basic', label:'Basic Details', type:'section' },
   { id:'form2_date',   label:'Date',       type:'readonly' },
-  { id:'aims_reference_id', label:'AIMS Reference ID', type:'text', required:true },
   { id:'age',          label:'Age',        type:'number', required:true },
   { id:'gender',       label:'Gender',      type:'select', options:['Male','Female','Other'], required:true },
   { id:'weight_kg',    label:'Weight (kg)', type:'number', required:true },
@@ -1628,8 +1637,6 @@ const FORM2_FIELDS = [
   { id:'sec_part1', label:'Part 1 — Health History', type:'section' },
   { id:'balance_disorder',        label:'Have you ever been diagnosed with a balance disorder?', type:'select', options:['Yes','No'] },
   { id:'balance_disorder_detail', label:'If yes, name of the condition',                          type:'text' },
-  { id:'mood_disorder',           label:'Have you ever been diagnosed with a mood disorder?',      type:'select', options:['Yes','No'] },
-  { id:'learning_disorder',       label:'Have you ever been diagnosed with dyslexia, dyscalculia or dysgraphia?', type:'select', options:['Yes','No'] },
   { id:'medications', label:'Do you take medications for any of these conditions? (select all that apply)', type:'checkboxes', options:['Blood pressure','Sleep medications','Pain medications','Antidepressants','Antianxiety','Diabetes'] },
   { id:'recreational_drugs_6mo', label:'Have you taken recreational drugs in the past 6 months?', type:'select', options:['Yes','No'] },
   { id:'major_injury_1yr',       label:'Did you experience any major fracture, injury or surgery in the last 1 year?', type:'select', options:['Yes','No'] },
@@ -1652,10 +1659,10 @@ const FORM2_FIELDS = [
   { id:'late_night_feeling', label:'How do you feel about being up late in the night?', type:'select', options:['I do not like it','No, I do not mind'] },
   { id:'avoid_late_reason', label:'Main reason to avoid being up late', type:'select', options:['I cannot fall asleep beyond my regular bedtime','I wake up late next day and it disrupts my routine'] },
   { id:'food_habits', label:'How would you best describe your food habits?', type:'select', options:['Very healthy','Healthy','Moderately healthy','Unhealthy','Very unhealthy'] },
-  { id:'packaging_waste_time', label:'Time to generate 5 packets of packaging waste in day-to-day life', type:'select', options:['In a day','In a few days','In a week','In a month','Over a month'] },
+  { id:'packaging_waste_time', label:'In how much time do you generate 5 packets of packaging waste (wrappers of fast food)?', type:'select', options:['In a day','In a few days','In a week','In a month','Over a month'] },
   { id:'portion_mindfulness', label:'Are you mindful about recommended portions of carbs/protein/fats?', type:'select', options:['Yes','No','Somewhat','I do not believe in it, I eat what I like','I do not believe in it, but I am mindful about healthy food'] },
   { id:'food_intake_type', label:'Which best describes your daily food intake?', type:'select', options:['A mix of freshly made and packaged food','Mostly freshly made food','Mostly pre-cooked/pre-packed food','A conscious effort to eat seasonal food'] },
-  { id:'go_to_snacks', label:'Go-to snacks', type:'select', options:['Packaged items (cookies, chips, ice-cream, etc.)','Seasonal fruits & vegetables','Dry fruits (almond, peanuts, walnuts, etc.)','Packaged sandwiches'] },
+  { id:'go_to_snacks', label:'What is your go-to snack?', type:'select', options:['Packaged items (cookies, chips, ice-cream, etc.)','Seasonal fruits & vegetables','Dry fruits (almond, peanuts, walnuts, etc.)','Packaged sandwiches'] },
   { id:'snack_frequency', label:'How many times do you snack in a day?', type:'select', options:['1–2','2–4','I do not keep count'] },
 
   { id:'sec_urban', label:'Urban Population', type:'section' },
@@ -1752,6 +1759,61 @@ function renderFormFields(containerId, fields, existingValues){
       return;
     }
 
+    if(f.type==='signature'){
+      const padWrap = document.createElement('div'); padWrap.className = 'sig-pad-wrap';
+      const sigCanvas = document.createElement('canvas');
+      sigCanvas.className = 'sig-pad-canvas';
+      sigCanvas.id = 'field_' + f.id;
+      const hint = document.createElement('div'); hint.className = 'sig-pad-hint';
+      hint.textContent = 'Sign here using stylus or finger';
+      padWrap.appendChild(sigCanvas); padWrap.appendChild(hint);
+      wrap.appendChild(padWrap);
+      const clearBtn = document.createElement('button'); clearBtn.type = 'button';
+      clearBtn.className = 'sig-clear-btn'; clearBtn.textContent = '✕ Clear Signature';
+      wrap.appendChild(clearBtn);
+      c.appendChild(wrap);
+      // Init after DOM insertion
+      setTimeout(()=>{
+        const rc = sigCanvas.getBoundingClientRect();
+        sigCanvas.width  = Math.round(rc.width  * window.devicePixelRatio);
+        sigCanvas.height = Math.round(rc.height * window.devicePixelRatio);
+        const sx = sigCanvas.getContext('2d');
+        sx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        sx.strokeStyle = '#111'; sx.lineWidth = 2.2;
+        sx.lineCap = 'round'; sx.lineJoin = 'round';
+        let drawing = false, lastX = 0, lastY = 0;
+        function getPos(e){
+          const r = sigCanvas.getBoundingClientRect();
+          const src = e.touches ? e.touches[0] : e;
+          return [src.clientX - r.left, src.clientY - r.top];
+        }
+        function startDraw(e){ e.preventDefault(); drawing=true; [lastX,lastY]=getPos(e); }
+        function draw(e){ if(!drawing) return; e.preventDefault(); const[cx,cy]=getPos(e); sx.beginPath(); sx.moveTo(lastX,lastY); sx.lineTo(cx,cy); sx.stroke(); [lastX,lastY]=[cx,cy]; saveSignature(); }
+        function endDraw(){ drawing=false; }
+        function saveSignature(){
+          formFilesStore[f.id] = { dataUrl: sigCanvas.toDataURL('image/png'), name:'volunteer_signature.png', type:'image/png' };
+        }
+        sigCanvas.addEventListener('mousedown', startDraw);
+        sigCanvas.addEventListener('mousemove', draw);
+        sigCanvas.addEventListener('mouseup', endDraw);
+        sigCanvas.addEventListener('mouseleave', endDraw);
+        sigCanvas.addEventListener('touchstart', startDraw, {passive:false});
+        sigCanvas.addEventListener('touchmove', draw, {passive:false});
+        sigCanvas.addEventListener('touchend', endDraw);
+        clearBtn.onclick = ()=>{
+          sx.clearRect(0, 0, sigCanvas.width/window.devicePixelRatio, sigCanvas.height/window.devicePixelRatio);
+          delete formFilesStore[f.id];
+        };
+        // Restore existing signature if re-rendering
+        if(formFilesStore[f.id]){
+          const img = new Image();
+          img.onload = ()=>{ sx.drawImage(img, 0, 0, sigCanvas.width/window.devicePixelRatio, sigCanvas.height/window.devicePixelRatio); };
+          img.src = formFilesStore[f.id].dataUrl;
+        }
+      }, 0);
+      return;
+    }
+
     if(f.type==='checkboxes'){
       const group = document.createElement('div'); group.className = 'cf-checkboxes-group';
       const existingArr = (existingValues[f.id] || '').split(';').map(s=>s.trim()).filter(Boolean);
@@ -1815,7 +1877,7 @@ function renderFormFields(containerId, fields, existingValues){
 function collectFormValues(fields){
   const values = {};
   fields.forEach(f=>{
-    if(f.type==='section' || f.type==='file') return; // file data lives in formFilesStore
+    if(f.type==='section' || f.type==='file' || f.type==='signature') return; // file/signature data lives in formFilesStore
     if(f.type==='checkbox'){ values[f.id] = document.getElementById('field_'+f.id).checked; return; }
     if(f.type==='checkboxes'){
       const checked = [];
@@ -1844,11 +1906,9 @@ function goForm1Next(){
   const values = collectFormValues(FORM1_FIELDS);
   const missing = validateRequired(FORM1_FIELDS, values);
   if(missing.length){ showToast('Please fill required fields: ' + missing.map(f=>f.label).join(', '), 'warning'); return; }
-  // Signature: either a typed name or an attached signature image is required
-  const hasTypedSig = !!values['researcher_signature'];
-  const hasFileSig = !!formFilesStore['researcher_signature_file'];
-  if(!hasTypedSig && !hasFileSig){
-    showToast('Please either type your name to sign, or attach a photo/image of your signature.', 'warning');
+  // Volunteer signature pad — warn if blank but do not block (some devices may struggle)
+  if(!formFilesStore['volunteer_signature']){
+    showToast('Please have the volunteer sign in the signature box before continuing.', 'warning');
     return;
   }
   formData1 = values;
@@ -1902,24 +1962,25 @@ function buildPdfBlob(title, fields, values){
     y += labelLines.length*5 + 2;
     doc.setFont(undefined,'normal');
 
-    if(f.type==='file'){
+    if(f.type==='file' || f.type==='signature'){
       const stored = formFilesStore[f.id];
       if(stored && stored.dataUrl){
         let fmt = 'JPEG';
         if(stored.dataUrl.startsWith('data:image/png')) fmt = 'PNG';
         else if(stored.dataUrl.startsWith('data:image/webp')) fmt = 'WEBP';
-        const imgW = 55, imgH = 28;
+        const imgW = f.type==='signature' ? 80 : 55;
+        const imgH = f.type==='signature' ? 32 : 28;
         ensureSpace(imgH + 8);
         try{
           doc.addImage(stored.dataUrl, fmt, marginL+4, y, imgW, imgH);
           y += imgH + 8;
         }catch(err){
-          doc.text('(could not embed attached file: ' + stored.name + ')', marginL+4, y);
+          doc.text('(could not embed ' + (f.type==='signature' ? 'signature' : 'attached file: ' + stored.name) + ')', marginL+4, y);
           y += 8;
         }
       }else{
         doc.setTextColor(120,120,120);
-        doc.text('(no file attached)', marginL+4, y);
+        doc.text(f.type==='signature' ? '(no signature drawn)' : '(no file attached)', marginL+4, y);
         doc.setTextColor(0,0,0);
         y += 8;
       }
@@ -2718,6 +2779,11 @@ async function endSession(){
     showToast('Session ended. All measurements and comments have been saved.', 'success');
     resetParticipantState();
     goToThreeWayScreen();
+    // Ask if the device should also be disconnected
+    if(port){
+      const doDisconnect = await customConfirm('Session saved. Do you also want to disconnect the device?', { okLabel:'Disconnect', cancelLabel:'Keep Connected' });
+      if(doDisconnect) disconnectSerial();
+    }
   }catch(e){
     hideLoadingState();
     showToast('Error saving session data: '+e.message, 'error');
