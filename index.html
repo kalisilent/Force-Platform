@@ -507,7 +507,7 @@ select.login-input option{background:#0c1a2e;color:#fff;}
     <button class="login-btn" onclick="startAddNewParticipant()">Add New Participant</button>
     <button class="login-btn" style="margin-top:8px;" onclick="openExistingPicker('select')">Select Existing Participant</button>
     <button class="login-btn" style="margin-top:8px;" onclick="openExistingPicker('analyze')">Analyze</button>
-    <button class="login-btn" id="tw-disconnect-btn" style="margin-top:16px;background:transparent;border:1px solid rgba(244,67,54,0.5);color:#f47c7c;display:none;" onclick="disconnectSerial();updateTwDisconnectBtn();">Disconnect Device</button>
+    <button class="login-btn" id="tw-disconnect-btn" style="margin-top:16px;background:transparent;border:1px solid rgba(244,67,54,0.5);color:#f47c7c;display:none;" onclick="disconnectSerial().then(()=>{ showToast('Device disconnected successfully.', 'success'); updateTwDisconnectBtn(); }).catch(()=>{ showToast('Device disconnected.', 'success'); updateTwDisconnectBtn(); });">Disconnect Device</button>
     <div class="login-err" id="tw-err"></div>
     <div class="ms-status"><a href="#" onclick="logOutInstitute();return false;" style="color:var(--teal-light);">Sign out</a></div>
   </div>
@@ -752,7 +752,7 @@ select.login-input option{background:#0c1a2e;color:#fff;}
         <p>Participation in this study is entirely voluntary. You are free to decline to participate without giving any reasons. Even if you consent now, you can withdraw from the study at any time, without any consequences. Though we would like to know the reasons for your withdrawal.</p>
 
         <h4>What will happen if I agree to participate?</h4>
-        <p>On receiving your informed consent, we will schedule an appointment for your visit to our research laboratory on a mutually suitable date and time. In the research laboratory, we will ask for some details about your health and lifestyle, relevant to the project, to label your data effectively (10–15 mins) (questionnaire 2). Then we will explain and ask you to stand on our force platform, as one stands on a weighing scale. We will measure your balance in different stances, likely 5–6 stances (1 min each), ensuring your comfort and safety. In total in the research laboratory, it will take about 30 mins to explain, collect details and measure balance.</p>
+        <p>On receiving your informed consent, we will ask for some details about your health and lifestyle, relevant to the project, to label your data effectively (10–15 mins) (questionnaire 2). Then we will explain and ask you to stand on our device, as one stands on a weighing scale. We will measure your balance in different stances, likely 5–6 stances (1 min each), ensuring your comfort and safety. In total, it will take about 30 mins to explain, collect details and measure balance.</p>
 
         <h4>What if I do not want to answer some of the questions?</h4>
         <p>It is your choice not to answer some of the questions and we will respect your choice. It is important for us that whichever question you choose to answer, you answer it truest to your knowledge. It will be detrimental to the study if you provide misleading answer(s).</p>
@@ -786,7 +786,8 @@ select.login-input option{background:#0c1a2e;color:#fff;}
         For questions about your rights as a volunteer, contact the Institutional Ethics Committee, Plaksha University.</p>
 
         <h4>Consent Statement</h4>
-        <p>I have read and understood the information provided above. I have been given the opportunity to ask questions and my questions have been answered to my satisfaction. I voluntarily agree to participate in this research study.</p>
+        <p>I have read and understood the information provided above. I have been given the opportunity to ask questions and my questions have been answered to my satisfaction.</p>
+        <p>I voluntarily agree to participate in this research study.</p>
       </div>
 
       <div class="form-fields-box" style="margin-top:18px;">
@@ -1060,6 +1061,28 @@ function customConfirm(message, opts){
     };
     okBtn.onclick = ()=>cleanup(true);
     cancelBtn.onclick = ()=>cleanup(false);
+  });
+}
+
+// 3-choice dialog: resolves with 'a', 'b', or null (cancel)
+function customChoice(message, labelA, labelB){
+  return new Promise(resolve=>{
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    overlay.innerHTML = `
+      <div style="background:var(--panel-bg,#1a2535);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:28px 32px;max-width:380px;width:90%;text-align:center;font-family:'DM Sans',sans-serif;">
+        <p style="color:#e0e6ed;font-size:15px;margin:0 0 22px;line-height:1.5;">${message}</p>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button id="cc-a" style="padding:11px 20px;border-radius:6px;border:none;background:var(--teal,#1a9e8f);color:#fff;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;">${labelA}</button>
+          <button id="cc-b" style="padding:11px 20px;border-radius:6px;border:1px solid rgba(26,158,143,0.5);background:transparent;color:#e0e6ed;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;">${labelB}</button>
+          <button id="cc-x" style="padding:8px 20px;border-radius:6px;border:none;background:transparent;color:#888;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">Cancel</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const cleanup = (val)=>{ document.body.removeChild(overlay); resolve(val); };
+    overlay.querySelector('#cc-a').onclick = ()=>cleanup('a');
+    overlay.querySelector('#cc-b').onclick = ()=>cleanup('b');
+    overlay.querySelector('#cc-x').onclick = ()=>cleanup(null);
   });
 }
 
@@ -1545,17 +1568,47 @@ async function confirmExistingParticipant(){
       appMode = 'analyze';
       currentSessionDirHandle = null;
       currentSessionDateFolder = null;
-    }else{
-      appMode = 'select';
-      currentSessionDateFolder = todayDateFolderName();
-      // The date-subfolder itself is NOT created here — only its name is
-      // recorded. It's created lazily on End Session, and only if the
-      // clinician actually recorded a measurement or typed a comment, so
-      // opening a participant to just look, then leaving without doing
-      // anything, never leaves behind an empty dated folder.
-      currentSessionDirHandle = null;
+      hideLoadingState();
+      document.getElementById('existing-picker-overlay').classList.remove('visible');
+      goToMeasurePage();
+      return;
     }
+
+    // For 'select' mode — ask Re-record or Follow-up
     hideLoadingState();
+    const choice = await customChoice(
+      `What would you like to do for ${currentParticipantId}?`,
+      'Re-record Existing Data',
+      'Add Follow-up Data'
+    );
+    if(choice === null){
+      // User cancelled — stay on picker
+      return;
+    }
+
+    if(choice === 'b'){
+      // Follow-up: find next available _FU# suffix
+      showLoadingState('Creating follow-up folder…');
+      const baseName = folderName; // e.g. PU_2026-08-003
+      let fuNum = 1;
+      while(true){
+        const fuFolder = `${baseName}_FU${fuNum}`;
+        const existing = await getChildDirIfExists(currentInstituteDirHandle, fuFolder);
+        if(!existing) break;
+        fuNum++;
+      }
+      const fuFolderName = `${baseName}_FU${fuNum}`;
+      const fuDirHandle = await currentInstituteDirHandle.getDirectoryHandle(fuFolderName, { create: true });
+      currentParticipantFolderName = fuFolderName;
+      currentParticipantId = PID_PREFIX + baseName.replace(PID_PREFIX,'').split('-').join('/') + `_FU${fuNum}`;
+      currentParticipantDirHandle = fuDirHandle;
+      hideLoadingState();
+      showToast(`Follow-up folder created: ${currentParticipantId}`, 'success');
+    }
+
+    appMode = 'select';
+    currentSessionDateFolder = todayDateFolderName();
+    currentSessionDirHandle = null;
     document.getElementById('existing-picker-overlay').classList.remove('visible');
     goToMeasurePage();
   }catch(e){
@@ -1615,8 +1668,7 @@ function continueToForm1(){
                embedded directly into the generated PDF)
 ═══════════════════════════════════════════════ */
 const FORM1_FIELDS = [
-  { id:'consent_agree',      label:"I have read and understood the information above, have had the opportunity to ask questions, and voluntarily agree to participate in this research study.", type:'checkbox', required:true },
-  { id:'consent_copy_given', label:'I have been given a copy of this consent form.', type:'checkbox' },
+  { id:'consent_agree', label:"I have read and understood the information provided above. I have been given the opportunity to ask questions and my questions have been answered to my satisfaction. I voluntarily agree to participate in this research study.", type:'checkbox', required:true },
   { id:'aims_reference_id',  label:'AIMS Reference ID',            type:'text', required:true },
   { id:'researcher_name',    label:'Researcher Name',              type:'text', required:true },
   { id:'volunteer_signature', label:'Volunteer Signature', type:'signature' },
@@ -2043,6 +2095,11 @@ function inAppBack(){
 }
 
 window.addEventListener('popstate', (e)=>{
+  // After disconnect, history state is {page:'landing'} — go to home
+  if(e.state && e.state.page === 'landing'){
+    renderScreen('home');
+    return;
+  }
   const screen = (e.state && e.state.screen) || 'home';
   renderScreen(screen);
 });
@@ -2420,6 +2477,8 @@ async function disconnectSerial(){
   port=null; setStatus('Disconnected','');
   document.getElementById('connect-btn').style.display='block';
   document.getElementById('disconnect-btn').style.display='none';
+  // Replace history so the back button returns to the landing page, not the measure UI
+  history.replaceState({page:'landing'}, '', window.location.pathname + window.location.search);
 }
 async function readLoop(){
   const dec=new TextDecoder(); let buf='';
@@ -2686,6 +2745,10 @@ function removeSelectedSession(sessionId){
   });
   renderSelectedSessionsList();
   computeAndRenderOverlay();
+  // Repopulate the date dropdown so sessions reappear after removal
+  if(addTraceParticipantFolder){
+    populateAddTraceDates(addTraceParticipantFolder);
+  }
 }
 
 function renderSelectedSessionsList(){
