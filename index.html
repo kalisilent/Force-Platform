@@ -876,7 +876,8 @@ select.login-input option{background:#0c1a2e;color:#fff;}
               <option value="one_leg_right">one_leg_right</option>
               <option value="one_leg_left">one_leg_left</option>
               <option value="tandem_stance">tandem_stance</option>
-              <option value="unstable_surface">unstable_surface</option>
+              <option value="unstable_surface_eo">unstable_surface_eyes_open</option>
+              <option value="unstable_surface_ec">unstable_surface_eyes_closed</option>
             </select>
           </div>
           <div class="cf-field" style="margin-bottom:14px;">
@@ -1669,7 +1670,8 @@ function continueToForm1(){
 ═══════════════════════════════════════════════ */
 const FORM1_FIELDS = [
   { id:'consent_agree', label:"I have read and understood the information provided above. I have been given the opportunity to ask questions and my questions have been answered to my satisfaction. I voluntarily agree to participate in this research study.", type:'checkbox', required:true },
-  { id:'aims_reference_id',  label:'AIMS Reference ID',            type:'text', required:true },
+  { id:'aims_reference_id',      label:'AIMS Reference ID',         type:'text', required:true },
+  { id:'clinical_diagnosis',     label:'Clinical Diagnosis',        type:'text', required:true },
   { id:'researcher_name',    label:'Researcher Name',              type:'text', required:true },
   { id:'volunteer_signature', label:'Volunteer Signature', type:'signature' },
   { id:'consent_date',       label:'Date',                          type:'readonly' }
@@ -2260,7 +2262,14 @@ const TRACE_COLOR_PALETTE = [
   '#7f8c8d', '#e74c3c', '#16a085', '#f39c12',
   '#8e44ad', '#2ecc71', '#3498db', '#d35400',
   '#c0392b', '#1abc9c', '#f1c40f', '#9b59b6',
-  '#27ae60', '#2980b9', '#e67e22', '#95a5a6'
+  '#27ae60', '#2980b9', '#e67e22', '#95a5a6',
+  '#e91e63', '#00bcd4', '#8bc34a', '#ff5722',
+  '#673ab7', '#009688', '#ffc107', '#3f51b5',
+  '#f44336', '#4caf50', '#ff9800', '#9c27b0',
+  '#03a9f4', '#cddc39', '#795548', '#607d8b',
+  '#ad1457', '#00838f', '#558b2f', '#e65100',
+  '#4527a0', '#00695c', '#f57f17', '#1565c0',
+  '#b71c1c', '#1b5e20', '#0d47a1', '#880e4f'
 ];
 let nextTraceColorIdx = 0;
 function nextTraceColor(){ const c = TRACE_COLOR_PALETTE[nextTraceColorIdx % TRACE_COLOR_PALETTE.length]; nextTraceColorIdx++; return c; }
@@ -2269,12 +2278,13 @@ function nextTraceColor(){ const c = TRACE_COLOR_PALETTE[nextTraceColorIdx % TRA
 // same experiment always shows up as the same color while you're working
 // with a single participant.
 const LIVE_EXP_COLORS = {
-  eyes_open:        TRACE_COLOR_PALETTE[0],
-  eyes_closed:      TRACE_COLOR_PALETTE[1],
-  one_leg_right:    TRACE_COLOR_PALETTE[2],
-  one_leg_left:     TRACE_COLOR_PALETTE[3],
-  tandem_stance:    TRACE_COLOR_PALETTE[4],
-  unstable_surface: TRACE_COLOR_PALETTE[5]
+  eyes_open:                  TRACE_COLOR_PALETTE[0],
+  eyes_closed:                TRACE_COLOR_PALETTE[1],
+  one_leg_right:              TRACE_COLOR_PALETTE[2],
+  one_leg_left:               TRACE_COLOR_PALETTE[3],
+  tandem_stance:              TRACE_COLOR_PALETTE[4],
+  unstable_surface_eo:        TRACE_COLOR_PALETTE[5],
+  unstable_surface_ec:        TRACE_COLOR_PALETTE[6]
 };
 
 /* ── Canvas + zoom/pan ── */
